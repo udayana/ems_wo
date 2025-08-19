@@ -1,0 +1,4 @@
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.mlkit.**
+-dontwarn com.google.firebase.**
