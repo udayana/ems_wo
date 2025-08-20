@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <!-- Images Column -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Before Image Label -->
+            <TextView
+                android:id="@+id/tv_before_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Before"
+                android:textSize="10sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="4dp"
+                android:visibility="gone" />
+
+            <!-- Before Image -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/surface_container">
+
+                <ImageView
+                    android:id="@+id/iv_photo_before"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_photo"
+                    app:tint="@color/text_secondary" />
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- After Image Section -->
+            <LinearLayout
+                android:id="@+id/ll_after_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="6dp"
+                android:visibility="gone">
+
+                <!-- After Image Label -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="After"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="4dp" />
+
+                <!-- After Image -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/surface_container">
+
+                    <ImageView
+                        android:id="@+id/iv_photo_after"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_photo"
+                        app:tint="@color/text_secondary" />
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Content Column -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <!-- Header: WO ID + Status -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:id="@+id/tv_wo_id"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="WO: 12345"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black" />
+
+                <!-- Status Badge -->
+                <TextView
+                    android:id="@+id/tv_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NEW"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:background="@drawable/status_badge_background"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp" />
+
+            </LinearLayout>
+
+            <!-- Job Title -->
+            <TextView
+                android:id="@+id/tv_job_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="AC Repair - Room 101"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Info Container -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/info_container_background"
+                android:padding="6dp">
+
+                <!-- Row 1: Location & Date -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_location"
+                            app:tint="@color/primary"
+                            android:layout_marginEnd="4dp" />
+
+                        <TextView
+                            android:id="@+id/tv_location"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Room 101"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/black" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_calendar"
+                            app:tint="@color/primary"
+                            android:layout_marginEnd="4dp" />
+
+                        <TextView
+                            android:id="@+id/tv_date"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="2024-01-15"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/black" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Row 2: Engineer & Priority -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_person"
+                            app:tint="@color/primary"
+                            android:layout_marginEnd="4dp" />
+
+                        <TextView
+                            android:id="@+id/tv_engineer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="John Doe"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/black" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_priority"
+                            app:tint="@color/primary"
+                            android:layout_marginEnd="4dp" />
+
+                        <TextView
+                            android:id="@+id/tv_priority"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="HIGH"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/black" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

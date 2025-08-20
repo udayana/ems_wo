@@ -69,5 +69,12 @@ dependencies {
     implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    
+    // RecyclerView and UI dependencies
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+                    implementation("com.github.bumptech.glide:glide:4.16.0")
+                annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     // Compose permission library removed - using standard Android permissions
 }

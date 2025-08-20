@@ -1,9 +1,9 @@
 package com.sofindo.ems
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.sofindo.ems.camera.CameraFragment
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.sofindo.ems.fragment.HomeFragment
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,20 +13,47 @@ class MainActivity : AppCompatActivity() {
         // Set title for the activity
         supportActionBar?.title = "EMS WO"
         
-        // Initialize camera functionality
-        setupCamera()
+        // Initialize bottom navigation
+        setupBottomNavigation()
+        
+        // Initialize home fragment
+        setupHomeFragment()
     }
     
-    private fun setupCamera() {
-        val cameraFragment = CameraFragment()
-        cameraFragment.setOnQrScannedListener { qrCode ->
-            // Handle QR code scan
-            Toast.makeText(this, "QR Code: $qrCode", Toast.LENGTH_LONG).show()
-            // TODO: Process QR code data
+    private fun setupBottomNavigation() {
+        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        
+        bottomNavigation.setOnItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_home -> {
+                    val homeFragment = HomeFragment()
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, homeFragment)
+                        .commit()
+                    true
+                }
+                R.id.nav_qr -> {
+                    // TODO: Implement QR Scanner fragment
+                    true
+                }
+                R.id.nav_outbox -> {
+                    // TODO: Implement Outbox fragment
+                    true
+                }
+                R.id.nav_profile -> {
+                    // TODO: Implement Profile fragment
+                    true
+                }
+                else -> false
+            }
         }
+    }
+    
+    private fun setupHomeFragment() {
+        val homeFragment = HomeFragment()
         
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, cameraFragment)
+            .replace(R.id.fragment_container, homeFragment)
             .commit()
     }
 }

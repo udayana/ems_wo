@@ -217,4 +217,55 @@ For support and questions:
 
 ---
 
+## 🚀 DEVELOPMENT SOP (STANDARD OPERATING PROCEDURE)
+
+### **🎯 PRINSIP DASAR**
+> **"TIRU HABIS YANG DI FLUTTER"** - Setiap implementasi Android harus identik dengan Flutter
+
+### **📋 WORKFLOW WAJIB**
+1. **ANALISIS FLUTTER DULU** ⚠️ **WAJIB**
+   - Cek `../MyFlutter/ems_flutter/lib/` untuk referensi
+   - Copy endpoint API yang sama
+   - Copy data structure yang sama
+   - Copy UI layout yang sama
+
+2. **IMPLEMENTASI ANDROID**
+   - Buat data models (sesuai Flutter)
+   - Buat API service (copy endpoint Flutter)
+   - Buat UI layouts (mirip Flutter)
+   - Test build dan install
+
+3. **GIT WORKFLOW**
+   - JANGAN langsung push
+   - Tunggu user bilang "bagus" dulu
+   - Baru commit dan push
+
+### **🔌 API ENDPOINTS (Copy dari Flutter)**
+```kotlin
+@GET("baca_wo.php")           // Flutter: baca_wo.php
+@GET("get_all_statuses.php")  // Flutter: get_all_statuses.php  
+@GET("search_wo.php")         // Flutter: search_wo.php
+@POST("login.php")            // Flutter: login.php
+```
+
+### **🎨 UI STANDARDS (Sesuai Flutter)**
+- **Colors**: Copy dari `AppColors` Flutter
+- **Padding**: 24dp (sesuai Flutter)
+- **Border Radius**: 8dp (sesuai Flutter)
+- **Text Sizes**: 12sp, 14sp, 16sp (sesuai Flutter)
+
+### **✅ CHECKLIST SEBELUM IMPLEMENTASI**
+- [ ] Sudah cek Flutter reference?
+- [ ] Sudah copy endpoint yang sama?
+- [ ] Sudah copy data structure yang sama?
+- [ ] Sudah copy UI layout yang sama?
+
+### **✅ CHECKLIST SEBELUM COMMIT**
+- [ ] User sudah bilang "bagus"?
+- [ ] Build successful?
+- [ ] UI sesuai Flutter?
+- [ ] Functionality working?
+
+---
+
 **Built with ❤️ using Kotlin and Material Design 3**

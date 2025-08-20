@@ -1,0 +1,77 @@
+# EMS WO Android Development Rules for Cursor AI
+
+## 🎯 CORE PRINCIPLE
+**"TIRU HABIS YANG DI FLUTTER"** - Every Android implementation must be identical to Flutter
+
+## 📋 MANDATORY WORKFLOW
+1. **ANALYZE FLUTTER FIRST** ⚠️ **REQUIRED**
+   - Check `../MyFlutter/ems_flutter/lib/` for reference
+   - Copy exact API endpoints from Flutter
+   - Copy exact data structures from Flutter
+   - Copy exact UI layouts from Flutter
+
+2. **IMPLEMENT ANDROID**
+   - Create data models (matching Flutter)
+   - Create API services (copy Flutter endpoints)
+   - Create UI layouts (matching Flutter)
+   - Test build and install
+
+3. **GIT WORKFLOW**
+   - DO NOT push immediately
+   - Wait for user to say "bagus" first
+   - Then commit and push
+
+## 🔌 API ENDPOINTS (Copy from Flutter)
+```kotlin
+@GET("baca_wo.php")           // Flutter: baca_wo.php
+@GET("get_all_statuses.php")  // Flutter: get_all_statuses.php  
+@GET("search_wo.php")         // Flutter: search_wo.php
+@POST("login.php")            // Flutter: login.php
+```
+
+## 🎨 UI STANDARDS (Match Flutter)
+- **Colors**: Copy from Flutter `AppColors`
+- **Padding**: 24dp (match Flutter)
+- **Border Radius**: 8dp (match Flutter)
+- **Text Sizes**: 12sp, 14sp, 16sp (match Flutter)
+
+## ✅ PRE-IMPLEMENTATION CHECKLIST
+- [ ] Checked Flutter reference?
+- [ ] Copied exact endpoints?
+- [ ] Copied exact data structures?
+- [ ] Copied exact UI layouts?
+
+## ✅ PRE-COMMIT CHECKLIST
+- [ ] User said "bagus"?
+- [ ] Build successful?
+- [ ] UI matches Flutter?
+- [ ] Functionality working?
+
+## 🚨 REMEMBER
+- NEVER use different endpoints than Flutter
+- NEVER create different UI than Flutter
+- NEVER implement without checking Flutter first
+- NEVER push before user approval
+
+## 📁 FLUTTER REFERENCE PATHS
+```
+../MyFlutter/ems_flutter/lib/
+├── models/           # Data structures
+├── services/         # API endpoints
+├── screens/          # UI layouts
+├── constants/        # Colors, strings
+└── utils/           # Helper functions
+```
+
+## 📁 ANDROID IMPLEMENTATION PATHS
+```
+wo_kotlin/app/src/main/
+├── java/com/sofindo/ems/
+│   ├── models/       # Data classes
+│   ├── api/         # Retrofit services
+│   ├── fragment/    # UI fragments
+│   └── adapter/     # RecyclerView adapters
+└── res/
+    ├── layout/      # XML layouts
+    └── drawable/    # Icons & backgrounds
+```

@@ -14,6 +14,7 @@ import com.google.android.material.button.MaterialButton
 import com.sofindo.ems.R
 import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.models.User
+import com.sofindo.ems.services.UserService
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -31,12 +32,16 @@ class LoginActivity : AppCompatActivity() {
     private var retryCount = 0
     private val maxRetries = 3
     
-    override fun onCreate(savedInstanceState: Bundle?) {
+        override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-        
+
         initViews()
         setupListeners()
+        
+        // Hardcode credentials for testing
+        etEmail.setText("engineer@demo.com")
+        etPassword.setText("123456")
     }
     
     private fun initViews() {
@@ -144,8 +149,10 @@ class LoginActivity : AppCompatActivity() {
                 dept = result["dept"]?.toString()
             )
             
-            // TODO: Save user to SharedPreferences or database
-            // UserService.saveUser(user)
+            // Save user to SharedPreferences
+            lifecycleScope.launch {
+                UserService.saveUser(this@LoginActivity, user)
+            }
             
             // Navigate to main activity
             val intent = Intent(this, com.sofindo.ems.MainActivity::class.java)
