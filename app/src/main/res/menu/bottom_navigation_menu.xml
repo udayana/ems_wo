@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="Home" />
+    
+    <item
+        android:id="@+id/nav_outbox"
+        android:icon="@drawable/ic_send"
+        android:title="Out" />
+    
+    <item
+        android:id="@+id/nav_add_wo"
+        android:icon="@drawable/ic_add_circle"
+        android:title="Add" />
+    
+    <item
+        android:id="@+id/nav_maintenance"
+        android:icon="@drawable/ic_build"
+        android:title="Maint" />
+    
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_person"
+        android:title="Profile" />
+</menu>
+
+
+
+

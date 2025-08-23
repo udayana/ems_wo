@@ -1,220 +1,331 @@
-# EMS Workorder - Android Kotlin App
-
-A modern Android application for EMS (Enterprise Management System) Workorder management, built with Kotlin and following Material Design 3 principles.
+# EMS WO - Android Application
 
 ## 📱 Project Overview
+EMS WO (Work Order) adalah aplikasi Android untuk manajemen work order yang dibangun dengan Kotlin dan menggunakan Material Design 3.
 
-This is the Android version of the EMS Workorder application, designed to provide a native mobile experience for managing work orders, maintenance tasks, and asset management. The app is built based on the existing Flutter version to maintain consistency in functionality and user experience.
-
-## 🏗️ Architecture
-
-- **Language**: Kotlin
-- **Architecture**: MVVM (Model-View-ViewModel)
-- **UI Framework**: Material Design 3
-- **Networking**: Retrofit + OkHttp
-- **JSON Parsing**: Moshi
-- **Async Operations**: Kotlin Coroutines
-- **Image Loading**: Android built-in ImageView
-- **Camera**: CameraX for QR scanning
-
-## 🎯 Current Progress
-
-### ✅ Completed Features
-- [x] **Project Setup** - Android project with Kotlin
-- [x] **Login Screen** - Complete authentication UI
-- [x] **API Integration** - Retrofit setup for PHP backend
-- [x] **User Authentication** - Login with retry mechanism
-- [x] **Material Design 3** - Modern UI components
-- [x] **App Icons** - Custom EMS branding
-- [x] **Error Handling** - Comprehensive error management
-- [x] **Password Toggle** - Show/hide password functionality
-
-### 🔄 In Progress
-- [ ] **Main Navigation** - Bottom navigation setup
-- [ ] **Home Dashboard** - Work order statistics
-- [ ] **Work Order List** - Display work orders
-- [ ] **Work Order Detail** - View and edit work orders
-
-### 📋 Planned Features
-- [ ] **QR Scanner** - Scan work order QR codes
-- [ ] **Camera Integration** - Photo capture for documentation
-- [ ] **Offline Support** - Local data caching
-- [ ] **Push Notifications** - Real-time updates
-- [ ] **User Profile** - Profile management
-- [ ] **Settings** - App configuration
-
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Android Studio Arctic Fox or later
-- Android SDK 24+ (API Level 24)
-- Kotlin 1.8+
-- Gradle 8.0+
+- Android Studio (latest version)
+- JDK 17
+- Android SDK (API 24+)
+- Git
 
-### Installation
-
-1. **Clone the repository**
+### Project Setup
+1. **Clone Repository**
    ```bash
-   git clone https://github.com/udayana/ems_wo.git
+   git clone <repository-url>
    cd ems_wo
    ```
 
 2. **Open in Android Studio**
-   - Open Android Studio
-   - Select "Open an existing project"
-   - Navigate to the cloned directory
+   - Buka Android Studio
+   - Pilih "Open" (bukan "New Project")
+   - Navigate ke folder: `/Users/gedeudayana/ems_wo`
+   - Klik "Open"
+   - Tunggu Gradle sync selesai
 
-3. **Configure SDK**
-   - Ensure Android SDK is properly configured
-   - Set up Android SDK path in `local.properties`
+3. **Run Application**
+   - Hubungkan Android device atau buat emulator
+   - Tekan tombol Run (▶️) di Android Studio
+   - Atau gunakan shortcut: `Shift + F10`
 
-4. **Build and Run**
-   ```bash
-   ./gradlew build
-   ./gradlew installDebug
-   ```
+## 🔑 Login Credentials (Hard-coded for Testing)
+- **Email:** `engineer@demo.com`
+- **Password:** `123456`
+- **Note:** Form sudah terisi otomatis, langsung klik Login
 
-## 🔧 Configuration
-
-### API Configuration
-The app connects to the EMS PHP backend at:
-```
-Base URL: https://emshotels.net/apiKu/
-```
-
-### Key Endpoints
-- `POST /login.php` - User authentication
-- `POST /check_login.php` - Verify login status
-- `GET /baca_wo.php` - Get work orders
-- `POST /submit_wo.php` - Submit work order
-
-### Environment Setup
-Create `local.properties` file:
-```properties
-sdk.dir=/path/to/your/android/sdk
-```
+## 📚 Flutter Reference (WAJIB DIBACA)
+**Setiap development HARUS mengikuti referensi Flutter:**
+- **Lokasi:** `/Users/gedeudayana/Downloads/EMS-Workorder-main 2/`
+- **File Penting:**
+  - `lib/screens/main/home.dart` → HomeFragment
+  - `lib/screens/main/outbox.dart` → OutboxFragment
+  - `lib/screens/main/tambah_wo.dart` → AddWOFragment
+  - `lib/screens/auth/profile_view.dart` → ProfileFragment
+  - `lib/screens/main/main_tab_view.dart` → MainActivity navigation
+- **Yang Harus Sama Persis:**
+  - Layout UI dan styling
+  - Function logic dan state management
+  - API endpoints dan data flow
+  - Navigation dan user experience
 
 ## 📁 Project Structure
 
 ```
-app/
-├── src/main/
-│   ├── java/com/sofindo/ems/
-│   │   ├── auth/           # Authentication
-│   │   ├── api/            # API services
-│   │   ├── models/         # Data models
-│   │   ├── camera/         # Camera functionality
-│   │   └── MainActivity.kt # Main activity
-│   ├── res/
-│   │   ├── layout/         # UI layouts
-│   │   ├── drawable/       # Images and icons
-│   │   ├── values/         # Colors, strings, styles
-│   │   └── mipmap/         # App icons
-│   └── AndroidManifest.xml
-├── build.gradle.kts        # App-level build config
-└── proguard-rules.pro      # ProGuard rules
-
-ems_flutter/                 # Reference Flutter project
-├── lib/                    # Flutter source code
-├── api/                    # PHP backend files
-└── assets/                 # Flutter assets
+ems_wo/
+├── app/
+│   ├── src/main/
+│   │   ├── java/com/sofindo/ems/
+│   │   │   ├── api/                    # API Services
+│   │   │   │   ├── ApiService.kt       # API endpoints
+│   │   │   │   └── RetrofitClient.kt   # HTTP client
+│   │   │   ├── auth/                   # Authentication
+│   │   │   │   └── LoginActivity.kt    # Login screen
+│   │   │   ├── fragments/              # Main app screens
+│   │   │   │   ├── HomeFragment.kt     # Dashboard
+│   │   │   │   ├── OutboxFragment.kt   # Outbox
+│   │   │   │   ├── AddWOFragment.kt    # Add work order
+│   │   │   │   ├── MaintenanceFragment.kt # Maintenance
+│   │   │   │   └── ProfileFragment.kt  # User profile
+│   │   │   ├── models/                 # Data models
+│   │   │   │   └── User.kt             # User model
+│   │   │   ├── services/               # Business logic
+│   │   │   │   └── UserService.kt      # User management
+│   │   │   ├── camera/                 # Camera functionality
+│   │   │   │   ├── CameraFragment.kt   # QR scanner
+│   │   │   │   └── QrAnalyzer.kt       # QR code analyzer
+│   │   │   ├── App.kt                  # Application class
+│   │   │   └── MainActivity.kt         # Main activity
+│   │   ├── res/
+│   │   │   ├── layout/                 # UI layouts
+│   │   │   ├── drawable/               # Icons & images
+│   │   │   ├── values/                 # Colors, strings, styles
+│   │   │   └── mipmap-*/               # App icons
+│   │   └── AndroidManifest.xml         # App configuration
+│   └── build.gradle.kts                # App dependencies
+├── build.gradle.kts                    # Project configuration
+└── README.md                           # This file
 ```
 
-## 🎨 UI/UX Design
+## 🎯 Features
 
-### Design System
-- **Primary Color**: `#1ABC9C` (Teal)
-- **Secondary Color**: `#34495E` (Dark Blue)
-- **Background**: `#F8F9FA` (Light Gray)
-- **Surface**: `#F1F3F4` (Input Background)
-- **Error**: `#E74C3C` (Red)
+### ✅ Implemented
+- **Authentication**
+  - Login dengan hard-coded credentials
+  - User session management
+  - Auto-fill login form
 
-### Components
-- **Material Design 3** components
-- **Custom input fields** with filled style
-- **Circular profile images** with shadows
-- **Responsive layouts** for different screen sizes
+- **Navigation**
+  - Bottom navigation dengan 5 tabs
+  - Fragment-based navigation
+  - Tab switching functionality
 
-## 🔌 API Integration
+- **Screens**
+  - **Home:** Dashboard dengan list work orders
+  - **Outbox:** List outbox work orders
+  - **Add WO:** Form tambah work order
+  - **Maintenance:** Placeholder (Coming Soon)
+  - **Profile:** User profile & settings
 
-### Network Layer
-- **Retrofit** for HTTP requests
-- **OkHttp** for network client
-- **Moshi** for JSON serialization
-- **Coroutines** for async operations
+- **UI/UX**
+  - Material Design 3
+  - Dark/Light theme support
+  - Responsive layouts
+  - Pull-to-refresh
+  - Search & filter functionality
 
-### Authentication Flow
-1. User enters email/phone and password
-2. App sends credentials to `/login.php`
-3. Server validates and returns user data
-4. App stores user session and navigates to main screen
+### 🚧 In Progress / TODO
+- RecyclerView adapters untuk list work orders
+- Image loading untuk profile pictures
+- Toast/Snackbar feedback
+- Work order detail views
+- Edit work order functionality
+- Camera integration untuk QR scanning
+- API integration (saat ini menggunakan mock data)
 
-### Error Handling
-- **Network errors** with retry mechanism
-- **Validation errors** with user-friendly messages
-- **Server errors** with appropriate fallbacks
+## 🛠 Development Workflow
 
-## 📱 Screenshots
+### 1. Daily Development
+```bash
+# 1. Buka Android Studio
+# 2. Open project: /Users/gedeudayana/ems_wo
+# 3. Tunggu Gradle sync
+# 4. Run aplikasi untuk test
+# 5. Develop fitur baru
+# 6. Test di device/emulator
+# 7. Commit changes
+```
 
-### Login Screen
-- Modern Material Design 3 interface
-- Custom EMS branding
-- Password visibility toggle
-- Error message display
-- Retry mechanism for failed requests
+### 2. Flutter Reference Comparison (WAJIB)
+**Setiap kali masuk project, selalu bandingkan dengan referensi Flutter:**
+- **Lokasi Referensi:** `/Users/gedeudayana/Downloads/EMS-Workorder-main 2/`
+- **File Referensi:** `lib/screens/main/` dan `lib/screens/auth/`
+- **Yang Dibandingkan:**
+  - Layout UI (sama persis dengan Flutter)
+  - Function logic (sama persis dengan Flutter)
+  - Endpoint API (sama persis dengan Flutter)
+  - Data flow dan state management
 
-## 🛠️ Development
+### 3. Implementation Standards
+**Buat yang sama persis dengan Flutter:**
+- **Layout:** Copy exact UI dari Flutter ke Android XML
+- **Function:** Implementasi logic yang sama dengan Flutter
+- **API Endpoints:** Gunakan endpoint yang sama dengan Flutter
+- **Data Models:** Struktur data yang sama dengan Flutter
+- **Navigation:** Flow yang sama dengan Flutter
 
-### Code Style
-- Follow Kotlin coding conventions
-- Use meaningful variable and function names
-- Add comments for complex logic
-- Follow Material Design guidelines
+### 4. Git Commit Strategy
+**Simpan ke git setiap kali satu halaman selesai penuh:**
+- **Commit setiap halaman lengkap:** Layout + Function + API
+- **Commit message format:** `feat: complete [page_name] page`
+- **Contoh commit:**
+  ```bash
+  git add .
+  git commit -m "feat: complete home page with work order list"
+  git commit -m "feat: complete profile page with user data"
+  git commit -m "feat: complete add WO page with form validation"
+  ```
+- **Jangan commit:** Work in progress atau halaman yang belum selesai
 
-### Testing
-- Unit tests for business logic
-- UI tests for critical user flows
-- API tests for backend integration
+### 5. Adding New Features (Following Flutter Reference)
+1. **Analyze Flutter Reference First**
+   - Buka file Flutter yang sesuai di `/Users/gedeudayana/Downloads/EMS-Workorder-main 2/lib/screens/`
+   - Analisis layout, function, dan API endpoints
+   - Catat semua fitur yang perlu diimplementasi
 
-### Performance
-- Optimize image loading
-- Implement efficient data caching
-- Minimize network requests
-- Use lazy loading for lists
+2. **Create Fragment** (jika perlu screen baru)
+   - Buat file di `app/src/main/java/com/sofindo/ems/fragments/`
+   - Buat layout di `app/src/main/res/layout/`
+   - Copy exact UI dari Flutter ke Android XML
+   - Update navigation di `MainActivity.kt`
 
-## 📄 License
+3. **Add API Endpoints** (sama persis dengan Flutter)
+   - Update `ApiService.kt` dengan endpoint yang sama
+   - Gunakan parameter dan response yang sama
+   - Test dengan mock data dulu
 
-This project is proprietary software for EMS (Enterprise Management System).
+4. **Implement Function Logic** (sama persis dengan Flutter)
+   - Copy logic dari Flutter ke Kotlin
+   - Implementasi state management yang sama
+   - Gunakan data flow yang sama
 
-## 🤝 Contributing
+5. **Update UI** (sama persis dengan Flutter)
+   - Modify layouts di `res/layout/` sesuai Flutter
+   - Add icons di `res/drawable/` jika diperlukan
+   - Update colors/styles di `res/values/` sesuai Flutter
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+### 3. Testing
+```bash
+# Build project
+./gradlew build
+
+# Run tests
+./gradlew test
+
+# Build APK
+./gradlew assembleDebug
+
+# Install on device
+./gradlew installDebug
+```
+
+## 🔧 Configuration
+
+### Build Configuration
+- **Min SDK:** 24 (Android 7.0)
+- **Target SDK:** 35 (Android 15)
+- **Compile SDK:** 35
+- **Java Version:** 17
+
+### Dependencies
+- **UI:** Material Design 3, AppCompat, ConstraintLayout
+- **Networking:** Retrofit, OkHttp, Moshi
+- **Async:** Kotlin Coroutines
+- **Camera:** CameraX, ML Kit Barcode Scanning
+- **Other:** SwipeRefreshLayout
+
+## 📱 Testing
+
+### Manual Testing
+1. **Login Test**
+   - Buka aplikasi
+   - Form sudah terisi: `engineer@demo.com` / `123456`
+   - Klik Login
+   - Harus masuk ke MainActivity
+
+2. **Navigation Test**
+   - Test semua 5 tabs: Home, Outbox, Add WO, Maintenance, Profile
+   - Pastikan fragment berubah dengan benar
+
+3. **Feature Test**
+   - Test search di Home/Outbox
+   - Test filter dropdown
+   - Test pull-to-refresh
+   - Test form validation di Add WO
+
+### Device Testing
+- **Physical Device:** Samsung Galaxy A04s (SM-A045F)
+- **Emulator:** API 30+ recommended
+- **Test Scenarios:** Login, navigation, basic functionality
+
+## 🐛 Common Issues & Solutions
+
+### Build Issues
+```bash
+# Clean & rebuild
+./gradlew clean
+./gradlew build
+
+# Invalidate caches in Android Studio
+File > Invalidate Caches > Invalidate and Restart
+```
+
+### Runtime Issues
+- **Login tidak berhasil:** Pastikan credentials `engineer@demo.com` / `123456`
+- **Fragment tidak muncul:** Cek navigation di `MainActivity.kt`
+- **API errors:** Saat ini menggunakan mock data, cek `ApiService.kt`
+
+### Device Issues
+- **Device tidak terdeteksi:** 
+  ```bash
+  adb devices
+  adb kill-server && adb start-server
+  ```
+
+## 📋 Development Checklist
+
+### Before Starting Work
+- [ ] Buka Android Studio
+- [ ] Open project: `/Users/gedeudayana/ems_wo`
+- [ ] Tunggu Gradle sync selesai
+- [ ] **Buka Flutter reference:** `/Users/gedeudayana/Downloads/EMS-Workorder-main 2/`
+- [ ] **Bandingkan dengan Flutter:** Layout, function, dan API endpoints
+- [ ] Test login dengan credentials
+- [ ] Pastikan semua tabs berfungsi
+
+### Before Committing
+- [ ] Test semua fitur utama
+- [ ] Build project tanpa error
+- [ ] Test di device/emulator
+- [ ] Update documentation jika perlu
+
+### Before Release
+- [ ] Complete feature testing
+- [ ] Performance testing
+- [ ] UI/UX review
+- [ ] Build signed APK
+- [ ] Update version number
 
 ## 📞 Support
 
-For support and questions:
-- Create an issue on GitHub
-- Contact the development team
-- Check the documentation
+### Development Team
+- **Lead Developer:** [Your Name]
+- **Project Manager:** [PM Name]
+- **QA Tester:** [QA Name]
 
-## 🔄 Version History
+### Resources
+- **API Documentation:** [API URL]
+- **Design System:** [Figma URL]
+- **Project Management:** [Jira/Trello URL]
 
-### v1.0.0 (Current)
-- ✅ Login screen implementation
-- ✅ API integration setup
-- ✅ Material Design 3 UI
-- ✅ Basic project structure
+## 📝 Changelog
 
-### Next Release (v1.1.0)
-- 🔄 Main navigation
-- 🔄 Home dashboard
-- 🔄 Work order list
-- 🔄 Work order detail
+### Version 1.7.3 (Current)
+- ✅ Implemented bottom navigation
+- ✅ Created all main fragments (Home, Outbox, Add WO, Maintenance, Profile)
+- ✅ Added hard-coded login system
+- ✅ Implemented Material Design 3 UI
+- ✅ Added UserService for session management
+- ✅ Created API service structure
+- 🚧 TODO: RecyclerView adapters, image loading, API integration
+
+### Version 1.7.2
+- Initial project setup
+- Basic login functionality
+- Camera integration
 
 ---
 
-**Built with ❤️ using Kotlin and Material Design 3**
+**Last Updated:** August 23, 2025  
+**Next Review:** August 30, 2025
