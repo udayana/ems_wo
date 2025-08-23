@@ -171,15 +171,15 @@ class AddWOFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
-                val result = RetrofitClient.apiService.addWorkOrder(
+                val result = RetrofitClient.apiService.submitWorkOrder(
                     propID = currentPropID!!,
-                    username = username!!,
+                    orderBy = username!!,
                     job = job,
-                    location = location,
-                    remarks = remarks,
+                    lokasi = location,
                     category = category,
-                    department = department,
-                    priority = priority
+                    dept = department,
+                    priority = priority,
+                    woto = department
                 )
                 
                 if (isAdded) {

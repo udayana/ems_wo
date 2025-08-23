@@ -57,16 +57,16 @@ interface ApiService {
     ): List<Map<String, Any>>
     
     @FormUrlEncoded
-    @POST("add_work_order.php")
-    suspend fun addWorkOrder(
+    @POST("submit_wo.php")
+    suspend fun submitWorkOrder(
         @Field("propID") propID: String,
-        @Field("username") username: String,
+        @Field("orderBy") orderBy: String,
         @Field("job") job: String,
-        @Field("location") location: String,
-        @Field("remarks") remarks: String,
+        @Field("lokasi") lokasi: String,
         @Field("category") category: String,
-        @Field("department") department: String,
-        @Field("priority") priority: String
+        @Field("dept") dept: String,
+        @Field("priority") priority: String,
+        @Field("woto") woto: String
     ): Map<String, Any>
     
     // Master Data APIs

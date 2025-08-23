@@ -6,7 +6,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.sofindo.ems.fragments.HomeFragment
 import com.sofindo.ems.fragments.OutboxFragment
-import com.sofindo.ems.fragments.AddWOFragment
+import com.sofindo.ems.fragments.TambahWOFragment
 import com.sofindo.ems.fragments.MaintenanceFragment
 import com.sofindo.ems.fragments.ProfileFragment
 
@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_add_wo -> {
-                    loadFragment(AddWOFragment())
+                    loadFragment(TambahWOFragment())
                     true
                 }
                 R.id.nav_maintenance -> {

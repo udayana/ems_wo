@@ -12,4 +12,7 @@
     <color name="surface_container">#FFF1F3F4</color>
     <color name="text_secondary">#FF7F8C8D</color>
     <color name="transparent">#00000000</color>
+    <color name="red">#FFE74C3C</color>
+    <color name="success">#FF27AE60</color>
+    <color name="error">#FFE74C3C</color>
 </resources>
