@@ -38,13 +38,22 @@ interface ApiService {
         @Query("woto") woto: String? = null
     ): List<Map<String, Any>>
     
-    @GET("get_outbox_work_orders.php")
-    suspend fun getOutboxWorkOrders(
+    // Outbox APIs - sama persis dengan Flutter
+    @FormUrlEncoded
+    @POST("cari_wo_out.php")
+    suspend fun getWorkOrdersOut(
+        @Field("propID") propID: String,
+        @Field("orderBy") orderBy: String,
+        @Field("status") status: String = "",
+        @Field("page") page: Int = 1,
+        @Field("userDept") userDept: String = "",
+        @Field("searchText") searchText: String = ""
+    ): List<Map<String, Any>>
+    
+    @GET("get_all_statuses_outbox.php")
+    suspend fun getAllStatusesOutbox(
         @Query("propID") propID: String,
-        @Query("username") username: String,
-        @Query("status") status: String = "",
-        @Query("page") page: Int = 1,
-        @Query("search") search: String = ""
+        @Query("dept") dept: String? = null
     ): List<Map<String, Any>>
     
     @FormUrlEncoded
