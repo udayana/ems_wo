@@ -389,8 +389,8 @@ class TambahWOFragment : Fragment() {
                     .error(R.drawable.photo_preview_background)
                     .into(ivPhotoPreview)
                 
-                ivPhotoPreview.visibility = View.VISIBLE
-                btnPhoto.text = "📷 Upload"
+                            ivPhotoPreview.visibility = View.VISIBLE
+            btnPhoto.text = "📷 Upload"
             } catch (e: Exception) {
                 showSnackbar("Failed to display image preview: ${e.message}", false)
             }
