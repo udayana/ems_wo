@@ -36,7 +36,8 @@
                 android:textColor="@color/black"
                 android:textColorHint="@color/text_secondary"
                 android:singleLine="true"
-                android:imeOptions="actionSearch" />
+                android:imeOptions="actionSearch"
+                android:inputType="text" />
 
             <!-- Filter Button -->
             <ImageView
@@ -56,19 +57,27 @@
 
     </LinearLayout>
 
-    <!-- Work Orders List -->
+    <!-- Work Orders List with SwipeRefreshLayout -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- RecyclerView for Work Orders -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_work_orders"
+        <!-- SwipeRefreshLayout for pull-to-refresh -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="16dp"
-            android:clipToPadding="false" />
+            android:layout_height="match_parent">
+
+            <!-- RecyclerView for Work Orders -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_work_orders"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp"
+                android:clipToPadding="false" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <!-- Empty State -->
         <LinearLayout
@@ -121,9 +130,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Loading work orders..."
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary" />
+                android:text="Loading data..."
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
 
         </LinearLayout>
 

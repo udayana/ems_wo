@@ -6,14 +6,19 @@
         android:title="Home" />
     
     <item
-        android:id="@+id/nav_qr"
-        android:icon="@drawable/ic_qr_code"
-        android:title="QR" />
+        android:id="@+id/nav_out"
+        android:icon="@drawable/ic_send"
+        android:title="Out" />
     
     <item
-        android:id="@+id/nav_outbox"
-        android:icon="@drawable/ic_outbox"
-        android:title="Outbox" />
+        android:id="@+id/nav_add"
+        android:icon="@drawable/ic_add_circle"
+        android:title="Add" />
+    
+    <item
+        android:id="@+id/nav_maint"
+        android:icon="@drawable/ic_build"
+        android:title="Maint" />
     
     <item
         android:id="@+id/nav_profile"

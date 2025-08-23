@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -31,6 +32,7 @@ class HomeFragment : Fragment() {
     private lateinit var etSearch: EditText
     private lateinit var ivFilter: ImageView
     private lateinit var rvWorkOrders: RecyclerView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var llEmptyState: LinearLayout
     private lateinit var llLoading: LinearLayout
     
@@ -74,6 +76,7 @@ class HomeFragment : Fragment() {
         
         initViews(view)
         setupRecyclerView()
+        setupSwipeRefresh()
         setupListeners()
         loadInitialData()
     }
@@ -82,6 +85,7 @@ class HomeFragment : Fragment() {
         etSearch = view.findViewById(R.id.et_search)
         ivFilter = view.findViewById(R.id.iv_filter)
         rvWorkOrders = view.findViewById(R.id.rv_work_orders)
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout)
         llEmptyState = view.findViewById(R.id.ll_empty_state)
         llLoading = view.findViewById(R.id.ll_loading)
     }
@@ -120,6 +124,19 @@ class HomeFragment : Fragment() {
                 }
             })
         }
+    }
+
+    private fun setupSwipeRefresh() {
+        swipeRefreshLayout.setOnRefreshListener {
+            loadWorkOrders(reset = true)
+        }
+        
+        // Set colors for the refresh indicator
+        swipeRefreshLayout.setColorSchemeResources(
+            R.color.primary,
+            R.color.secondary,
+            R.color.success
+        )
     }
 
     private fun setupListeners() {
@@ -217,6 +234,7 @@ class HomeFragment : Fragment() {
             } finally {
                 isLoading = false
                 isLoadingMore = false
+                swipeRefreshLayout.isRefreshing = false
                 updateUI()
             }
         }
@@ -293,7 +311,21 @@ class HomeFragment : Fragment() {
     }
 
     private fun performSearch() {
-        loadWorkOrders(reset = true)
+        // Filter existing data instead of making API call
+        val filteredList = if (searchText.isEmpty()) {
+            workOrders
+        } else {
+            workOrders.filter { workOrder ->
+                val searchLower = searchText.lowercase()
+                workOrder.nour?.lowercase()?.contains(searchLower) == true ||
+                workOrder.job?.lowercase()?.contains(searchLower) == true ||
+                workOrder.lokasi?.lowercase()?.contains(searchLower) == true ||
+                workOrder.woto?.lowercase()?.contains(searchLower) == true
+            }
+        }
+        
+        workOrderAdapter.submitList(filteredList)
+        updateUI()
     }
 
     private fun showFilterMenu() {
@@ -305,6 +337,8 @@ class HomeFragment : Fragment() {
             popup.menu.add(menuTitle).apply {
                 setOnMenuItemClickListener {
                     selectedStatus = status
+                    searchText = ""
+                    etSearch.setText("")
                     loadWorkOrders(reset = true)
                     true
                 }
@@ -315,16 +349,28 @@ class HomeFragment : Fragment() {
     }
 
     private fun updateUI() {
+        val currentList = workOrderAdapter.currentList
+        
         when {
             isLoading -> {
                 llLoading.visibility = View.VISIBLE
                 llEmptyState.visibility = View.GONE
                 rvWorkOrders.visibility = View.GONE
             }
-            workOrders.isEmpty() -> {
+            currentList.isEmpty() -> {
                 llLoading.visibility = View.GONE
                 llEmptyState.visibility = View.VISIBLE
                 rvWorkOrders.visibility = View.GONE
+                
+                // Update empty state message
+                val emptyMessage = if (searchText.isNotEmpty()) {
+                    "No search results"
+                } else {
+                    "No work orders"
+                }
+                
+                val emptyTextView = llEmptyState.findViewById<TextView>(R.id.tv_empty_message)
+                emptyTextView?.text = emptyMessage
             }
             else -> {
                 llLoading.visibility = View.GONE

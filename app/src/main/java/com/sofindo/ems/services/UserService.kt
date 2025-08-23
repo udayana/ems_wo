@@ -2,9 +2,8 @@ package com.sofindo.ems.services
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.google.gson.Gson
 import com.sofindo.ems.models.User
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 
 object UserService {
     private const val PREF_NAME = "ems_user_prefs"
@@ -15,14 +14,12 @@ object UserService {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     }
 
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
+    private val gson = Gson()
 
     // Save user data after successful login
     suspend fun saveUser(context: Context, user: User) {
         val prefs = getSharedPreferences(context)
-        val userJson = moshi.adapter(User::class.java).toJson(user)
+        val userJson = gson.toJson(user)
         prefs.edit()
             .putString(KEY_CURRENT_USER, userJson)
             .putString(KEY_PROP_ID, user.propID)
@@ -36,7 +33,7 @@ object UserService {
         
         return if (userJson != null) {
             try {
-                moshi.adapter(User::class.java).fromJson(userJson)
+                gson.fromJson(userJson, User::class.java)
             } catch (e: Exception) {
                 null
             }
@@ -64,6 +61,11 @@ object UserService {
             .remove(KEY_CURRENT_USER)
             .remove(KEY_PROP_ID)
             .apply()
+    }
+
+    // Clear user data (alias for clearUser)
+    suspend fun clearUserData(context: Context) {
+        clearUser(context)
     }
 
     // Check if user is logged in

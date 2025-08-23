@@ -1,36 +1,36 @@
 package com.sofindo.ems.models
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import com.google.gson.annotations.SerializedName
 import java.util.Date
 
-@JsonClass(generateAdapter = true)
 data class WorkOrder(
-    @Json(name = "woId") val woId: String? = null,
-    @Json(name = "nour") val nour: String? = null,
-    @Json(name = "propID") val propID: String? = null,
-    @Json(name = "remark") val remark: String? = null,
-    @Json(name = "detail") val detail: String? = null,
-    @Json(name = "job") val job: String? = null,  // Job title field
-    @Json(name = "remark_manager") val remarkManager: String? = null,
-    @Json(name = "status") val status: String? = null,
-    @Json(name = "photo") val photo: String? = null,
-    @Json(name = "photoDone") val photoDone: String? = null,
-    @Json(name = "dept") val dept: String? = null,
-    @Json(name = "woto") val woto: String? = null,
-    @Json(name = "dateCreate") val dateCreate: String? = null,
-    @Json(name = "engineer") val engineer: String? = null,
-    @Json(name = "timeStart") val timeStart: String? = null,
-    @Json(name = "timeEnd") val timeEnd: String? = null,
-    @Json(name = "location") val location: String? = null,
-    @Json(name = "lokasi") val lokasi: String? = null,  // Location field
-    @Json(name = "priority") val priority: String? = null,
-    @Json(name = "category") val category: String? = null,
-    @Json(name = "estimatedTime") val estimatedTime: String? = null,
-    @Json(name = "actualTime") val actualTime: String? = null,
-    @Json(name = "cost") val cost: String? = null,
-    @Json(name = "parts") val parts: String? = null,
-    @Json(name = "lastUpdate") val lastUpdate: String? = null
+    @SerializedName("woId") val woId: String? = null,
+    @SerializedName("nour") val nour: String? = null,
+    @SerializedName("propID") val propID: String? = null,
+    @SerializedName("remark") val remark: String? = null,
+    @SerializedName("detail") val detail: String? = null,
+    @SerializedName("job") val job: String? = null,  // Job title field
+    @SerializedName("remark_manager") val remarkManager: String? = null,
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("photo") val photo: String? = null,
+    @SerializedName("photoDone") val photoDone: String? = null,
+    @SerializedName("dept") val dept: String? = null,
+    @SerializedName("woto") val woto: String? = null,
+    @SerializedName("dateCreate") val dateCreate: String? = null,
+    @SerializedName("mulainya") val mulainya: String? = null,  // Start date field
+    @SerializedName("engineer") val engineer: String? = null,
+    @SerializedName("timeStart") val timeStart: String? = null,
+    @SerializedName("timeEnd") val timeEnd: String? = null,
+    @SerializedName("location") val location: String? = null,
+    @SerializedName("lokasi") val lokasi: String? = null,  // Location field
+    @SerializedName("orderBy") val orderBy: String? = null,  // Order by field
+    @SerializedName("priority") val priority: String? = null,
+    @SerializedName("category") val category: String? = null,
+    @SerializedName("estimatedTime") val estimatedTime: String? = null,
+    @SerializedName("actualTime") val actualTime: String? = null,
+    @SerializedName("cost") val cost: String? = null,
+    @SerializedName("parts") val parts: String? = null,
+    @SerializedName("lastUpdate") val lastUpdate: String? = null
 ) {
     // Helper properties
     val displayStatus: String
@@ -47,6 +47,9 @@ data class WorkOrder(
     
     val displayEngineer: String
         get() = engineer ?: "Not assigned"
+    
+    val displayOrderBy: String
+        get() = orderBy ?: "Unknown"
     
     val hasPhotoBefore: Boolean
         get() = !photo.isNullOrEmpty()
@@ -70,17 +73,16 @@ data class WorkOrder(
     
     val statusColor: String
         get() = when (status?.lowercase()) {
-            "new", null, "" -> "#E74C3C"
-            "received" -> "#F39C12"
-            "on progress" -> "#3498DB"
-            "pending" -> "#9B59B6"
             "done" -> "#27AE60"
-            else -> "#7F8C8D"
+            "pending" -> "#F1C40F"
+            "on progress" -> "#F39C12"
+            "received" -> "#3498DB"
+            "new", null, "" -> "#95A5A6"
+            else -> "#95A5A6"
         }
 }
 
-@JsonClass(generateAdapter = true)
 data class StatusCount(
-    @Json(name = "status") val status: String? = null,
-    @Json(name = "count") val count: Int = 0
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("count") val count: Int = 0
 )

@@ -1,20 +1,18 @@
 package com.sofindo.ems.models
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import com.google.gson.annotations.SerializedName
 import java.util.Date
 
-@JsonClass(generateAdapter = true)
 data class User(
-    @Json(name = "id") val id: String,
-    @Json(name = "username") val username: String,
-    @Json(name = "email") val email: String,
-    @Json(name = "nama") val fullName: String? = null,
-    @Json(name = "telp") val phoneNumber: String? = null,
-    @Json(name = "photoprofile") val profileImage: String? = null,
-    @Json(name = "role") val role: String = "user",
-    @Json(name = "propID") val propID: String? = null,
-    @Json(name = "dept") val dept: String? = null,
-    @Json(name = "createdAt") val createdAt: String? = null,
-    @Json(name = "lastLogin") val lastLogin: String? = null
+    @SerializedName("id") val id: String,
+    @SerializedName("username") val username: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("nama") val fullName: String? = null,
+    @SerializedName("telp") val phoneNumber: String? = null,
+    @SerializedName("photoprofile") val profileImage: String? = null,
+    @SerializedName("role") val role: String = "user",
+    @SerializedName("propID") val propID: String? = null,
+    @SerializedName("dept") val dept: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("lastLogin") val lastLogin: String? = null
 )
