@@ -92,7 +92,18 @@ class MaintenanceDetailFragment : Fragment() {
         }
         
         btnViewJobTasks.setOnClickListener { 
-            Toast.makeText(context, "View Job Tasks clicked", Toast.LENGTH_SHORT).show()
+            // Navigate to Maintenance Job Task Fragment
+            val fragment = MaintenanceJobTaskFragment.newInstance(
+                assetNo = assetData?.get("no")?.toString() ?: "",
+                mntId = assetData?.get("mntId")?.toString() ?: "",
+                propertyName = assetData?.get("property")?.toString() ?: "",
+                propID = propID
+            )
+            
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack("maintenance_job_task")
+                .commit()
         }
         btnViewHistory.setOnClickListener { 
             Toast.makeText(context, "View History clicked", Toast.LENGTH_SHORT).show()

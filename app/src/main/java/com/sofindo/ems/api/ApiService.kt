@@ -91,12 +91,9 @@ interface ApiService {
         @Query("propID") propID: String
     ): Map<String, Any>
     
-    @FormUrlEncoded
     @POST("update_maintask_status.php")
     suspend fun updateMaintenanceTaskStatus(
-        @Field("taskId") taskId: String,
-        @Field("done") done: Int,
-        @Field("doneby") doneBy: String
+        @retrofit2.http.Body requestBody: Map<String, String>
     ): Map<String, Any>
     
     @GET("maintenance_notes.php")

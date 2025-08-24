@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="@drawable/task_card_background_selector"
+    android:layout_marginBottom="8dp"
+    android:gravity="center_vertical">
+
+    <!-- Task Number Badge -->
+    <TextView
+        android:id="@+id/tv_task_number"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/task_number_badge"
+        android:gravity="center"
+        android:text="1"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <!-- Task Title -->
+    <TextView
+        android:id="@+id/tv_task_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Indoor - Open the front cover of the indoor unit"
+        android:textSize="14sp"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:lineSpacingExtra="2dp" />
+
+    <!-- Checkbox -->
+    <CheckBox
+        android:id="@+id/checkbox_task"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:scaleX="1.5"
+        android:scaleY="1.5" />
+
+</LinearLayout>

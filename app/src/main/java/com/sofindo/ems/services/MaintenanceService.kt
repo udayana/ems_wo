@@ -66,20 +66,49 @@ class MaintenanceService {
             doneBy: String
         ): Map<String, Any> {
             return withContext(Dispatchers.IO) {
+                val requestBody = mapOf(
+                    "taskId" to taskId,
+                    "done" to (if (isDone) "1" else "0"),
+                    "doneby" to doneBy
+                )
+                
                 try {
                     val apiService: ApiService = RetrofitClient.apiService
-                    val response = apiService.updateMaintenanceTaskStatus(
-                        taskId = taskId,
-                        done = if (isDone) 1 else 0,
-                        doneBy = doneBy
-                    )
+                    
+                    // Log request yang akan dikirim
+                    android.util.Log.d("MaintenanceService", "=== API CALL START ===")
+                    android.util.Log.d("MaintenanceService", "URL: update_maintask_status.php")
+                    android.util.Log.d("MaintenanceService", "Method: POST")
+                    android.util.Log.d("MaintenanceService", "Content-Type: application/json")
+                    android.util.Log.d("MaintenanceService", "Request Body: $requestBody")
+                    android.util.Log.d("MaintenanceService", "taskId: '$taskId'")
+                    android.util.Log.d("MaintenanceService", "done: ${if (isDone) 1 else 0}")
+                    android.util.Log.d("MaintenanceService", "doneby: '$doneBy'")
+                    
+                    android.util.Log.d("MaintenanceService", "Making API call...")
+                    val response = apiService.updateMaintenanceTaskStatus(requestBody)
+                    
+                    // Log response yang diterima
+                    android.util.Log.d("MaintenanceService", "=== API RESPONSE ===")
+                    android.util.Log.d("MaintenanceService", "Response: $response")
+                    android.util.Log.d("MaintenanceService", "Response type: ${response::class.java.simpleName}")
                     
                     if (response["success"] == true) {
+                        android.util.Log.d("MaintenanceService", "✅ API call successful!")
                         response
                     } else {
-                        throw Exception(response["error"] as? String ?: "Unknown error occurred")
+                        val errorMsg = response["error"] as? String ?: "Unknown error occurred"
+                        android.util.Log.e("MaintenanceService", "❌ API Error: $errorMsg")
+                        android.util.Log.e("MaintenanceService", "Full response: $response")
+                        throw Exception(errorMsg)
                     }
                 } catch (e: Exception) {
+                    android.util.Log.e("MaintenanceService", "=== EXCEPTION CAUGHT ===")
+                    android.util.Log.e("MaintenanceService", "Exception type: ${e::class.java.simpleName}")
+                    android.util.Log.e("MaintenanceService", "Exception message: ${e.message}")
+                    android.util.Log.e("MaintenanceService", "Exception stack trace:")
+                    e.printStackTrace()
+                    android.util.Log.e("MaintenanceService", "Request body that failed: $requestBody")
                     throw Exception("Failed to update maintenance task status: ${e.message}")
                 }
             }

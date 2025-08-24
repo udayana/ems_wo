@@ -28,4 +28,8 @@
     <color name="status_done">#FF27AE60</color>
     <color name="status_pending">#FFF39C12</color>
     <color name="status_cancelled">#FFE74C3C</color>
+    
+    <!-- Additional colors -->
+    <color name="blue">#FF2196F3</color>
+    <color name="grey">#FF757575</color>
 </resources>
