@@ -65,6 +65,10 @@ class ProfileFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val user = UserService.getCurrentUser()
+                val propID = UserService.getCurrentPropID()
+                
+                android.util.Log.d("ProfileFragment", "Current user: $user")
+                android.util.Log.d("ProfileFragment", "Current propID: $propID")
                 
                 if (user != null) {
                     tvName.text = user.fullName ?: user.username
@@ -72,6 +76,10 @@ class ProfileFragment : Fragment() {
                     tvPhone.text = user.phoneNumber ?: "Not provided"
                     tvRole.text = user.role
                     tvDepartment.text = user.dept ?: "Not specified"
+                    
+                    // Add propID to display for debugging
+                    val propIDText = view?.findViewById<TextView>(R.id.tv_prop_id)
+                    propIDText?.text = "Prop ID: $propID"
                     
                     // TODO: Load profile image if available
                     // if (user.profileImage != null) {
@@ -81,6 +89,7 @@ class ProfileFragment : Fragment() {
                     showError("User data not found")
                 }
             } catch (e: Exception) {
+                android.util.Log.e("ProfileFragment", "Error loading user data", e)
                 showError("Failed to load user data: ${e.message}")
             }
         }

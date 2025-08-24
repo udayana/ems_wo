@@ -78,4 +78,59 @@ interface ApiService {
     
     @GET("get_locations.php")
     suspend fun getLocations(): List<String>
+    
+    // Maintenance APIs - sama persis dengan Flutter
+    @GET("get_maintenance_this_week.php")
+    suspend fun getMaintenanceThisWeek(
+        @Query("propID") propID: String
+    ): Map<String, Any>
+    
+    @GET("get_maintask_job.php")
+    suspend fun getMaintenanceTaskJob(
+        @Query("noAssets") noAssets: String,
+        @Query("propID") propID: String
+    ): Map<String, Any>
+    
+    @FormUrlEncoded
+    @POST("update_maintask_status.php")
+    suspend fun updateMaintenanceTaskStatus(
+        @Field("taskId") taskId: String,
+        @Field("done") done: Int,
+        @Field("doneby") doneBy: String
+    ): Map<String, Any>
+    
+    @GET("maintenance_notes.php")
+    suspend fun getMaintenanceNotes(
+        @Query("mntId") mntId: String,
+        @Query("propID") propID: String? = null
+    ): Map<String, Any>
+    
+    @FormUrlEncoded
+    @POST("maintenance_notes.php")
+    suspend fun updateMaintenanceNotes(
+        @Field("mntId") mntId: String,
+        @Field("notes") notes: String,
+        @Field("propID") propID: String? = null
+    ): Map<String, Any>
+    
+    @FormUrlEncoded
+    @POST("update_maintenance_event.php")
+    suspend fun updateMaintenanceEvent(
+        @Field("mntId") mntId: String,
+        @Field("status") status: String,
+        @Field("doneDate") doneDate: String,
+        @Field("notes") notes: String
+    ): Map<String, Any>
+    
+    @GET("get_maintenance_history.php")
+    suspend fun getMaintenanceHistory(
+        @Query("mntId") mntId: String,
+        @Query("propID") propID: String
+    ): Map<String, Any>
+    
+    // Asset API - sama persis dengan Flutter
+    @GET("get_asset_detail.php")
+    suspend fun getAssetDetail(
+        @Query("noAsset") noAsset: String
+    ): Map<String, Any>
 }

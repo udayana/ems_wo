@@ -15,4 +15,17 @@
     <color name="red">#FFE74C3C</color>
     <color name="success">#FF27AE60</color>
     <color name="error">#FFE74C3C</color>
+    
+    <!-- Material Design 3 colors for maintenance -->
+    <color name="surface">#FFFFFFFF</color>
+    <color name="surface_container_highest">#FFF1F3F4</color>
+    <color name="on_surface">#FF1C1B1F</color>
+    <color name="on_surface_variant">#FF49454F</color>
+    <color name="outline">#FF79747E</color>
+    <color name="checkbox_color">#FF27AE60</color>
+    
+    <!-- Status colors -->
+    <color name="status_done">#FF27AE60</color>
+    <color name="status_pending">#FFF39C12</color>
+    <color name="status_cancelled">#FFE74C3C</color>
 </resources>

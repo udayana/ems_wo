@@ -138,6 +138,12 @@ class LoginActivity : AppCompatActivity() {
             // Debug: Log the response to see what fields are available
             android.util.Log.d("LoginActivity", "Login response: $result")
             
+            // Try different possible keys for propID
+            val propID = result["propID"]?.toString() 
+                ?: result["prop_id"]?.toString() 
+                ?: result["propID"]?.toString()
+                ?: ""
+            
             val user = User(
                 id = result["id"]?.toString() ?: "",
                 username = result["nama"]?.toString() ?: result["email"]?.toString() ?: "",
@@ -146,26 +152,41 @@ class LoginActivity : AppCompatActivity() {
                 phoneNumber = result["telp"]?.toString(),
                 profileImage = result["photoprofile"]?.toString(),
                 role = result["dept"]?.toString() ?: "user",
-                propID = result["propID"]?.toString() ?: result["prop_id"]?.toString(),
+                propID = propID,
                 dept = result["dept"]?.toString()
             )
             
             // Debug: Log the user object to verify propID
             android.util.Log.d("LoginActivity", "User propID: ${user.propID}")
             android.util.Log.d("LoginActivity", "User dept: ${user.dept}")
+            android.util.Log.d("LoginActivity", "User ID: ${user.id}")
+            android.util.Log.d("LoginActivity", "User email: ${user.email}")
             
             // Save user to SharedPreferences
             lifecycleScope.launch {
-                UserService.saveUser(user)
-                
-                // Navigate to main activity
-                val intent = Intent(this@LoginActivity, com.sofindo.ems.MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
+                try {
+                    UserService.saveUser(user)
+                    
+                    // Verify the data was saved
+                    val savedUser = UserService.getCurrentUser()
+                    val savedPropID = UserService.getCurrentPropID()
+                    
+                    android.util.Log.d("LoginActivity", "Saved user: $savedUser")
+                    android.util.Log.d("LoginActivity", "Saved propID: $savedPropID")
+                    
+                    // Navigate to main activity
+                    val intent = Intent(this@LoginActivity, com.sofindo.ems.MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                } catch (e: Exception) {
+                    android.util.Log.e("LoginActivity", "Error saving user data", e)
+                    handleLoginError("Failed to save user data: ${e.message}")
+                }
             }
             
         } catch (e: Exception) {
+            android.util.Log.e("LoginActivity", "Error processing login response", e)
             handleLoginError("Failed to process login response: ${e.message}")
         }
     }

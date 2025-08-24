@@ -73,7 +73,8 @@ class TambahWOFragment : Fragment() {
     // Activity result launchers
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.extras?.getParcelable("data", Bitmap::class.java)?.let { bitmap ->
+            @Suppress("DEPRECATION")
+            result.data?.extras?.getParcelable<Bitmap>("data")?.let { bitmap ->
                 // Handle camera result with bitmap
                 try {
                     selectedImageFile = createImageFile()
