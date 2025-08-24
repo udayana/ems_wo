@@ -106,7 +106,18 @@ class MaintenanceDetailFragment : Fragment() {
                 .commit()
         }
         btnViewHistory.setOnClickListener { 
-            Toast.makeText(context, "View History clicked", Toast.LENGTH_SHORT).show()
+            // Navigate to Maintenance History Fragment
+            val fragment = MaintenanceHistoryFragment.newInstance(
+                assetNo = assetData?.get("no")?.toString() ?: "",
+                mntId = assetData?.get("no")?.toString() ?: "", // Use asset number as mntId for history
+                propertyName = assetData?.get("property")?.toString() ?: "",
+                propID = propID
+            )
+            
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack("maintenance_history")
+                .commit()
         }
     }
     

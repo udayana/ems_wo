@@ -102,21 +102,16 @@ interface ApiService {
         @Query("propID") propID: String? = null
     ): Map<String, Any>
     
-    @FormUrlEncoded
     @POST("maintenance_notes.php")
     suspend fun updateMaintenanceNotes(
-        @Field("mntId") mntId: String,
-        @Field("notes") notes: String,
-        @Field("propID") propID: String? = null
+        @retrofit2.http.Body requestBody: Map<String, String>
     ): Map<String, Any>
     
-    @FormUrlEncoded
+
+    
     @POST("update_maintenance_event.php")
     suspend fun updateMaintenanceEvent(
-        @Field("mntId") mntId: String,
-        @Field("status") status: String,
-        @Field("doneDate") doneDate: String,
-        @Field("notes") notes: String
+        @retrofit2.http.Body requestBody: Map<String, String>
     ): Map<String, Any>
     
     @GET("get_maintenance_history.php")

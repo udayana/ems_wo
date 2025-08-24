@@ -186,6 +186,8 @@
                     android:gravity="top"
                     android:inputType="textMultiLine" />
 
+
+
             </LinearLayout>
 
             <!-- Submit Button -->
@@ -193,7 +195,7 @@
                 android:id="@+id/btn_submit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Submit Maintenance (8/8)"
+                android:text="Submit Maintenance (0/0)"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"

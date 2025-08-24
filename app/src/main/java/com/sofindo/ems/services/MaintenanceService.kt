@@ -144,7 +144,23 @@ class MaintenanceService {
             return withContext(Dispatchers.IO) {
                 try {
                     val apiService: ApiService = RetrofitClient.apiService
-                    val response = apiService.updateMaintenanceNotes(mntId, notes, propID)
+                    
+                    // Create JSON body as required by PHP
+                    val requestBody = mutableMapOf<String, String>()
+                    requestBody["mntId"] = mntId
+                    requestBody["notes"] = notes
+                    if (!propID.isNullOrEmpty()) {
+                        requestBody["propID"] = propID
+                    }
+                    
+                    // Debug logging untuk melihat request body
+                    android.util.Log.d("MaintenanceService", "=== API REQUEST DEBUG ===")
+                    android.util.Log.d("MaintenanceService", "Request body: $requestBody")
+                    android.util.Log.d("MaintenanceService", "mntId in request: ${requestBody["mntId"]}")
+                    android.util.Log.d("MaintenanceService", "notes in request: ${requestBody["notes"]}")
+                    android.util.Log.d("MaintenanceService", "propID in request: ${requestBody["propID"]}")
+                    
+                    val response = apiService.updateMaintenanceNotes(requestBody)
                     
                     if (response["success"] == true) {
                         response
@@ -157,6 +173,10 @@ class MaintenanceService {
             }
         }
         
+
+        
+
+        
         // Update maintenance event status
         suspend fun updateMaintenanceEvent(
             mntId: String,
@@ -167,12 +187,15 @@ class MaintenanceService {
                 try {
                     val apiService: ApiService = RetrofitClient.apiService
                     val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                    val response = apiService.updateMaintenanceEvent(
-                        mntId = mntId,
-                        status = status,
-                        doneDate = currentDate,
-                        notes = notes
-                    )
+                    
+                    // Create JSON body as required by PHP (same as Flutter)
+                    val requestBody = mutableMapOf<String, String>()
+                    requestBody["mntId"] = mntId
+                    requestBody["status"] = status
+                    requestBody["doneDate"] = currentDate
+                    requestBody["notes"] = notes
+                    
+                    val response = apiService.updateMaintenanceEvent(requestBody)
                     
                     if (response["success"] == true) {
                         response
@@ -181,28 +204,6 @@ class MaintenanceService {
                     }
                 } catch (e: Exception) {
                     throw Exception("Failed to update maintenance event: ${e.message}")
-                }
-            }
-        }
-        
-        // Get maintenance history
-        suspend fun getMaintenanceHistory(
-            mntId: String,
-            propID: String
-        ): List<Map<String, Any>> {
-            return withContext(Dispatchers.IO) {
-                try {
-                    val apiService: ApiService = RetrofitClient.apiService
-                    val response = apiService.getMaintenanceHistory(mntId, propID)
-                    
-                    if (response["success"] == true) {
-                        val historyData = response["data"] as? List<Map<String, Any>> ?: emptyList()
-                        historyData
-                    } else {
-                        throw Exception(response["error"] as? String ?: "Failed to load maintenance history")
-                    }
-                } catch (e: Exception) {
-                    throw Exception("Error connecting to server: ${e.message}")
                 }
             }
         }
@@ -221,6 +222,28 @@ class MaintenanceService {
                     }
                 } catch (e: Exception) {
                     throw Exception("Error getting maintenance today: ${e.message}")
+                }
+            }
+        }
+        
+        // Get maintenance history from tblmnthistory (same as Flutter)
+        suspend fun getMaintenanceHistory(
+            mntId: String,
+            propID: String
+        ): List<Map<String, Any>> {
+            return withContext(Dispatchers.IO) {
+                try {
+                    val apiService: ApiService = RetrofitClient.apiService
+                    val response = apiService.getMaintenanceHistory(mntId, propID)
+                    
+                    if (response["success"] == true) {
+                        val historyData = response["data"] as? List<Map<String, Any>> ?: emptyList()
+                        historyData
+                    } else {
+                        throw Exception(response["error"] as? String ?: "Failed to load maintenance history")
+                    }
+                } catch (e: Exception) {
+                    throw Exception("Error connecting to server: ${e.message}")
                 }
             }
         }
