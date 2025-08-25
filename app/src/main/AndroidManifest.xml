@@ -44,6 +44,11 @@
             android:exported="false"
             android:theme="@style/Theme.EMS_WO" />
 
+        <activity
+            android:name=".activities.EditWorkOrderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
         <!-- FileProvider for camera and gallery access -->
         <provider
             android:name="androidx.core.content.FileProvider"

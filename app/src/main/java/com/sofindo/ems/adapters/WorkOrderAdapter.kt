@@ -125,7 +125,9 @@ class WorkOrderAdapter(
     }
     
     private fun showPopupMenu(view: View, workOrder: Map<String, Any>) {
-        val popupMenu = android.widget.PopupMenu(view.context, view)
+        // Create custom popup menu with themed context
+        val themedContext = android.view.ContextThemeWrapper(view.context, R.style.PopupMenuStyle)
+        val popupMenu = android.widget.PopupMenu(themedContext, view)
         
         // Use different menu based on fragment type
         if (isHomeFragment) {
@@ -134,6 +136,22 @@ class WorkOrderAdapter(
             popupMenu.menuInflater.inflate(R.menu.work_order_menu, popupMenu.menu)
         }
         
+        // Set popup menu background using reflection
+        try {
+            val popupField = popupMenu.javaClass.getDeclaredField("mPopup")
+            popupField.isAccessible = true
+            val popupWindow = popupField.get(popupMenu)
+            
+            if (popupWindow is android.widget.PopupWindow) {
+                popupWindow.setBackgroundDrawable(view.context.getDrawable(R.drawable.popup_menu_background))
+                popupWindow.elevation = 8f
+                android.util.Log.d("WorkOrderAdapter", "Successfully set popup menu background")
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("WorkOrderAdapter", "Could not set popup menu background", e)
+        }
+        
+        // Set click listener for all cases
         popupMenu.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_detail -> {

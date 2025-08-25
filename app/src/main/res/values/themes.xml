@@ -24,4 +24,22 @@
         <item name="android:textSize">14sp</item>
         <item name="android:background">@drawable/dropdown_popup_background</item>
     </style>
+    
+    <!-- Popup Menu Style -->
+    <style name="PopupMenuStyle" parent="Theme.Material3.DayNight">
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:background">@drawable/popup_menu_background</item>
+        <item name="android:popupBackground">@drawable/popup_menu_background</item>
+        <item name="android:popupMenuStyle">@style/PopupMenuStyle</item>
+        <item name="android:dropDownListViewStyle">@style/PopupMenuStyle</item>
+    </style>
+    
+    <!-- Delete Menu Item Style -->
+    <style name="DeleteMenuItemStyle" parent="Theme.Material3.DayNight">
+        <item name="android:textColor">@color/red</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+    </style>
 </resources>

@@ -53,6 +53,10 @@ class OutboxFragment : Fragment() {
     // Search debounce timer (sama seperti Flutter)
     private var searchDebounce: Timer? = null
     
+    companion object {
+        private const val EDIT_WO_REQUEST_CODE = 1001
+    }
+    
     // RecyclerView adapter
     private lateinit var workOrderAdapter: WorkOrderAdapter
     
@@ -195,26 +199,67 @@ class OutboxFragment : Fragment() {
     }
     
     private fun onEditWorkOrder(workOrder: Map<String, Any>) {
-        val woNumber = workOrder["nour"]?.toString() ?: ""
-        Toast.makeText(context, "Edit Outbox WO: $woNumber", Toast.LENGTH_SHORT).show()
-        // TODO: Navigate to edit work order screen
+        try {
+            // Check if context is available
+            val context = context ?: return
+            
+            // Navigate to edit work order activity
+            val intent = android.content.Intent(context, com.sofindo.ems.activities.EditWorkOrderActivity::class.java)
+            intent.putExtra("workOrder", workOrder as java.io.Serializable)
+            startActivityForResult(intent, EDIT_WO_REQUEST_CODE)
+        } catch (e: Exception) {
+            android.util.Log.e("OutboxFragment", "Error launching EditWorkOrderActivity", e)
+            Toast.makeText(context, "Error: Cannot open edit screen", Toast.LENGTH_SHORT).show()
+        }
     }
     
     private fun onDeleteWorkOrder(workOrder: Map<String, Any>) {
         val woNumber = workOrder["nour"]?.toString() ?: ""
+        val woId = workOrder["woId"]?.toString() ?: ""
+        
+        if (woId.isEmpty()) {
+            Toast.makeText(context, "Error: Work Order ID not found", Toast.LENGTH_SHORT).show()
+            return
+        }
         
         // Show confirmation dialog
         android.app.AlertDialog.Builder(requireContext())
             .setTitle("Delete Work Order")
             .setMessage("Are you sure you want to delete WO: $woNumber?")
             .setPositiveButton("Delete") { _, _ ->
-                // TODO: Implement delete API call
-                Toast.makeText(context, "Deleted WO: $woNumber", Toast.LENGTH_SHORT).show()
-                // Refresh data after deletion
-                refreshData()
+                // Call delete API
+                deleteWorkOrderFromAPI(woId, woNumber)
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+    
+    private fun deleteWorkOrderFromAPI(woId: String, woNumber: String) {
+        lifecycleScope.launch {
+            try {
+                // Show loading toast
+                Toast.makeText(context, "Deleting work order...", Toast.LENGTH_SHORT).show()
+                
+                // Call delete API
+                val response = RetrofitClient.apiService.deleteWorkOrder(woId)
+                
+                // Check response
+                val success = response["success"] as? Boolean ?: false
+                val message = response["message"]?.toString() ?: "Unknown response"
+                
+                if (success) {
+                    Toast.makeText(context, "Successfully deleted WO: $woNumber", Toast.LENGTH_SHORT).show()
+                    // Refresh data after successful deletion
+                    refreshData()
+                } else {
+                    Toast.makeText(context, "Failed to delete: $message", Toast.LENGTH_SHORT).show()
+                }
+                
+            } catch (e: Exception) {
+                android.util.Log.e("OutboxFragment", "Error deleting work order", e)
+                Toast.makeText(context, "Error deleting work order: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
     
     private fun onDetailWorkOrder(workOrder: Map<String, Any>) {
@@ -558,6 +603,16 @@ class OutboxFragment : Fragment() {
     private fun hideEmptyState() {
         tvEmpty.visibility = View.GONE
         recyclerView.visibility = View.VISIBLE
+    }
+    
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        
+        if (requestCode == EDIT_WO_REQUEST_CODE && resultCode == android.app.Activity.RESULT_OK) {
+            // Work order was successfully updated, refresh the data
+            refreshData()
+        }
     }
     
     override fun onDestroy() {
