@@ -25,6 +25,7 @@ class ProfileFragment : Fragment() {
     
     private lateinit var ivProfile: ImageView
     private lateinit var ivEditProfile: ImageView
+    private lateinit var tvPropertyName: TextView
     private lateinit var tvName: TextView
     private lateinit var tvEmail: TextView
     private lateinit var tvPhone: TextView
@@ -57,6 +58,7 @@ class ProfileFragment : Fragment() {
     private fun initViews(view: View) {
         ivProfile = view.findViewById(R.id.iv_profile)
         ivEditProfile = view.findViewById(R.id.iv_edit_profile)
+        tvPropertyName = view.findViewById(R.id.tv_property_name)
         tvName = view.findViewById(R.id.tv_name)
         tvEmail = view.findViewById(R.id.tv_email)
         tvPhone = view.findViewById(R.id.tv_phone)
@@ -93,6 +95,9 @@ class ProfileFragment : Fragment() {
                     tvName.text = user.fullName ?: user.username ?: user.email
                     tvEmail.text = user.email
                     tvPhone.text = user.phoneNumber ?: "No phone number"
+                    
+                    // Set property name from user data
+                    tvPropertyName.text = user.propertyName ?: "Profile"
                     
                     // Load profile image with cache clearing
                     if (!user.profileImage.isNullOrEmpty()) {

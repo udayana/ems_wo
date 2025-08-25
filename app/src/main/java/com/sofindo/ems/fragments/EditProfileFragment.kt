@@ -36,12 +36,15 @@ class EditProfileFragment : Fragment() {
     private lateinit var etEmail: EditText
     private lateinit var etPhone: EditText
     private lateinit var btnUploadPhoto: Button
+    private lateinit var btnSaveChanges: Button
     private lateinit var progressBar: ProgressBar
+    private lateinit var progressBarSave: ProgressBar
     private lateinit var tvTapToChange: TextView
     
     private var selectedImageUri: Uri? = null
     private var currentUser: User? = null
     private var isUploading = false
+    private var isSaving = false
     
     private val pickImage = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -77,7 +80,9 @@ class EditProfileFragment : Fragment() {
         etEmail = view.findViewById(R.id.et_email)
         etPhone = view.findViewById(R.id.et_phone)
         btnUploadPhoto = view.findViewById(R.id.btn_upload_photo)
+        btnSaveChanges = view.findViewById(R.id.btn_save_changes)
         progressBar = view.findViewById(R.id.progress_bar)
+        progressBarSave = view.findViewById(R.id.progress_bar_save)
         tvTapToChange = view.findViewById(R.id.tv_tap_to_change)
     }
     
@@ -88,6 +93,10 @@ class EditProfileFragment : Fragment() {
         
         btnUploadPhoto.setOnClickListener {
             uploadProfilePhoto()
+        }
+        
+        btnSaveChanges.setOnClickListener {
+            saveProfileChanges()
         }
     }
     
@@ -182,6 +191,85 @@ class EditProfileFragment : Fragment() {
         }
     }
     
+    private fun saveProfileChanges() {
+        val fullName = etFullName.text.toString().trim()
+        val email = etEmail.text.toString().trim()
+        val phone = etPhone.text.toString().trim()
+        
+        // Validation
+        if (fullName.isEmpty()) {
+            etFullName.error = "Full name is required"
+            return
+        }
+        
+        if (email.isEmpty()) {
+            etEmail.error = "Email is required"
+            return
+        }
+        
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.error = "Please enter a valid email"
+            return
+        }
+        
+        if (phone.isEmpty()) {
+            etPhone.error = "Phone number is required"
+            return
+        }
+        
+        // Check if there are any changes
+        if (currentUser != null) {
+            val hasChanges = currentUser!!.fullName != fullName || 
+                           currentUser!!.email != email || 
+                           currentUser!!.phoneNumber != phone
+            
+            if (!hasChanges) {
+                Toast.makeText(requireContext(), "No changes to save", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+        
+        // Save profile changes
+        lifecycleScope.launch {
+            try {
+                isSaving = true
+                updateSaveUI()
+                
+                if (currentUser != null) {
+                    val result = ProfileService.updateUserProfile(
+                        currentUser!!.id,
+                        fullName,
+                        email,
+                        phone
+                    )
+                    
+                    if (result["success"] == true) {
+                        // Update local user data
+                        val updatedUser = currentUser!!.copy(
+                            fullName = fullName,
+                            email = email,
+                            phoneNumber = phone
+                        )
+                        UserService.saveUser(updatedUser)
+                        
+                        Toast.makeText(requireContext(), "Profile updated successfully!", Toast.LENGTH_LONG).show()
+                        
+                        // Navigate back
+                        requireActivity().supportFragmentManager.popBackStack()
+                        
+                    } else {
+                        throw Exception(result["message"]?.toString() ?: "Update failed")
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Failed to update profile: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                isSaving = false
+                updateSaveUI()
+            }
+        }
+    }
+    
     private suspend fun resizeAndCompressImage(uri: Uri): ByteArray = withContext(Dispatchers.IO) {
         val inputStream = requireContext().contentResolver.openInputStream(uri)
         val originalBitmap = BitmapFactory.decodeStream(inputStream)
@@ -221,6 +309,18 @@ class EditProfileFragment : Fragment() {
             btnUploadPhoto.text = "Upload Photo"
             btnUploadPhoto.isEnabled = true
             progressBar.visibility = View.GONE
+        }
+    }
+    
+    private fun updateSaveUI() {
+        if (isSaving) {
+            btnSaveChanges.text = "Saving..."
+            btnSaveChanges.isEnabled = false
+            progressBarSave.visibility = View.VISIBLE
+        } else {
+            btnSaveChanges.text = "Save Changes"
+            btnSaveChanges.isEnabled = true
+            progressBarSave.visibility = View.GONE
         }
     }
     

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
@@ -11,6 +12,7 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <!-- Header -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -20,14 +22,150 @@
             android:textColor="@color/black"
             android:layout_marginBottom="24dp" />
 
+        <!-- Category Field -->
         <TextView
-            android:id="@+id/tv_support_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Category *"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="6dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading..."
+            android:layout_marginBottom="12dp"
+            android:hint="Select issue category..."
+            app:startIconDrawable="@drawable/ic_help"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeColor="@color/primary"
+            app:hintTextColor="@color/primary"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+
+            <AutoCompleteTextView
+                android:id="@+id/spinner_category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:hint="Select issue category..." />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Description Field -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Description *"
             android:textSize="16sp"
+            android:textStyle="bold"
             android:textColor="@color/black"
-            android:lineSpacingExtra="8dp" />
+            android:layout_marginBottom="6dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:hint="Describe your issue or question in detail..."
+            app:startIconDrawable="@drawable/ic_note"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeColor="@color/primary"
+            app:hintTextColor="@color/primary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:minLines="4"
+                android:maxLines="6"
+                android:gravity="top"
+                android:hint="Describe your issue or question in detail..." />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Selected Image Preview -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_image_preview"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/iv_screenshot_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/image_background" />
+
+                <ImageView
+                    android:id="@+id/btn_remove_screenshot"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/circle_background"
+                    android:src="@drawable/ic_close"
+                    android:padding="4dp" />
+
+            </RelativeLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Add Screenshot Button -->
+        <Button
+            android:id="@+id/btn_add_screenshot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Add Screenshot"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:background="@drawable/outline_button_background"
+            android:textColor="@color/primary"
+            android:padding="14dp"
+            android:layout_marginBottom="16dp"
+            android:drawableStart="@drawable/ic_upload"
+            android:drawablePadding="8dp"
+            android:gravity="center" />
+
+        <!-- Submit Button -->
+        <Button
+            android:id="@+id/btn_submit_ticket"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Submit to support team"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:background="@drawable/submit_button_background"
+            android:textColor="@color/white"
+            android:padding="14dp"
+            android:drawableStart="@drawable/ic_send"
+            android:drawablePadding="8dp"
+            android:gravity="center" />
+
+        <!-- Submit Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progress_bar_submit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
 
     </LinearLayout>
 

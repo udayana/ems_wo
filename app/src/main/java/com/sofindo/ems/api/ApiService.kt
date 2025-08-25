@@ -226,4 +226,22 @@ interface ApiService {
         @Query("mntId") mntId: String,
         @Query("propID") propID: String
     ): Map<String, Any>
+    
+    // Support Ticket APIs - sama persis dengan Flutter
+    @FormUrlEncoded
+    @POST("submit_support_ticket.php")
+    suspend fun submitSupportTicket(
+        @Field("name") name: String,
+        @Field("email") email: String,
+        @Field("mobile_number") mobileNumber: String?,
+        @Field("issue") issue: String,
+        @Field("description") description: String,
+        @Field("screenshot_path") screenshotPath: String? = null
+    ): Map<String, Any>
+    
+    @Multipart
+    @POST("upload_support_attachment.php")
+    suspend fun uploadSupportAttachment(
+        @Part attachment: MultipartBody.Part
+    ): Map<String, Any>
 }

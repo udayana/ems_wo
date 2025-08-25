@@ -14,6 +14,7 @@ data class User(
     @Json(name = "photoprofile") val profileImage: String? = null,
     @Json(name = "dept") val role: String = "user",
     @Json(name = "propID") val propID: String? = null,
+    @Json(name = "propertyName") val propertyName: String? = null,
     @Json(name = "dept") val dept: String? = null,
     @Json(name = "createdAt") val createdAt: Date = Date(),
     @Json(name = "lastLogin") val lastLogin: Date? = null
