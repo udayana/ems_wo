@@ -12,7 +12,7 @@ data class User(
     @Json(name = "nama") val fullName: String? = null,
     @Json(name = "telp") val phoneNumber: String? = null,
     @Json(name = "photoprofile") val profileImage: String? = null,
-    @Json(name = "dept") val role: String = "user",
+    @Json(name = "role") val role: String = "user",
     @Json(name = "propID") val propID: String? = null,
     @Json(name = "propertyName") val propertyName: String? = null,
     @Json(name = "dept") val dept: String? = null,

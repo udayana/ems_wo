@@ -13,12 +13,12 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.EMSWorkOrder">
+        android:theme="@style/Theme.EMS_WO">
 
         <activity
             android:name=".auth.LoginActivity"
             android:exported="true"
-            android:theme="@style/Theme.EMSWorkOrder">
+            android:theme="@style/Theme.EMS_WO">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -28,6 +28,32 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".activities.WorkOrderDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.ChangeStatusWOActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.ChangePendingDoneActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <!-- FileProvider for camera and gallery access -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <!-- Firebase messaging service removed -->
 

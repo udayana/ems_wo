@@ -33,6 +33,7 @@ class AddWOFragment : Fragment() {
     
     private var currentPropID: String? = null
     private var username: String? = null
+    private var currentUserDept: String? = null
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -73,6 +74,7 @@ class AddWOFragment : Fragment() {
                 val user = UserService.getCurrentUser()
                 currentPropID = user?.propID
                 username = user?.username ?: user?.email
+                currentUserDept = user?.dept
                 
                 if (!currentPropID.isNullOrEmpty() && !username.isNullOrEmpty()) {
                     loadMasterData()
@@ -144,12 +146,23 @@ class AddWOFragment : Fragment() {
     }
     
     private fun submitWorkOrder() {
+        // Marker: onClick reached
+        android.util.Log.d("AddWOFragment", "submitWorkOrder() tapped")
+        if (isAdded) {
+            android.widget.Toast.makeText(requireContext(), "Submit tapped", android.widget.Toast.LENGTH_SHORT).show()
+        }
         val job = etJob.text.toString().trim()
         val location = etLocation.text.toString().trim()
         val remarks = etRemarks.text.toString().trim()
-        val category = spinnerCategory.selectedItem.toString()
-        val department = spinnerDepartment.selectedItem.toString()
-        val priority = spinnerPriority.selectedItem.toString()
+        val category = spinnerCategory.selectedItem?.toString() ?: ""
+        val targetDepartment = spinnerDepartment.selectedItem?.toString() ?: "" // Departemen tujuan
+        val priority = spinnerPriority.selectedItem?.toString() ?: "Low"
+
+        // Sembunyikan keyboard segera saat user menekan submit
+        val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        val currentFocused = requireActivity().currentFocus ?: View(requireContext())
+        imm.hideSoftInputFromWindow(currentFocused.windowToken, 0)
+        currentFocused.clearFocus()
         
         // Validation
         if (job.isEmpty()) {
@@ -167,37 +180,67 @@ class AddWOFragment : Fragment() {
             return
         }
         
-        showLoading()
-        
-        lifecycleScope.launch {
-            try {
-                val result = RetrofitClient.apiService.submitWorkOrder(
-                    propID = currentPropID!!,
-                    orderBy = username!!,
-                    job = job,
-                    lokasi = location,
-                    category = category,
-                    dept = department,
-                    priority = priority,
-                    woto = department
-                )
-                
-                if (isAdded) {
-                    if (result["success"] == true || result["success"] == "true") {
-                        showSuccess("Work order added successfully")
-                        clearForm()
-                    } else {
-                        showError(result["message"]?.toString() ?: "Failed to add work order")
+        // Konfirmasi sebelum kirim
+        val userDeptConfirm = currentUserDept ?: "Unknown"
+        val message = "dept asal: $userDeptConfirm\n" +
+            "dept tujuan (woto): $targetDepartment\n" +
+            "job: $job"
+        val builderContext = if (isAdded) requireActivity() else (view?.context ?: return)
+        android.app.AlertDialog.Builder(builderContext)
+            .setTitle("Kirim Work Order?")
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("Kirim") { _, _ ->
+                showLoading()
+                lifecycleScope.launch {
+                    try {
+                        // Ambil dept asal dari user object yang sudah di-load
+                        val freshUserDept = currentUserDept ?: userDeptConfirm
+
+                        // DEBUG: Log data penting
+                        android.util.Log.d("AddWOFragment", "=== DEBUG WORK ORDER DATA ===")
+                        android.util.Log.d("AddWOFragment", "dept asal (fresh): $freshUserDept")
+                        android.util.Log.d("AddWOFragment", "dept tujuan (woto): $targetDepartment")
+                        android.util.Log.d("AddWOFragment", "job: $job")
+                        android.util.Log.d("AddWOFragment", "=== END DEBUG ===")
+                        
+                        val result = RetrofitClient.apiService.submitWorkOrder(
+                            propID = currentPropID!!,
+                            orderBy = username!!,
+                            job = job,
+                            lokasi = location,
+                            category = category,
+                            dept = freshUserDept,
+                            priority = priority,
+                            woto = targetDepartment
+                        )
+                        
+                        // DEBUG: Log response dari API
+                        android.util.Log.d("AddWOFragment", "=== API RESPONSE ===")
+                        android.util.Log.d("AddWOFragment", "Response: $result")
+                        android.util.Log.d("AddWOFragment", "Success: ${result["success"]}")
+                        android.util.Log.d("AddWOFragment", "Message: ${result["message"]}")
+                        android.util.Log.d("AddWOFragment", "=== END API RESPONSE ===")
+                        
+                        if (isAdded) {
+                            if (result["success"] == true || result["success"] == "true") {
+                                showSuccess("Work order added successfully")
+                                clearForm()
+                            } else {
+                                showError(result["message"]?.toString() ?: "Failed to add work order")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        if (isAdded) {
+                            showError("Failed to submit work order: ${e.message}")
+                        }
+                    } finally {
+                        hideLoading()
                     }
                 }
-            } catch (e: Exception) {
-                if (isAdded) {
-                    showError("Failed to submit work order: ${e.message}")
-                }
-            } finally {
-                hideLoading()
             }
-        }
+            .setNegativeButton("Batal", null)
+            .show()
     }
     
     private fun clearForm() {
@@ -223,12 +266,16 @@ class AddWOFragment : Fragment() {
     }
     
     private fun showError(message: String) {
-        // TODO: Show error message
         hideLoading()
+        if (isAdded) {
+            android.widget.Toast.makeText(requireContext(), message, android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
     
     private fun showSuccess(message: String) {
-        // TODO: Show success message
         hideLoading()
+        if (isAdded) {
+            android.widget.Toast.makeText(requireContext(), message, android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 }

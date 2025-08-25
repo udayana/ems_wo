@@ -13,7 +13,14 @@ import java.util.*
 
 class WorkOrderAdapter(
     private var workOrders: List<Map<String, Any>> = emptyList(),
-    private val onItemClick: (Map<String, Any>) -> Unit = {}
+    private val onItemClick: (Map<String, Any>) -> Unit = {},
+    private val onEditClick: (Map<String, Any>) -> Unit = {},
+    private val onDeleteClick: (Map<String, Any>) -> Unit = {},
+    private val onDetailClick: (Map<String, Any>) -> Unit = {},
+    private val onFollowUpClick: (Map<String, Any>) -> Unit = {},
+    private val showSender: Boolean = false,
+    private val replaceWotoWithOrderBy: Boolean = false,
+    private val isHomeFragment: Boolean = false
 ) : RecyclerView.Adapter<WorkOrderAdapter.WorkOrderViewHolder>() {
 
     class WorkOrderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -28,6 +35,9 @@ class WorkOrderAdapter(
         val tvDepartment: TextView = itemView.findViewById(R.id.tv_department)
         val tvDate: TextView = itemView.findViewById(R.id.tv_date)
         val tvPriority: TextView = itemView.findViewById(R.id.tv_priority)
+        
+        // Menu button (hidden but kept for reference)
+        val btnMenu: android.widget.ImageButton = itemView.findViewById(R.id.btn_menu)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WorkOrderViewHolder {
@@ -49,8 +59,14 @@ class WorkOrderAdapter(
         // Bind Location
         holder.tvLocation.text = workOrder["lokasi"]?.toString() ?: "No Location"
         
-        // Bind Department (woto)
-        holder.tvDepartment.text = workOrder["woto"]?.toString() ?: "Unknown"
+        // Bind right-side label: either woto (department) or orderBy (sender)
+        val orderByValue = workOrder["orderBy"]?.toString() ?: workOrder["orderby"]?.toString()
+        val wotoValue = workOrder["woto"]?.toString()
+        if (replaceWotoWithOrderBy) {
+            holder.tvDepartment.text = "by: ${orderByValue ?: "Unknown"}"
+        } else {
+            holder.tvDepartment.text = wotoValue ?: "Unknown"
+        }
         
         // Bind Date
         holder.tvDate.text = formatDateInline(workOrder["mulainya"]?.toString())
@@ -92,9 +108,12 @@ class WorkOrderAdapter(
             }
         }
         
-        // Set click listener for item
+        // Hide the menu button since we're using card click instead
+        holder.btnMenu.visibility = View.GONE
+        
+        // Set click listener for entire card to show popup menu
         holder.itemView.setOnClickListener {
-            onItemClick(workOrder)
+            showPopupMenu(holder.itemView, workOrder)
         }
     }
 
@@ -103,6 +122,41 @@ class WorkOrderAdapter(
     fun updateData(newWorkOrders: List<Map<String, Any>>) {
         workOrders = newWorkOrders
         notifyDataSetChanged()
+    }
+    
+    private fun showPopupMenu(view: View, workOrder: Map<String, Any>) {
+        val popupMenu = android.widget.PopupMenu(view.context, view)
+        
+        // Use different menu based on fragment type
+        if (isHomeFragment) {
+            popupMenu.menuInflater.inflate(R.menu.work_order_home_menu, popupMenu.menu)
+        } else {
+            popupMenu.menuInflater.inflate(R.menu.work_order_menu, popupMenu.menu)
+        }
+        
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_detail -> {
+                    onDetailClick(workOrder)
+                    true
+                }
+                R.id.action_edit -> {
+                    onEditClick(workOrder)
+                    true
+                }
+                R.id.action_delete -> {
+                    onDeleteClick(workOrder)
+                    true
+                }
+                R.id.action_follow_up -> {
+                    onFollowUpClick(workOrder)
+                    true
+                }
+                else -> false
+            }
+        }
+        
+        popupMenu.show()
     }
     
     // Helper functions (sama persis dengan Flutter)

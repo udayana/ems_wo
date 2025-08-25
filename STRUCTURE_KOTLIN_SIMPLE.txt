@@ -1,0 +1,382 @@
+STRUKTUR FILE KOTLIN EMS WORK ORDER (EMS WO)
+===============================================
+
+INFORMASI PROYEK
+----------------
+Nama Proyek: EMS Work Order (EMS WO)
+Platform: Android Native
+Bahasa: Kotlin
+Package: com.sofindo.ems
+Total File Kotlin: 31 files
+Total Lines: ~3,500+ lines
+
+STRUKTUR FOLDER UTAMA
+=====================
+
+1. FOLDER ROOT (ems_wo/)
+------------------------
+ems_wo/
+├── .git/                          (Repository Git)
+├── .gradle/                       (Cache Gradle)
+├── .idea/                         (Konfigurasi IntelliJ IDEA)
+├── .kotlin/                       (Cache Kotlin)
+├── Android-icons/                 (Icon aplikasi Android)
+├── apk_extracted/                 (Hasil ekstraksi APK)
+├── app/                           (FOLDER UTAMA APLIKASI ANDROID)
+├── build/                         (Output build)
+├── gradle/                        (Gradle wrapper)
+└── [File Konfigurasi]
+
+2. FOLDER APLIKASI ANDROID (app/)
+---------------------------------
+app/
+├── build.gradle.kts              (Konfigurasi build aplikasi)
+├── build.gradle.kts.backup
+├── proguard-rules.pro
+└── src/main/
+    ├── AndroidManifest.xml
+    ├── java/com/sofindo/ems/     (SOURCE CODE KOTLIN)
+    └── res/                       (Resource aplikasi)
+
+STRUKTUR SOURCE CODE KOTLIN
+===========================
+
+PACKAGE: com.sofindo.ems
+
+1. ADAPTERS (4 files)
+---------------------
+adapters/
+├── MaintenanceAdapter.kt         (4.0KB, 91 lines)
+├── MaintenanceHistoryAdapter.kt  (3.4KB, 94 lines)
+├── MaintenanceJobTaskAdapter.kt  (3.3KB, 88 lines)
+└── WorkOrderAdapter.kt           (6.6KB, 176 lines)
+
+2. API (2 files)
+----------------
+api/
+├── ApiService.kt                 (Service API)
+└── RetrofitClient.kt            (Konfigurasi Retrofit)
+
+3. AUTH (1 file)
+----------------
+auth/
+└── LoginActivity.kt             (Activity Login)
+
+4. CAMERA (2 files)
+-------------------
+camera/
+├── CameraFragment.kt            (Fragment Kamera)
+└── QrAnalyzer.kt               (Analisis QR Code)
+
+5. DIALOGS (1 file)
+-------------------
+dialogs/
+└── ImageViewerDialog.kt        (Dialog Viewer Gambar)
+
+6. FRAGMENTS (12 files)
+-----------------------
+fragments/
+├── AddWOFragment.kt            (11KB, 282 lines)
+├── EditProfileFragment.kt      (14KB, 394 lines)
+├── HomeFragment.kt             (18KB, 493 lines)
+├── MaintenanceDetailFragment.kt (9.9KB, 236 lines)
+├── MaintenanceFragment.kt      (5.9KB, 180 lines)
+├── MaintenanceHistoryFragment.kt (6.7KB, 199 lines)
+├── MaintenanceJobTaskFragment.kt (25KB, 517 lines)
+├── OutboxFragment.kt           (20KB, 539 lines)
+├── ProfileFragment.kt          (7.4KB, 208 lines)
+├── QRScannerFragment.kt        (4.3KB, 127 lines)
+├── SupportFragment.kt          (10KB, 310 lines)
+└── TambahWOFragment.kt         (25KB, 641 lines)
+
+7. MODELS (2 files)
+-------------------
+models/
+├── Maintenance.kt              (1.2KB, 41 lines)
+└── User.kt                     (834B, 22 lines)
+
+8. SERVICES (5 files)
+---------------------
+services/
+├── AssetService.kt             (2.2KB, 54 lines)
+├── MaintenanceService.kt       (11KB, 252 lines)
+├── ProfileService.kt           (5.5KB, 136 lines)
+├── SupportService.kt           (13KB, 263 lines)
+└── UserService.kt              (4.2KB, 108 lines)
+
+9. FILE UTAMA (2 files)
+-----------------------
+├── App.kt                      (223B, 12 lines)
+└── MainActivity.kt             (5.1KB, 157 lines)
+
+STRUKTUR RESOURCE (res/)
+========================
+
+1. DRAWABLE (Icon & Background)
+-------------------------------
+drawable/
+├── camera_icon_background.xml
+├── cancel_button_background.xml
+├── circle_background.xml
+├── circle_profile_background.xml
+├── content_background.xml
+├── dropdown_popup_background.xml
+├── edittext_background.xml
+├── error_background.xml
+├── form_container_background.xml
+├── ic_add_circle.xml
+├── ic_add.xml
+├── ic_arrow_back.xml
+├── ic_build.xml
+├── ic_calendar.xml
+├── ic_camera_custom.xml
+├── ic_camera_minimal.xml
+├── ic_camera_simple.xml
+├── ic_camera.xml
+├── ic_close.xml
+├── ic_edit.xml
+├── ic_email_simple.xml
+├── ic_email.xml
+├── ic_error_outline.xml
+├── ic_filter_list.xml
+├── ic_help.xml
+├── ic_history.xml
+├── ic_home.xml
+├── ic_image_placeholder.xml
+├── ic_location.xml
+├── ic_lock.xml
+├── ic_logout.xml
+├── ic_more_vert.xml
+├── ic_note.xml
+├── ic_person.xml
+├── ic_phone_simple.xml
+├── ic_phone.xml
+├── ic_photo.xml
+├── ic_qr_scanner.xml
+├── ic_refresh.xml
+├── ic_schedule.xml
+├── ic_send.xml
+├── ic_status_cancelled.xml
+├── ic_status_done.xml
+├── ic_status_pending.xml
+├── ic_task.xml
+├── ic_upload.xml
+├── ic_visibility_off.xml
+├── ic_visibility.xml
+├── image_background.xml
+├── info_background.xml
+├── input_background.xml
+├── logo_ems.png
+├── logout_button_background.xml
+├── maintenance_container_background.xml
+├── maintenance_item_background.xml
+├── outline_button_background.xml
+├── photo_button_background.xml
+├── photo_preview_background.xml
+├── progress_background.xml
+└── record_badge_background.xml
+
+2. LAYOUT (Layout XML)
+----------------------
+layout/
+├── activity_login.xml          (6.9KB, 185 lines)
+├── activity_main.xml           (914B, 24 lines)
+├── dialog_image_viewer.xml     (1.2KB, 37 lines)
+├── dialog_success.xml          (1.4KB, 42 lines)
+├── fragment_add_wo.xml         (4.9KB, 145 lines)
+├── fragment_camera.xml         (1.0KB, 27 lines)
+├── fragment_edit_profile.xml   (9.8KB, 228 lines)
+├── fragment_home.xml           (3.5KB, 96 lines)
+├── fragment_maintenance.xml    (5.0KB, 129 lines)
+├── fragment_maintenance_detail.xml (19KB, 452 lines)
+├── fragment_maintenance_history.xml (5.3KB, 139 lines)
+├── fragment_maintenance_job_task.xml (7.7KB, 212 lines)
+├── fragment_outbox.xml         (3.4KB, 102 lines)
+├── fragment_profile.xml        (10KB, 260 lines)
+├── fragment_support.xml        (6.7KB, 173 lines)
+├── fragment_tambah_wo.xml      (11KB, 280 lines)
+├── item_maintenance.xml        (2.6KB, 81 lines)
+├── item_maintenance_history.xml (7.9KB, 201 lines)
+├── item_maintenance_job_task.xml (1.5KB, 46 lines)
+└── item_work_order.xml         (6.1KB, 176 lines)
+
+3. MENU (Menu XML)
+------------------
+menu/
+├── bottom_navigation_menu.xml
+├── edit_profile_menu.xml
+└── maintenance_history_menu.xml
+
+4. MIPMAP (Icon Launcher)
+-------------------------
+mipmap-hdpi/
+mipmap-mdpi/
+mipmap-xhdpi/
+mipmap-xxhdpi/
+mipmap-xxxhdpi/
+
+5. VALUES (Konfigurasi)
+-----------------------
+values/
+├── colors.xml
+├── strings.xml
+└── themes.xml
+
+6. XML (XML Resources)
+----------------------
+xml/
+
+FILE KONFIGURASI UTAMA
+======================
+
+1. BUILD CONFIGURATION
+----------------------
+build.gradle.kts               (Konfigurasi build utama)
+app/build.gradle.kts          (Konfigurasi build aplikasi)
+settings.gradle.kts           (Pengaturan proyek)
+gradle.properties             (Properties Gradle)
+
+2. GRADLE WRAPPER
+-----------------
+gradlew                       (Gradle wrapper script Unix)
+gradlew.bat                   (Gradle wrapper script Windows)
+gradle/wrapper/
+├── gradle-wrapper.jar
+└── gradle-wrapper.properties
+
+3. KONFIGURASI LAIN
+-------------------
+local.properties              (Konfigurasi lokal)
+ems_wo.keystore              (Keystore untuk signing APK)
+.gitignore                   (File yang diabaikan Git)
+
+FITUR UTAMA APLIKASI
+====================
+
+1. AUTHENTICATION
+-----------------
+- Login/Logout
+- Profile Management
+- Edit Profile
+
+2. MAINTENANCE MANAGEMENT
+-------------------------
+- Work Order Management
+- Maintenance History
+- Maintenance Job Task
+- Status Management (Pending/Done/Cancelled)
+
+3. QR SCANNER
+-------------
+- Barcode Scanner
+- QR Code Scanner
+- Camera Integration
+
+4. IMAGE HANDLING
+-----------------
+- Image Upload
+- Image Viewer
+- Photo Capture
+
+5. API INTEGRATION
+------------------
+- REST API Integration
+- Retrofit Client
+- Network Services
+
+6. UI COMPONENTS
+----------------
+- RecyclerView Adapters
+- Custom Dialogs
+- Fragment-based Navigation
+- Bottom Navigation
+
+TEKNOLOGI YANG DIGUNAKAN
+========================
+
+1. CORE TECHNOLOGIES
+--------------------
+- Kotlin (Programming Language)
+- Android SDK
+- Gradle (Build System)
+
+2. UI/UX
+---------
+- XML Layouts
+- Fragments
+- RecyclerView
+- Custom Views
+
+3. NETWORKING
+-------------
+- Retrofit
+- OkHttp
+- JSON Parsing
+
+4. IMAGE PROCESSING
+-------------------
+- Glide (Image Loading)
+- CameraX
+- ML Kit (Barcode Scanning)
+
+5. STORAGE
+----------
+- SharedPreferences
+- File Storage
+
+6. PERMISSIONS
+--------------
+- Camera Permission
+- Storage Permission
+- Network Permission
+
+STATISTIK PROYEK
+================
+
+FILE COUNT
+----------
+- Total Kotlin Files: 31
+- Total Layout Files: 20
+- Total Drawable Files: 50+
+- Total Resource Files: 100+
+
+LINES OF CODE
+-------------
+- Largest File: TambahWOFragment.kt (641 lines)
+- Total Kotlin Lines: ~3,500+
+- Total XML Lines: ~2,000+
+
+SIZE
+----
+- Total Project Size: ~50MB
+- APK Size: ~15MB
+- Source Code Size: ~2MB
+
+ARSITEKTUR APLIKASI
+===================
+
+PATTERN
+-------
+- Fragment-based Architecture
+- Service Layer Pattern
+- Adapter Pattern
+- Repository Pattern
+
+PACKAGE STRUCTURE
+-----------------
+- Separation of Concerns
+- Modular Design
+- Clean Architecture Principles
+
+NAVIGATION
+----------
+- Fragment Navigation
+- Bottom Navigation
+- Activity-based Navigation
+
+===============================================
+Dokumen ini berisi struktur lengkap aplikasi EMS Work Order yang dibangun dengan Android Native Kotlin.
+Total: 31 file Kotlin dengan ~3,500+ lines of code.
+===============================================
+
+

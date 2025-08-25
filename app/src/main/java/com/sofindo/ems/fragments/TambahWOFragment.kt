@@ -263,10 +263,8 @@ class TambahWOFragment : Fragment() {
             spinnerCategory.setSelection(0) // General
         }
         
-        val engineeringIndex = departments.indexOfFirst { it.equals("Engineering", ignoreCase = true) }
-        if (engineeringIndex >= 0) {
-            spinnerDepartment.setSelection(engineeringIndex)
-        } else if (departments.isNotEmpty()) {
+        // Set department spinner default to first item (user must select destination department)
+        if (departments.isNotEmpty()) {
             spinnerDepartment.setSelection(0)
         }
         
@@ -402,7 +400,7 @@ class TambahWOFragment : Fragment() {
         val job = etJob.text.toString().trim()
         val location = etLocation.text.toString().trim()
         val category = spinnerCategory.selectedItem.toString()
-        val department = spinnerDepartment.selectedItem.toString()
+        val selectedDepartment = spinnerDepartment.selectedItem.toString()  // Department yang dipilih user
         val priority = spinnerPriority.selectedItem.toString()
         
         // Validation
@@ -425,15 +423,23 @@ class TambahWOFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
+                // Get user's department from UserService
+                val userDept = UserService.getCurrentDept()
+                if (userDept.isNullOrEmpty()) {
+                    showSnackbar("User department not found", false)
+                    hideLoading()
+                    return@launch
+                }
+                
                 val workOrderData = mapOf<String, String>(
                     "propID" to currentPropID!!,
                     "job" to job,
                     "lokasi" to location,
                     "category" to category,
-                    "dept" to department,
+                    "dept" to userDept,  // Department user yang login (otomatis)
                     "priority" to priority,
                     "orderBy" to username!!,
-                    "woto" to department
+                    "woto" to selectedDepartment  // Department yang dipilih user di spinner "To:"
                 )
                 
                 // Simulate upload progress if image exists
@@ -462,9 +468,9 @@ class TambahWOFragment : Fragment() {
                                 job = job,
                                 lokasi = location,
                                 category = category,
-                                dept = department,
+                                dept = userDept,  // Department user yang login (otomatis)
                                 priority = priority,
-                                woto = department
+                                woto = selectedDepartment  // Department yang dipilih user di spinner "To:"
                             )
                             resultMap.putAll(response)
                         } catch (e: Exception) {
@@ -483,9 +489,9 @@ class TambahWOFragment : Fragment() {
                             job = job,
                             lokasi = location,
                             category = category,
-                            dept = department,
+                            dept = userDept,  // Department user yang login (otomatis)
                             priority = priority,
-                            woto = department
+                            woto = selectedDepartment  // Department yang dipilih user di spinner "To:"
                         )
                         resultMap.putAll(response)
                     } catch (e: Exception) {
@@ -580,10 +586,7 @@ class TambahWOFragment : Fragment() {
         etJob.text.clear()
         etLocation.text.clear()
         spinnerCategory.setSelection(0)
-        val engineeringIndex = departments.indexOfFirst { it.equals("Engineering", ignoreCase = true) }
-        if (engineeringIndex >= 0) {
-            spinnerDepartment.setSelection(engineeringIndex)
-        }
+        // Department spinner tidak perlu di-reset karena user harus memilih department tujuan
         spinnerPriority.setSelection(0)
         selectedImageFile = null
         ivPhotoPreview.visibility = View.GONE

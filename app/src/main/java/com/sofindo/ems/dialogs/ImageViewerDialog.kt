@@ -13,12 +13,14 @@ import com.sofindo.ems.R
 
 class ImageViewerDialog(
     context: Context,
-    private val imageUrl: String
+    private val imageUrl: String,
+    private val title: String? = null
 ) : Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen) {
 
     private lateinit var ivFullImage: ImageView
     private lateinit var btnClose: ImageButton
     private lateinit var progressBar: ProgressBar
+    private lateinit var tvTitle: android.widget.TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +43,15 @@ class ImageViewerDialog(
         ivFullImage = findViewById(R.id.iv_full_image)
         btnClose = findViewById(R.id.btn_close)
         progressBar = findViewById(R.id.progress_bar)
+        tvTitle = findViewById(R.id.tv_title)
+        
+        // Set title if provided
+        if (title != null) {
+            tvTitle.text = title
+            tvTitle.visibility = android.view.View.VISIBLE
+        } else {
+            tvTitle.visibility = android.view.View.GONE
+        }
     }
     
     private fun setupListeners() {

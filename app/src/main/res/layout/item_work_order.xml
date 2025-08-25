@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="16dp"
-    android:layout_marginVertical="4dp"
+
     android:background="@drawable/work_order_item_background">
 
     <!-- Work Order Image/Icon -->
@@ -26,7 +26,7 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <!-- WO Number and Status -->
+        <!-- WO Number, Status, and Menu -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -36,10 +36,11 @@
 
             <TextView
                 android:id="@+id/tv_wo_number"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="WO: 1321"
-                android:textColor="#FFFFFF"
+                android:textColor="#000000"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -48,6 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:background="@drawable/status_badge_background"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="2dp"
@@ -56,7 +58,20 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
+            <!-- Menu Popup Button -->
+            <ImageButton
+                android:id="@+id/btn_menu"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_more_vert"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Menu"
+                android:padding="4dp"
+                app:tint="#000000" />
+
         </LinearLayout>
+
+
 
         <!-- Job Description -->
         <TextView
@@ -64,7 +79,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="tes bssar"
-            android:textColor="#FFFFFF"
+            android:textColor="#000000"
             android:textSize="14sp"
             android:layout_marginBottom="8dp" />
 
@@ -89,7 +104,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Pool"
-                android:textColor="#FFFFFF"
+                android:textColor="#000000"
                 android:textSize="12sp" />
 
             <ImageView
@@ -106,7 +121,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ENG Demo"
-                android:textColor="#FFFFFF"
+                android:textColor="#000000"
                 android:textSize="12sp" />
 
         </LinearLayout>
@@ -131,7 +146,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="23 Aug 2025"
-                android:textColor="#FFFFFF"
+                android:textColor="#000000"
                 android:textSize="12sp" />
 
             <ImageView
@@ -148,7 +163,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="HIGH"
-                android:textColor="#FFFFFF"
+                android:textColor="#000000"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 

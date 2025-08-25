@@ -55,6 +55,11 @@ class HomeFragment : Fragment() {
     // RecyclerView adapter
     private lateinit var workOrderAdapter: WorkOrderAdapter
     
+    // Request codes
+    companion object {
+        private const val REQUEST_CHANGE_STATUS = 1001
+    }
+    
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -81,11 +86,32 @@ class HomeFragment : Fragment() {
         // Setup RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
         
-        // Initialize adapter with click listener
-        workOrderAdapter = WorkOrderAdapter { workOrder ->
-            // Handle work order click
-            onWorkOrderClick(workOrder)
-        }
+        // Initialize adapter with menu callbacks for Home (Detail and Follow Up only)
+        workOrderAdapter = WorkOrderAdapter(
+            onItemClick = { workOrder ->
+                // Handle work order click (this won't be used since we're using card click for menu)
+                onWorkOrderClick(workOrder)
+            },
+            onEditClick = { workOrder ->
+                // Handle edit click (not used in Home)
+                onEditWorkOrder(workOrder)
+            },
+            onDeleteClick = { workOrder ->
+                // Handle delete click (not used in Home)
+                onDeleteWorkOrder(workOrder)
+            },
+            onDetailClick = { workOrder ->
+                // Handle detail click
+                onDetailWorkOrder(workOrder)
+            },
+            onFollowUpClick = { workOrder ->
+                // Handle follow up click
+                onFollowUpWorkOrder(workOrder)
+            },
+            showSender = false, 
+            replaceWotoWithOrderBy = true,
+            isHomeFragment = true
+        )
         
         recyclerView.adapter = workOrderAdapter
         
@@ -171,6 +197,32 @@ class HomeFragment : Fragment() {
         // TODO: Navigate to work order detail
         val woNumber = workOrder["nour"]?.toString() ?: ""
         Toast.makeText(context, "Clicked WO: $woNumber", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun onEditWorkOrder(workOrder: Map<String, Any>) {
+        // TODO: Navigate to edit work order
+        val woNumber = workOrder["nour"]?.toString() ?: ""
+        Toast.makeText(context, "Edit WO: $woNumber", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun onDeleteWorkOrder(workOrder: Map<String, Any>) {
+        // TODO: Show delete confirmation dialog
+        val woNumber = workOrder["nour"]?.toString() ?: ""
+        Toast.makeText(context, "Delete WO: $woNumber", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun onDetailWorkOrder(workOrder: Map<String, Any>) {
+        // Navigate to work order detail activity
+        val intent = android.content.Intent(context, com.sofindo.ems.activities.WorkOrderDetailActivity::class.java)
+        intent.putExtra("workOrder", workOrder as java.io.Serializable)
+        startActivity(intent)
+    }
+    
+    private fun onFollowUpWorkOrder(workOrder: Map<String, Any>) {
+        // Navigate to change status activity
+        val intent = android.content.Intent(context, com.sofindo.ems.activities.ChangeStatusWOActivity::class.java)
+        intent.putExtra("workOrder", workOrder as java.io.Serializable)
+        startActivityForResult(intent, REQUEST_CHANGE_STATUS)
     }
     
     // Sama persis dengan Flutter _initializeData()
@@ -481,6 +533,15 @@ class HomeFragment : Fragment() {
     private fun hideEmptyState() {
         tvEmpty.visibility = View.GONE
         recyclerView.visibility = View.VISIBLE
+    }
+    
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        
+        if (requestCode == REQUEST_CHANGE_STATUS && resultCode == android.app.Activity.RESULT_OK) {
+            // Refresh data after status change
+            refreshData()
+        }
     }
     
     override fun onDestroy() {

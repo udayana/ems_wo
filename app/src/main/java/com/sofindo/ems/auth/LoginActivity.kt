@@ -151,7 +151,7 @@ class LoginActivity : AppCompatActivity() {
                 fullName = result["nama"]?.toString(),
                 phoneNumber = result["telp"]?.toString(),
                 profileImage = result["photoprofile"]?.toString(),
-                role = result["dept"]?.toString() ?: "user",
+                role = result["role"]?.toString() ?: "user",
                 propID = propID,
                 dept = result["dept"]?.toString()
             )

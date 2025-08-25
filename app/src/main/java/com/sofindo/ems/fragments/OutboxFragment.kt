@@ -31,6 +31,7 @@ class OutboxFragment : Fragment() {
     private lateinit var searchView: EditText
     private lateinit var btnFilter: ImageButton
     private lateinit var tvEmpty: TextView
+
     
     // Sama persis dengan HomeFragment
     private var workOrders = mutableListOf<Map<String, Any>>()
@@ -77,15 +78,37 @@ class OutboxFragment : Fragment() {
         searchView = view.findViewById(R.id.search_view)
         btnFilter = view.findViewById(R.id.btn_filter)
         tvEmpty = view.findViewById(R.id.tv_empty)
+
         
         // Setup RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
         
-        // Initialize adapter with click listener
-        workOrderAdapter = WorkOrderAdapter { workOrder ->
-            // Handle work order click
-            onWorkOrderClick(workOrder)
-        }
+        // Initialize adapter with menu callbacks for Outbox (Detail, Edit, Delete)
+        workOrderAdapter = WorkOrderAdapter(
+            onItemClick = { workOrder ->
+                // Handle work order click (this won't be used since we're using card click for menu)
+                onWorkOrderClick(workOrder)
+            },
+            onEditClick = { workOrder ->
+                // Handle edit click
+                onEditWorkOrder(workOrder)
+            },
+            onDeleteClick = { workOrder ->
+                // Handle delete click
+                onDeleteWorkOrder(workOrder)
+            },
+            onDetailClick = { workOrder ->
+                // Handle detail click
+                onDetailWorkOrder(workOrder)
+            },
+            onFollowUpClick = { workOrder ->
+                // Handle follow up click (not used in Outbox)
+                onFollowUpWorkOrder(workOrder)
+            },
+            showSender = false,
+            replaceWotoWithOrderBy = false,
+            isHomeFragment = false
+        )
         
         recyclerView.adapter = workOrderAdapter
         
@@ -171,6 +194,44 @@ class OutboxFragment : Fragment() {
         Toast.makeText(context, "Clicked Outbox WO: $woNumber", Toast.LENGTH_SHORT).show()
     }
     
+    private fun onEditWorkOrder(workOrder: Map<String, Any>) {
+        val woNumber = workOrder["nour"]?.toString() ?: ""
+        Toast.makeText(context, "Edit Outbox WO: $woNumber", Toast.LENGTH_SHORT).show()
+        // TODO: Navigate to edit work order screen
+    }
+    
+    private fun onDeleteWorkOrder(workOrder: Map<String, Any>) {
+        val woNumber = workOrder["nour"]?.toString() ?: ""
+        
+        // Show confirmation dialog
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Delete Work Order")
+            .setMessage("Are you sure you want to delete WO: $woNumber?")
+            .setPositiveButton("Delete") { _, _ ->
+                // TODO: Implement delete API call
+                Toast.makeText(context, "Deleted WO: $woNumber", Toast.LENGTH_SHORT).show()
+                // Refresh data after deletion
+                refreshData()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun onDetailWorkOrder(workOrder: Map<String, Any>) {
+        // Navigate to work order detail activity
+        val intent = android.content.Intent(context, com.sofindo.ems.activities.WorkOrderDetailActivity::class.java)
+        intent.putExtra("workOrder", workOrder as java.io.Serializable)
+        startActivity(intent)
+    }
+    
+    private fun onFollowUpWorkOrder(workOrder: Map<String, Any>) {
+        // This function is not used in Outbox but required for adapter compatibility
+        val woNumber = workOrder["nour"]?.toString() ?: ""
+        Toast.makeText(context, "Follow Up WO: $woNumber (Outbox)", Toast.LENGTH_SHORT).show()
+    }
+    
+
+    
     // Sama persis dengan HomeFragment tapi untuk outbox
     private fun initializeData() {
         lifecycleScope.launch {
@@ -186,6 +247,8 @@ class OutboxFragment : Fragment() {
                 android.util.Log.d("OutboxFragment", "Debug: userDept = $userDept")
                 
                 currentPropID = propID ?: ""
+                
+
                 
                 if (!currentPropID.isNullOrEmpty() && !username.isNullOrEmpty()) {
                     android.util.Log.d("OutboxFragment", "Debug: Loading outbox work orders...")
@@ -218,6 +281,12 @@ class OutboxFragment : Fragment() {
                 android.util.Log.d("OutboxFragment", "status: $selectedStatus")
                 android.util.Log.d("OutboxFragment", "searchText: $searchText")
                 
+                // DEBUG: Log data penting untuk outbox
+                android.util.Log.d("OutboxFragment", "=== DEBUG OUTBOX DATA ===")
+                android.util.Log.d("OutboxFragment", "userDept: ${userDept ?: ""}")
+                android.util.Log.d("OutboxFragment", "orderBy: $username")
+                android.util.Log.d("OutboxFragment", "=== END DEBUG ===")
+                
                 // Fetch dari API outbox
                 val workOrdersResult = RetrofitClient.apiService.getWorkOrdersOut(
                     propID = currentPropID!!,
@@ -233,10 +302,15 @@ class OutboxFragment : Fragment() {
                 if (isAdded) {
                     workOrders.clear()
                     workOrders.addAll(workOrdersResult)
+                    
+                    // Sort work orders by WO number (nour) in descending order (highest first)
+                    sortWorkOrdersByWONumber(workOrders)
+                    
                     hasMoreData = workOrdersResult.size >= 10
                     currentPage = 2 // Set untuk next page
                     
                     android.util.Log.d("OutboxFragment", "workOrders updated: ${workOrders.size} items")
+                    android.util.Log.d("OutboxFragment", "Work orders sorted by WO number (highest first)")
                     
                     updateUI()
                     
@@ -362,6 +436,9 @@ class OutboxFragment : Fragment() {
                         workOrders.addAll(workOrdersResult)
                     }
                     
+                    // Sort work orders by WO number (nour) in descending order (highest first)
+                    sortWorkOrdersByWONumber(workOrders)
+                    
                     if (workOrdersResult.size < 10) {
                         hasMoreData = false
                     } else {
@@ -408,6 +485,18 @@ class OutboxFragment : Fragment() {
                 }
             }
         }, 500) // 500ms debounce
+    }
+    
+    // Sort work orders by WO number (nour) in descending order (highest first)
+    private fun sortWorkOrdersByWONumber(workOrdersList: MutableList<Map<String, Any>>) {
+        workOrdersList.sortByDescending { workOrder ->
+            val nour = workOrder["nour"]?.toString() ?: ""
+            try {
+                nour.toIntOrNull() ?: 0
+            } catch (e: NumberFormatException) {
+                0
+            }
+        }
     }
     
     // Get filtered work orders based on search text - optimasi performa (sama seperti Flutter)

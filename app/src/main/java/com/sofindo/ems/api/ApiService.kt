@@ -98,8 +98,9 @@ interface ApiService {
     suspend fun updateWorkOrderStatus(
         @Field("woId") woId: String,
         @Field("status") status: String,
-        @Field("userName") userName: String
-    ): Map<String, Any>
+        @Field("userName") userName: String,
+        @Field("timeAccept") timeAccept: String? = null
+    ): String
     
     // Get departments - sama persis dengan Flutter
     @FormUrlEncoded
@@ -173,14 +174,15 @@ interface ApiService {
     ): Map<String, Any>
     
     // Update pending/done - sama persis dengan Flutter
-    @FormUrlEncoded
+    @Multipart
     @POST("update_pending_done.php")
     suspend fun updatePendingDone(
-        @Field("woId") woId: String,
-        @Field("status") status: String,
-        @Field("userName") userName: String,
-        @Field("remarks") remarks: String
-    ): Map<String, Any>
+        @Part("woId") woId: okhttp3.RequestBody,
+        @Part("status") status: okhttp3.RequestBody,
+        @Part("userName") userName: okhttp3.RequestBody,
+        @Part("remarks") remarks: okhttp3.RequestBody,
+        @Part photoFile: MultipartBody.Part? = null
+    ): String
     
     // Asset API - sama persis dengan Flutter
     @GET("get_asset_detail.php")
