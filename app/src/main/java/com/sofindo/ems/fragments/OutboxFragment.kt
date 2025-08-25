@@ -224,8 +224,7 @@ class OutboxFragment : Fragment() {
                     orderBy = username!!,
                     status = selectedStatus,
                     page = 1,
-                    userDept = userDept ?: "",
-                    searchText = "" // Search dilakukan local, tidak perlu kirim ke API
+                    userDept = userDept ?: ""
                 )
                 
                 android.util.Log.d("OutboxFragment", "API Response received: ${workOrdersResult.size} items")
@@ -260,16 +259,16 @@ class OutboxFragment : Fragment() {
         
         lifecycleScope.launch {
             try {
-                // Load dari API get_all_statuses_outbox
-                val statusData = RetrofitClient.apiService.getAllStatusesOutbox(
-                    propID = currentPropID!!,
-                    dept = userDept
-                )
-                
-                // Update status counts dari API
-                updateStatusCountsFromAPI(statusData)
+                // Set default values karena getAllStatusesOutbox tidak ada
+                statusCounts.clear()
+                statusCounts[""] = 0
+                statusCounts["new"] = 0
+                for (status in statusOptions) {
+                    if (status.isNotEmpty()) {
+                        statusCounts[status] = 0
+                    }
+                }
             } catch (e: Exception) {
-                // API get_all_statuses_outbox failed
                 // Set default values jika API gagal
                 statusCounts.clear()
                 statusCounts[""] = 0
@@ -352,8 +351,7 @@ class OutboxFragment : Fragment() {
                     orderBy = username!!,
                     status = selectedStatus,
                     page = currentPage,
-                    userDept = userDept ?: "",
-                    searchText = "" // Search dilakukan local, tidak perlu kirim ke API
+                    userDept = userDept ?: ""
                 )
                 
                 if (isAdded) {

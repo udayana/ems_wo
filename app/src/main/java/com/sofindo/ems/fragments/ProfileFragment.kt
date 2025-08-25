@@ -1,5 +1,7 @@
 package com.sofindo.ems.fragments
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,21 +9,27 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
 import com.sofindo.ems.R
+import com.sofindo.ems.auth.LoginActivity
 import com.sofindo.ems.services.UserService
+import com.sofindo.ems.fragments.SupportFragment
+import com.sofindo.ems.fragments.EditProfileFragment
 import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment() {
     
     private lateinit var ivProfile: ImageView
+    private lateinit var ivEditProfile: ImageView
     private lateinit var tvName: TextView
     private lateinit var tvEmail: TextView
     private lateinit var tvPhone: TextView
-    private lateinit var tvRole: TextView
-    private lateinit var tvDepartment: TextView
-    private lateinit var btnEditProfile: Button
+    private lateinit var btnChangePassword: Button
+    private lateinit var btnHelpSupport: Button
     private lateinit var btnLogout: Button
     
     override fun onCreateView(
@@ -39,25 +47,39 @@ class ProfileFragment : Fragment() {
         setupListeners()
         loadUserData()
     }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh user data when returning from edit profile
+        loadUserData()
+    }
     
     private fun initViews(view: View) {
         ivProfile = view.findViewById(R.id.iv_profile)
+        ivEditProfile = view.findViewById(R.id.iv_edit_profile)
         tvName = view.findViewById(R.id.tv_name)
         tvEmail = view.findViewById(R.id.tv_email)
         tvPhone = view.findViewById(R.id.tv_phone)
-        tvRole = view.findViewById(R.id.tv_role)
-        tvDepartment = view.findViewById(R.id.tv_department)
-        btnEditProfile = view.findViewById(R.id.btn_edit_profile)
+        btnChangePassword = view.findViewById(R.id.btn_change_password)
+        btnHelpSupport = view.findViewById(R.id.btn_help_support)
         btnLogout = view.findViewById(R.id.btn_logout)
     }
     
     private fun setupListeners() {
-        btnEditProfile.setOnClickListener {
-            // TODO: Navigate to edit profile
+        ivEditProfile.setOnClickListener {
+            navigateToEditProfile()
+        }
+        
+        btnChangePassword.setOnClickListener {
+            openChangePasswordUrl()
+        }
+        
+        btnHelpSupport.setOnClickListener {
+            navigateToSupport()
         }
         
         btnLogout.setOnClickListener {
-            logout()
+            showLogoutDialog()
         }
     }
     
@@ -65,50 +87,116 @@ class ProfileFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val user = UserService.getCurrentUser()
-                val propID = UserService.getCurrentPropID()
-                
-                android.util.Log.d("ProfileFragment", "Current user: $user")
-                android.util.Log.d("ProfileFragment", "Current propID: $propID")
                 
                 if (user != null) {
-                    tvName.text = user.fullName ?: user.username
+                    // Load user data
+                    tvName.text = user.fullName ?: user.username ?: user.email
                     tvEmail.text = user.email
-                    tvPhone.text = user.phoneNumber ?: "Not provided"
-                    tvRole.text = user.role
-                    tvDepartment.text = user.dept ?: "Not specified"
+                    tvPhone.text = user.phoneNumber ?: "No phone number"
                     
-                    // Add propID to display for debugging
-                    val propIDText = view?.findViewById<TextView>(R.id.tv_prop_id)
-                    propIDText?.text = "Prop ID: $propID"
-                    
-                    // TODO: Load profile image if available
-                    // if (user.profileImage != null) {
-                    //     // Load image using Glide or similar
-                    // }
-                } else {
-                    showError("User data not found")
+                    // Load profile image with cache clearing
+                    if (!user.profileImage.isNullOrEmpty()) {
+                        // Clear Glide cache for this specific URL
+                        Glide.get(requireContext()).clearMemory()
+                        Thread {
+                            Glide.get(requireContext()).clearDiskCache()
+                        }.start()
+                        
+                        // Load image with cache busting
+                        Glide.with(requireContext())
+                            .load(getProfileImageUrl(user.profileImage!!) + "?t=" + System.currentTimeMillis())
+                            .placeholder(R.drawable.ic_person)
+                            .error(R.drawable.ic_person)
+                            .circleCrop()
+                            .into(ivProfile)
+                    } else {
+                        ivProfile.setImageResource(R.drawable.ic_person)
+                    }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("ProfileFragment", "Error loading user data", e)
-                showError("Failed to load user data: ${e.message}")
+                android.util.Log.e("ProfileFragment", "Error loading user data: ${e.message}")
             }
         }
     }
     
-    private fun logout() {
+    private fun getProfileImageUrl(profileImage: String): String {
+        return "https://emshotels.net/images/user/profile/thumb/$profileImage"
+    }
+    
+    private fun openChangePasswordUrl() {
+        val url = "https://emshotels.net/member/forgot-password.php"
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(
+                requireContext(),
+                "Cannot open link: $url",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+    
+    private fun navigateToSupport() {
+        // Navigate to support fragment
+        val supportFragment = SupportFragment()
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, supportFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+    
+    private fun navigateToEditProfile() {
+        // Navigate to edit profile fragment
+        val editProfileFragment = EditProfileFragment()
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, editProfileFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+    
+    private fun showLogoutDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Logout")
+            .setMessage("Are you sure you want to logout from the application?")
+            .setPositiveButton("Logout") { _, _ ->
+                handleLogout()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun handleLogout() {
         lifecycleScope.launch {
             try {
-                UserService.clearUserData()
-                // Navigate back to login
+                // Logout but keep user data for display
+                UserService.logout()
+                
+                Toast.makeText(
+                    requireContext(),
+                    "Successfully logged out from application",
+                    Toast.LENGTH_LONG
+                ).show()
+                
+                // Navigate to login screen and clear all previous routes
+                val intent = Intent(requireContext(), LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
                 requireActivity().finish()
+                
             } catch (e: Exception) {
-                showError("Failed to logout: ${e.message}")
+                android.util.Log.e("ProfileFragment", "Error during logout", e)
+                // Still logout even if there's an error
+                val intent = Intent(requireContext(), LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                requireActivity().finish()
             }
         }
     }
     
     private fun showError(message: String) {
-        // TODO: Show error message
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 }
 

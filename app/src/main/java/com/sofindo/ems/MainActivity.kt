@@ -2,6 +2,8 @@ package com.sofindo.ems
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -12,12 +14,14 @@ import com.sofindo.ems.fragments.OutboxFragment
 import com.sofindo.ems.fragments.TambahWOFragment
 import com.sofindo.ems.fragments.MaintenanceFragment
 import com.sofindo.ems.fragments.ProfileFragment
+import com.sofindo.ems.fragments.EditProfileFragment
 import com.sofindo.ems.services.UserService
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     
     private lateinit var bottomNavigationView: BottomNavigationView
+    private var currentFragment: Fragment? = null
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,9 +85,53 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun loadFragment(fragment: Fragment) {
+        currentFragment = fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
+        
+        // Update app bar title and menu
+        updateAppBar()
+    }
+    
+    private fun updateAppBar() {
+        val title = when (currentFragment) {
+            is HomeFragment -> "Home"
+            is OutboxFragment -> "Outbox"
+            is TambahWOFragment -> "Add Work Order"
+            is MaintenanceFragment -> "Maintenance"
+            is ProfileFragment -> "Profile"
+            is EditProfileFragment -> "Edit Profile"
+            else -> "EMS WO"
+        }
+        
+        supportActionBar?.title = title
+        invalidateOptionsMenu()
+    }
+    
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menu?.clear()
+        
+        when (currentFragment) {
+            is EditProfileFragment -> {
+                menuInflater.inflate(R.menu.edit_profile_menu, menu)
+                return true
+            }
+        }
+        
+        return super.onCreateOptionsMenu(menu)
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_save -> {
+                if (currentFragment is EditProfileFragment) {
+                    (currentFragment as EditProfileFragment).saveProfile()
+                }
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
     
     fun switchToTab(tabIndex: Int) {
@@ -94,6 +142,15 @@ class MainActivity : AppCompatActivity() {
             3 -> R.id.nav_maintenance
             4 -> R.id.nav_profile
             else -> R.id.nav_home
+        }
+    }
+    
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
+            updateAppBar()
+        } else {
+            super.onBackPressed()
         }
     }
 }

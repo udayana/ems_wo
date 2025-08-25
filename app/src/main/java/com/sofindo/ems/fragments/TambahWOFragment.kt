@@ -185,7 +185,7 @@ class TambahWOFragment : Fragment() {
                 // Load data with timeout handling
                 val categoriesResult = withContext(Dispatchers.IO) {
                     try {
-                        RetrofitClient.apiService.getCategories()
+                        RetrofitClient.apiService.getCategories(currentPropID!!)
                     } catch (e: Exception) {
                         listOf("General", "Maintenance", "Housekeeping", "Security")
                     }
@@ -193,7 +193,7 @@ class TambahWOFragment : Fragment() {
                 
                 val departmentsResult = withContext(Dispatchers.IO) {
                     try {
-                        RetrofitClient.apiService.getDepartments()
+                        RetrofitClient.apiService.getDepartments(currentPropID!!)
                     } catch (e: Exception) {
                         listOf("Engineering", "Housekeeping", "Security", "Front Office")
                     }
@@ -201,7 +201,7 @@ class TambahWOFragment : Fragment() {
                 
                 val locationsResult = withContext(Dispatchers.IO) {
                     try {
-                        RetrofitClient.apiService.getLocations()
+                        RetrofitClient.apiService.getLocations(currentPropID!!)
                     } catch (e: Exception) {
                         listOf("Lobby", "Room", "Kitchen", "Pool", "Garden")
                     }

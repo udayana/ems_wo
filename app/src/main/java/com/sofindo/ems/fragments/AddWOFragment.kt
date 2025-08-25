@@ -88,8 +88,8 @@ class AddWOFragment : Fragment() {
     private fun loadMasterData() {
         lifecycleScope.launch {
             try {
-                val categoriesResult = RetrofitClient.apiService.getCategories()
-                val departmentsResult = RetrofitClient.apiService.getDepartments()
+                val categoriesResult = RetrofitClient.apiService.getCategories(currentPropID!!)
+                val departmentsResult = RetrofitClient.apiService.getDepartments(currentPropID!!)
                 
                 if (isAdded) {
                     categories.clear()

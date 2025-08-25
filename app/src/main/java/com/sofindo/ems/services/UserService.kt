@@ -70,5 +70,38 @@ object UserService {
     suspend fun clearUserData() = withContext(Dispatchers.IO) {
         prefs.edit().clear().apply()
     }
+    
+    // Logout but keep user data for display (similar to Flutter implementation)
+    suspend fun logout() = withContext(Dispatchers.IO) {
+        android.util.Log.d("UserService", "Logging out user (keeping display data)...")
+        // Only remove propID, keep user data for display
+        prefs.edit().remove(KEY_PROP_ID).apply()
+        android.util.Log.d("UserService", "Logout completed")
+    }
+    
+    // Get user data for display (even if logged out)
+    suspend fun getDisplayUser(): User? = withContext(Dispatchers.IO) {
+        val userId = prefs.getString(KEY_USER_ID, null) ?: return@withContext null
+        
+        return@withContext User(
+            id = userId,
+            username = prefs.getString(KEY_USERNAME, "") ?: "",
+            email = prefs.getString(KEY_EMAIL, "") ?: "",
+            fullName = prefs.getString(KEY_FULL_NAME, null),
+            phoneNumber = prefs.getString(KEY_PHONE, null),
+            profileImage = prefs.getString(KEY_PROFILE_IMAGE, null),
+            role = prefs.getString(KEY_ROLE, "user") ?: "user",
+            propID = prefs.getString(KEY_PROP_ID, null),
+            dept = prefs.getString(KEY_DEPT, null)
+        )
+    }
+    
+    // Check if user is logged in (has propID)
+    suspend fun isLoggedIn(): Boolean = withContext(Dispatchers.IO) {
+        val propID = prefs.getString(KEY_PROP_ID, null)
+        val hasPropID = !propID.isNullOrEmpty()
+        android.util.Log.d("UserService", "Login check result: $hasPropID (propID: $propID)")
+        return@withContext hasPropID
+    }
 }
 
