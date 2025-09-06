@@ -3,18 +3,25 @@ package com.sofindo.ems.auth
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.text.method.PasswordTransformationMethod
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.sofindo.ems.R
 import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.models.User
 import com.sofindo.ems.services.UserService
+import com.sofindo.ems.auth.RegisterActivity
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -26,11 +33,14 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvForgotPassword: View
     private lateinit var tvRegister: View
     private lateinit var ivPasswordToggle: ImageView
+    private lateinit var ivProfile: ImageView
     
     private var isLoading = false
     private var isPasswordVisible = false
     private var retryCount = 0
     private val maxRetries = 3
+    private var savedEmail = ""
+    private var savedPassword = ""
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +58,13 @@ class LoginActivity : AppCompatActivity() {
         tvForgotPassword = findViewById(R.id.tv_forgot_password)
         tvRegister = findViewById(R.id.tv_register)
         ivPasswordToggle = findViewById(R.id.iv_password_toggle)
+        ivProfile = findViewById(R.id.iv_profile)
+        
+        // Load saved credentials if available
+        loadSavedCredentials()
+        
+        // Load user profile image if available
+        loadUserProfileImage()
     }
     
     private fun setupListeners() {
@@ -62,13 +79,30 @@ class LoginActivity : AppCompatActivity() {
         }
         
         tvRegister.setOnClickListener {
-            // TODO: Navigate to register screen
-            Toast.makeText(this, "Register feature coming soon", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, RegisterActivity::class.java)
+            startActivity(intent)
         }
         
         ivPasswordToggle.setOnClickListener {
             togglePasswordVisibility()
         }
+        
+        // Add text change listeners for auto-hide keyboard
+        etEmail.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                checkAndHideKeyboard()
+            }
+        })
+        
+        etPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                checkAndHideKeyboard()
+            }
+        })
     }
     
     private fun handleLogin() {
@@ -135,8 +169,6 @@ class LoginActivity : AppCompatActivity() {
     
     private fun handleLoginSuccess(result: Map<String, Any>) {
         try {
-            // Debug: Log the response to see what fields are available
-            android.util.Log.d("LoginActivity", "Login response: $result")
             
             // Try different possible keys for propID
             val propID = result["propID"]?.toString() 
@@ -156,11 +188,7 @@ class LoginActivity : AppCompatActivity() {
                 dept = result["dept"]?.toString()
             )
             
-            // Debug: Log the user object to verify propID
-            android.util.Log.d("LoginActivity", "User propID: ${user.propID}")
-            android.util.Log.d("LoginActivity", "User dept: ${user.dept}")
-            android.util.Log.d("LoginActivity", "User ID: ${user.id}")
-            android.util.Log.d("LoginActivity", "User email: ${user.email}")
+            // Create user object
             
             // Save user to SharedPreferences
             lifecycleScope.launch {
@@ -171,22 +199,27 @@ class LoginActivity : AppCompatActivity() {
                     val savedUser = UserService.getCurrentUser()
                     val savedPropID = UserService.getCurrentPropID()
                     
-                    android.util.Log.d("LoginActivity", "Saved user: $savedUser")
-                    android.util.Log.d("LoginActivity", "Saved propID: $savedPropID")
+                    // Check if credentials are already saved
+                    val sharedPrefs = getSharedPreferences("login_prefs", MODE_PRIVATE)
+                    val rememberMe = sharedPrefs.getBoolean("remember_me", false)
                     
-                    // Navigate to main activity
-                    val intent = Intent(this@LoginActivity, com.sofindo.ems.MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
+                    if (rememberMe) {
+                        // Credentials already saved, navigate directly
+                        runOnUiThread {
+                            navigateToMainActivity()
+                        }
+                    } else {
+                        // Show Remember Me dialog for first time
+                        runOnUiThread {
+                            showRememberMeDialog(user.email)
+                        }
+                    }
                 } catch (e: Exception) {
-                    android.util.Log.e("LoginActivity", "Error saving user data", e)
                     handleLoginError("Failed to save user data: ${e.message}")
                 }
             }
             
         } catch (e: Exception) {
-            android.util.Log.e("LoginActivity", "Error processing login response", e)
             handleLoginError("Failed to process login response: ${e.message}")
         }
     }
@@ -245,5 +278,119 @@ class LoginActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Toast.makeText(this, "Cannot open forgot password link", Toast.LENGTH_SHORT).show()
         }
+    }
+    
+    private fun loadUserProfileImage() {
+        lifecycleScope.launch {
+            try {
+                val user = UserService.getCurrentUser()
+                
+                if (user != null && !user.profileImage.isNullOrEmpty()) {
+                    // Load profile image with cache clearing
+                    Glide.get(this@LoginActivity).clearMemory()
+                    Thread {
+                        Glide.get(this@LoginActivity).clearDiskCache()
+                    }.start()
+                    
+                    // Load image with cache busting
+                    Glide.with(this@LoginActivity)
+                        .load(getProfileImageUrl(user.profileImage!!) + "?t=" + System.currentTimeMillis())
+                        .placeholder(R.drawable.ic_person)
+                        .error(R.drawable.ic_person)
+                        .circleCrop()
+                        .into(ivProfile)
+                } else {
+                    ivProfile.setImageResource(R.drawable.ic_person)
+                }
+            } catch (e: Exception) {
+                // Error loading user data, use default icon
+                ivProfile.setImageResource(R.drawable.ic_person)
+            }
+        }
+    }
+    
+    private fun getProfileImageUrl(profileImage: String): String {
+        return "https://emshotels.net/images/user/profile/thumb/$profileImage"
+    }
+    
+    private fun checkAndHideKeyboard() {
+        val email = etEmail.text?.toString()?.trim() ?: ""
+        val password = etPassword.text?.toString() ?: ""
+        
+        // Check if email has valid format and password has at least 6 characters
+        if (isValidEmail(email) && password.length >= 6) {
+            // Hide keyboard
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            val currentFocus = currentFocus
+            if (currentFocus != null) {
+                imm.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+                currentFocus.clearFocus()
+            }
+        }
+    }
+    
+    private fun isValidEmail(email: String): Boolean {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+    
+    private fun showRememberMeDialog(userEmail: String) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_remember_me, null)
+        val switchRememberMe = dialogView.findViewById<SwitchMaterial>(R.id.switch_remember_me)
+        val btnCancel = dialogView.findViewById<View>(R.id.btn_cancel)
+        val btnOk = dialogView.findViewById<View>(R.id.btn_ok)
+        
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(false)
+            .create()
+        
+        btnCancel.setOnClickListener {
+            // Don't save credentials, just navigate
+            dialog.dismiss()
+            navigateToMainActivity()
+        }
+        
+        btnOk.setOnClickListener {
+            if (switchRememberMe.isChecked) {
+                // Save credentials
+                saveCredentials(userEmail, etPassword.text?.toString() ?: "")
+            }
+            dialog.dismiss()
+            navigateToMainActivity()
+        }
+        
+        dialog.show()
+    }
+    
+    private fun saveCredentials(email: String, password: String) {
+        val sharedPrefs = getSharedPreferences("login_prefs", MODE_PRIVATE)
+        sharedPrefs.edit().apply {
+            putString("saved_email", email)
+            putString("saved_password", password)
+            putBoolean("remember_me", true)
+            apply()
+        }
+    }
+    
+    private fun loadSavedCredentials() {
+        val sharedPrefs = getSharedPreferences("login_prefs", MODE_PRIVATE)
+        val rememberMe = sharedPrefs.getBoolean("remember_me", false)
+        
+        if (rememberMe) {
+            savedEmail = sharedPrefs.getString("saved_email", "") ?: ""
+            savedPassword = sharedPrefs.getString("saved_password", "") ?: ""
+            
+            if (savedEmail.isNotEmpty() && savedPassword.isNotEmpty()) {
+                etEmail.setText(savedEmail)
+                etPassword.setText(savedPassword)
+            }
+        }
+    }
+    
+    private fun navigateToMainActivity() {
+        val intent = Intent(this@LoginActivity, com.sofindo.ems.MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 }

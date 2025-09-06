@@ -2,6 +2,7 @@ package com.sofindo.ems.services
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.sofindo.ems.api.ApiService
 import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.models.Maintenance
@@ -11,7 +12,7 @@ import kotlinx.coroutines.withContext
 
 class MaintenanceService {
     companion object {
-        // Get maintenance this week - sama persis dengan Flutter
+        // Get maintenance this week - exactly like Flutter
         suspend fun getMaintenanceThisWeek(context: Context): List<Maintenance> {
             return withContext(Dispatchers.IO) {
                 try {
@@ -75,40 +76,16 @@ class MaintenanceService {
                 try {
                     val apiService: ApiService = RetrofitClient.apiService
                     
-                    // Log request yang akan dikirim
-                    android.util.Log.d("MaintenanceService", "=== API CALL START ===")
-                    android.util.Log.d("MaintenanceService", "URL: update_maintask_status.php")
-                    android.util.Log.d("MaintenanceService", "Method: POST")
-                    android.util.Log.d("MaintenanceService", "Content-Type: application/json")
-                    android.util.Log.d("MaintenanceService", "Request Body: $requestBody")
-                    android.util.Log.d("MaintenanceService", "taskId: '$taskId'")
-                    android.util.Log.d("MaintenanceService", "done: ${if (isDone) 1 else 0}")
-                    android.util.Log.d("MaintenanceService", "doneby: '$doneBy'")
-                    
-                    android.util.Log.d("MaintenanceService", "Making API call...")
+                    // Make API call
                     val response = apiService.updateMaintenanceTaskStatus(requestBody)
                     
-                    // Log response yang diterima
-                    android.util.Log.d("MaintenanceService", "=== API RESPONSE ===")
-                    android.util.Log.d("MaintenanceService", "Response: $response")
-                    android.util.Log.d("MaintenanceService", "Response type: ${response::class.java.simpleName}")
-                    
                     if (response["success"] == true) {
-                        android.util.Log.d("MaintenanceService", "✅ API call successful!")
                         response
                     } else {
                         val errorMsg = response["error"] as? String ?: "Unknown error occurred"
-                        android.util.Log.e("MaintenanceService", "❌ API Error: $errorMsg")
-                        android.util.Log.e("MaintenanceService", "Full response: $response")
                         throw Exception(errorMsg)
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("MaintenanceService", "=== EXCEPTION CAUGHT ===")
-                    android.util.Log.e("MaintenanceService", "Exception type: ${e::class.java.simpleName}")
-                    android.util.Log.e("MaintenanceService", "Exception message: ${e.message}")
-                    android.util.Log.e("MaintenanceService", "Exception stack trace:")
-                    e.printStackTrace()
-                    android.util.Log.e("MaintenanceService", "Request body that failed: $requestBody")
                     throw Exception("Failed to update maintenance task status: ${e.message}")
                 }
             }
@@ -153,12 +130,7 @@ class MaintenanceService {
                         requestBody["propID"] = propID
                     }
                     
-                    // Debug logging untuk melihat request body
-                    android.util.Log.d("MaintenanceService", "=== API REQUEST DEBUG ===")
-                    android.util.Log.d("MaintenanceService", "Request body: $requestBody")
-                    android.util.Log.d("MaintenanceService", "mntId in request: ${requestBody["mntId"]}")
-                    android.util.Log.d("MaintenanceService", "notes in request: ${requestBody["notes"]}")
-                    android.util.Log.d("MaintenanceService", "propID in request: ${requestBody["propID"]}")
+                    // Update maintenance notes
                     
                     val response = apiService.updateMaintenanceNotes(requestBody)
                     
@@ -216,8 +188,8 @@ class MaintenanceService {
                     val todayString = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
                     
                     allMaintenance.filter { maintenance ->
-                        // Parse start_date dan bandingkan dengan hari ini
-                        val startDate = maintenance.startDate.split(" ")[0] // Ambil tanggal saja, hilangkan waktu
+                        // Parse start_date and compare with today
+                        val startDate = maintenance.startDate.split(" ")[0] // Get date only, remove time
                         startDate == todayString
                     }
                 } catch (e: Exception) {

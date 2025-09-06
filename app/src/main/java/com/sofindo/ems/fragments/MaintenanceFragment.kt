@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+
 import com.sofindo.ems.R
 import com.sofindo.ems.adapters.MaintenanceAdapter
 import com.sofindo.ems.models.Maintenance
@@ -54,26 +55,15 @@ class MaintenanceFragment : Fragment() {
         progressBar = view.findViewById(R.id.progress_bar)
         tvError = view.findViewById(R.id.tv_error)
         tvEmpty = view.findViewById(R.id.tv_empty)
-        btnOpenScanner = view.findViewById(R.id.btn_open_scanner)
+        btnOpenScanner = view.findViewById(R.id.btn_open_scanner_custom)
         
-        // Setup Toolbar
-        toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_refresh -> {
-                    loadMaintenanceData()
-                    true
-                }
-                else -> false
-            }
+        // Setup Open Scanner Button
+        btnOpenScanner.setOnClickListener {
+            openScanner()
         }
         
         // Setup RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
-        
-        // Setup Scanner Button
-        btnOpenScanner.setOnClickListener {
-            openScanner()
-        }
     }
     
     private fun loadMaintenanceData() {
@@ -87,8 +77,7 @@ class MaintenanceFragment : Fragment() {
                 val currentUser = UserService.getCurrentUser()
                 val currentPropID = UserService.getCurrentPropID()
                 
-                android.util.Log.d("MaintenanceFragment", "Current user: $currentUser")
-                android.util.Log.d("MaintenanceFragment", "Current propID: $currentPropID")
+                // Check user login status
                 
                 if (currentUser == null || currentPropID.isNullOrEmpty()) {
                     showError("User not logged in or Property ID not found. Please login again.")
@@ -104,7 +93,6 @@ class MaintenanceFragment : Fragment() {
                 }
                 
             } catch (e: Exception) {
-                android.util.Log.e("MaintenanceFragment", "Error loading maintenance data", e)
                 showError(e.message ?: "Unknown error occurred")
             } finally {
                 showLoading(false)

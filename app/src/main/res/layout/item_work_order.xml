@@ -40,9 +40,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="WO: 1321"
-                android:textColor="#000000"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="normal" />
 
             <TextView
                 android:id="@+id/tv_wo_status"
@@ -67,7 +67,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Menu"
                 android:padding="4dp"
-                app:tint="#000000" />
+                app:tint="?attr/colorOnSurface" />
 
         </LinearLayout>
 
@@ -79,8 +79,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="tes bssar"
-            android:textColor="#000000"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="14sp"
+            android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
         <!-- Location and Department Row -->
@@ -96,7 +97,7 @@
                 android:src="@drawable/ic_location"
                 android:layout_marginEnd="4dp"
                 android:layout_gravity="center_vertical"
-                app:tint="#4CAF50" />
+                app:tint="#FF1ABC9C" />
 
             <TextView
                 android:id="@+id/tv_location"
@@ -104,24 +105,33 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Pool"
-                android:textColor="#000000"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp" />
 
             <ImageView
+                android:id="@+id/iv_to_icon"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:src="@drawable/ic_person"
+                android:src="@drawable/ic_send"
                 android:layout_marginEnd="4dp"
                 android:layout_marginStart="16dp"
                 android:layout_gravity="center_vertical"
-                app:tint="#4CAF50" />
+                app:tint="#FF1ABC9C" />
+
+            <TextView
+                android:id="@+id/tv_to_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="To: "
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/tv_department"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ENG Demo"
-                android:textColor="#000000"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp" />
 
         </LinearLayout>
@@ -138,7 +148,7 @@
                 android:src="@drawable/ic_schedule"
                 android:layout_marginEnd="4dp"
                 android:layout_gravity="center_vertical"
-                app:tint="#4CAF50" />
+                app:tint="#FF1ABC9C" />
 
             <TextView
                 android:id="@+id/tv_date"
@@ -146,7 +156,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="23 Aug 2025"
-                android:textColor="#000000"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp" />
 
             <ImageView
@@ -163,7 +173,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="HIGH"
-                android:textColor="#000000"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 

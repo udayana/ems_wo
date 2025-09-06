@@ -4,13 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import com.sofindo.ems.R
 import com.sofindo.ems.services.MaintenanceService
 import com.sofindo.ems.services.UserService
@@ -35,8 +34,8 @@ class MaintenanceDetailFragment : Fragment() {
     private lateinit var tvMaintenanceId: TextView
     private lateinit var tvDescription: TextView
     private lateinit var layoutDescription: View
-    private lateinit var btnViewJobTasks: android.widget.Button
-    private lateinit var btnViewHistory: android.widget.Button
+    private lateinit var btnViewJobTasks: MaterialButton
+    private lateinit var btnViewHistory: MaterialButton
     private lateinit var progressBar: ProgressBar
     
     private var mntId: String = ""
@@ -90,6 +89,9 @@ class MaintenanceDetailFragment : Fragment() {
         toolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
         }
+        
+        // Set initial title
+        toolbar.title = "Asset Detail"
         
         btnViewJobTasks.setOnClickListener { 
             // Navigate to Maintenance Job Task Fragment
@@ -147,13 +149,19 @@ class MaintenanceDetailFragment : Fragment() {
         try {
             assetData = AssetService.getAssetDetail(assetUrl)
             
-            // Debug logging untuk melihat response API
-            android.util.Log.d("MaintenanceDetail", "Asset data received: $assetData")
+            // Asset data received from API
             
             // Update UI with asset data
             tvAssetNo.text = assetData?.get("no")?.toString() ?: "N/A"
             tvCategory.text = assetData?.get("category")?.toString() ?: "N/A"
             tvProperty.text = assetData?.get("property")?.toString() ?: "N/A"
+            
+            // Update toolbar title with property name
+            val propertyName = assetData?.get("property")?.toString()
+            if (!propertyName.isNullOrEmpty()) {
+                val toolbar = view?.findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+                toolbar?.title = propertyName
+            }
             tvMerk.text = assetData?.get("merk")?.toString() ?: "N/A"
             tvModel.text = assetData?.get("model")?.toString() ?: "N/A"
             tvSerialNo.text = assetData?.get("serno")?.toString() ?: "N/A"
@@ -172,15 +180,14 @@ class MaintenanceDetailFragment : Fragment() {
                 layoutDescription.visibility = View.GONE
             }
             
-            // Load image if available - sesuai dengan Flutter
+            // Load image if available - matching Flutter
             val imageUrl = assetData?.get("imageUrl")?.toString()
-            android.util.Log.d("MaintenanceDetail", "Image URL: $imageUrl")
             
             // Image always visible - either real image or placeholder
             ivAssetImage.visibility = View.VISIBLE
             
             if (!imageUrl.isNullOrEmpty()) {
-                // Load image using Glide - sesuai dengan Flutter implementation
+                // Load image using Glide - matching Flutter implementation
                 Glide.with(this)
                     .load(imageUrl)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -189,15 +196,13 @@ class MaintenanceDetailFragment : Fragment() {
                     .centerCrop()
                     .into(ivAssetImage)
                     
-                android.util.Log.d("MaintenanceDetail", "Loading image from: $imageUrl")
+                // Loading image from URL
             } else {
                 // Show placeholder if no image URL
                 ivAssetImage.setImageResource(R.drawable.ic_image_placeholder)
-                android.util.Log.d("MaintenanceDetail", "No image URL found, showing placeholder")
             }
             
         } catch (e: Exception) {
-            android.util.Log.e("MaintenanceDetail", "Error loading asset", e)
             Toast.makeText(context, "Error loading asset: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }

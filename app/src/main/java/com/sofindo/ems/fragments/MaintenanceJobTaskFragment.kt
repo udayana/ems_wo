@@ -2,6 +2,7 @@ package com.sofindo.ems.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -29,6 +30,7 @@ class MaintenanceJobTaskFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var etNote: EditText
     private lateinit var btnSubmit: Button
+
     private lateinit var progressBar: ProgressBar
     private lateinit var layoutContent: View
     private lateinit var layoutError: View
@@ -62,12 +64,7 @@ class MaintenanceJobTaskFragment : Fragment() {
             propertyName = args.getString("propertyName", "")
             propID = args.getString("propID", "")
             
-            // Debug logging untuk arguments
-            android.util.Log.d("MaintenanceJobTask", "=== ARGUMENTS DEBUG ===")
-            android.util.Log.d("MaintenanceJobTask", "assetNo: $assetNo")
-            android.util.Log.d("MaintenanceJobTask", "mntId: $mntId")
-            android.util.Log.d("MaintenanceJobTask", "propertyName: $propertyName")
-            android.util.Log.d("MaintenanceJobTask", "propID: $propID")
+            // Arguments loaded
         }
         
         initViews(view)
@@ -83,18 +80,19 @@ class MaintenanceJobTaskFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recycler_view)
         etNote = view.findViewById(R.id.et_note)
         btnSubmit = view.findViewById(R.id.btn_submit)
+
         progressBar = view.findViewById(R.id.progress_bar)
         layoutContent = view.findViewById(R.id.layout_content)
         layoutError = view.findViewById(R.id.layout_error)
         tvErrorMessage = view.findViewById(R.id.tv_error_message)
         btnRetry = view.findViewById(R.id.btn_retry)
         
-        // Setup RecyclerView
+                // Setup RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
         
-        // Setup submit button
+        // Setup update notes button
         btnSubmit.setOnClickListener {
-            submitMaintenanceTasks()
+            updateMaintenanceNotes()
         }
         
         // Setup retry button
@@ -108,6 +106,8 @@ class MaintenanceJobTaskFragment : Fragment() {
         toolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
         }
+        
+
         
         // Set job details
         tvJobTitle.text = propertyName
@@ -143,8 +143,7 @@ class MaintenanceJobTaskFragment : Fragment() {
                         val maintenanceData = maintenanceDataList[recordIndex] as? Map<String, Any>
                         val jobtask = maintenanceData?.get("jobtask")?.toString() ?: ""
                         
-                        // Debug logging untuk melihat data dari API
-                        android.util.Log.d("MaintenanceJobTask", "Maintenance data: $maintenanceData")
+                        // Process maintenance data from API
                         
                         // Parse jobtask text into individual tasks
                         if (jobtask.isNotEmpty()) {
@@ -161,10 +160,9 @@ class MaintenanceJobTaskFragment : Fragment() {
                                 val mntUniq = maintenanceData?.get("mntUniq")?.toString() ?: ""
                                 val id = maintenanceData?.get("id")?.toString() ?: ""
                                 
-                                android.util.Log.d("MaintenanceJobTask", "Task $recordIndex: taskNo=$taskNo, mntId=$mntId, mntUniq=$mntUniq, id=$id, title=$taskText")
+                                // Process task data
                                 
-                                // Debug: Log semua data dari maintenanceData
-                                android.util.Log.d("MaintenanceJobTask", "Full maintenance data for task $recordIndex: $maintenanceData")
+                                // Process maintenance data for task
                                 
                                 processedTasks.add(
                                     mapOf(
@@ -231,69 +229,53 @@ class MaintenanceJobTaskFragment : Fragment() {
                 val taskNo = task["taskNo"]?.toString() ?: ""
                 val taskMntId = task["mntId"]?.toString() ?: ""
                 val taskMntUniq = task["mntUniq"]?.toString() ?: ""
-                android.util.Log.d("MaintenanceJobTask", "Updating task: taskNo=$taskNo, mntId=$taskMntId, mntUniq=$taskMntUniq, isCompleted=$isCompleted, userName=$userName")
-                android.util.Log.d("MaintenanceJobTask", "Full task data: $task")
+                // Update task status
                 
                 // Use taskNo as taskId (6 digit number)
                 val taskIdToUse = taskNo
                 
+                // Update doneBy with current user
+                val newDoneBy = if (isCompleted) userName else ""
+                
                 MaintenanceService.updateMaintenanceTaskStatus(
                     taskId = taskIdToUse,
                     isDone = isCompleted,
-                    doneBy = if (isCompleted) userName else ""
+                    doneBy = newDoneBy
                 )
                 
                 // Update local state - only update the specific task
                 val updatedTasks = tasks.toMutableList()
                 updatedTasks[taskIndex] = updatedTasks[taskIndex].toMutableMap().apply {
                     put("completed", isCompleted)
+                    put("doneBy", newDoneBy) // Store doneBy info for display
                 }
                 tasks = updatedTasks
                 // Don't call notifyItemChanged to avoid rebinding and resetting checkbox
                 updateProgressStatus()
                 
-                // Update visual styling for the specific task item
-                val holder = maintenanceAdapter?.let { adapter ->
-                    (recyclerView.findViewHolderForAdapterPosition(taskIndex) as? MaintenanceJobTaskAdapter.TaskViewHolder)
-                }
-                holder?.let { viewHolder ->
-                    val task = tasks[taskIndex]
-                    val isCompleted = task["completed"] as? Boolean ?: false
-                    
-                    // Update text styling
-                    if (isCompleted) {
-                        viewHolder.tvTaskTitle.setTextColor(resources.getColor(R.color.grey, null))
-                        viewHolder.tvTaskTitle.paintFlags = viewHolder.tvTaskTitle.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
-                        viewHolder.itemView.isActivated = true
-                    } else {
-                        viewHolder.tvTaskTitle.setTextColor(resources.getColor(R.color.black, null))
-                        viewHolder.tvTaskTitle.paintFlags = viewHolder.tvTaskTitle.paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                        viewHolder.itemView.isActivated = false
-                    }
-                }
+                // Update adapter to refresh display with doneBy info
+                maintenanceAdapter?.updateTasks(tasks)
                 
                 // Step 2: If task is completed, check if all tasks are done
                 if (isCompleted) {
                     val allCompleted = tasks.all { it["completed"] == true }
                     
                     if (allCompleted) {
-                        // Step 3: Update maintenance event with notes (same as Flutter)
+                        // Auto-complete: Update maintenance event status to "done" (without notes)
                         try {
-                            val note = etNote.text.toString().trim()
-                            
                             // Get the actual event ID from the first task
                             val actualEventId = if (tasks.isNotEmpty()) tasks[0]["eventId"]?.toString() ?: "" else ""
                             val taskMntId = if (tasks.isNotEmpty()) tasks[0]["mntId"]?.toString() ?: "" else ""
                             val eventIdToUse = if (actualEventId.isNotEmpty()) actualEventId else if (taskMntId.isNotEmpty()) taskMntId else mntId
                             
-                            // Update event status and notes together (same as Flutter)
+                            // Update event status to "done" (notes will be updated via Update Notes button)
                             MaintenanceService.updateMaintenanceEvent(
                                 mntId = eventIdToUse,
                                 status = "done",
-                                notes = note // Pass notes directly to updateMaintenanceEvent
+                                notes = "" // Empty notes, will be updated later
                             )
                             
-                            Toast.makeText(context, "All tasks completed! Maintenance event updated.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "All tasks completed! Maintenance event marked as done.", Toast.LENGTH_LONG).show()
                         } catch (eventError: Exception) {
                             Toast.makeText(context, "Task updated but event update failed: ${eventError.message}", Toast.LENGTH_LONG).show()
                         }
@@ -306,7 +288,6 @@ class MaintenanceJobTaskFragment : Fragment() {
                 
             } catch (e: Exception) {
                 val errorMsg = "Error updating task: ${e.message}"
-                android.util.Log.e("MaintenanceJobTask", errorMsg)
                 Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
                 
                 // Revert the UI state if API call failed
@@ -329,7 +310,7 @@ class MaintenanceJobTaskFragment : Fragment() {
         val totalCount = tasks.size
         
         tvProgressStatus.text = "Progress: $completedCount/$totalCount tasks completed"
-        btnSubmit.text = "Submit Maintenance ($completedCount/$totalCount)"
+        btnSubmit.text = "Update Notes"
         
         // Update progress icon based on completion
         if (completedCount == totalCount && totalCount > 0) {
@@ -343,22 +324,24 @@ class MaintenanceJobTaskFragment : Fragment() {
     
 
     
-    private fun submitMaintenanceTasks() {
+    private fun updateMaintenanceNotes() {
         if (isSubmitting) return
         
-        val completedTasks = tasks.filter { it["completed"] == true }
-        if (completedTasks.isEmpty()) {
-            Toast.makeText(context, "Please complete all tasks before submitting", Toast.LENGTH_SHORT).show()
+        val note = etNote.text.toString().trim()
+        if (note.isEmpty()) {
+            Toast.makeText(context, "Please enter notes before updating", Toast.LENGTH_SHORT).show()
             return
         }
         
         isSubmitting = true
         btnSubmit.isEnabled = false
-        btnSubmit.text = "Submitting..."
+        btnSubmit.text = "Updating Notes..."
         
         lifecycleScope.launch {
             try {
-                val note = etNote.text.toString().trim()
+                // Note already captured above
+                
+
                 
                 // Get propID from UserService if not provided
                 val currentPropID = if (propID.isNotEmpty()) propID else UserService.getCurrentPropID() ?: ""
@@ -367,78 +350,29 @@ class MaintenanceJobTaskFragment : Fragment() {
                     throw Exception("Property ID tidak ditemukan. Silakan login ulang.")
                 }
                 
-                // Step 1: Update all tasks in tblmnttask first (same as Flutter)
-                for (task in completedTasks) {
-                    val taskId = task["taskNo"]?.toString() ?: ""
-                    
-                    if (taskId.isNotEmpty()) {
-                        MaintenanceService.updateMaintenanceTaskStatus(
-                            taskId = taskId,
-                            isDone = true,
-                            doneBy = "user" // TODO: Get actual user ID
-                        )
-                    }
-                }
-                
-                // Step 2: If all tasks updated successfully, update notes and event
-                // Get the actual event ID (number) from the first task
+                // Update maintenance notes only
+                // Get the actual event ID from the first task
                 val actualEventId = if (tasks.isNotEmpty()) tasks[0]["eventId"]?.toString() ?: "" else ""
                 val taskMntId = if (tasks.isNotEmpty()) tasks[0]["mntId"]?.toString() ?: "" else ""
                 val eventIdToUse = if (actualEventId.isNotEmpty()) actualEventId else if (taskMntId.isNotEmpty()) taskMntId else mntId
                 
-                android.util.Log.d("MaintenanceJobTask", "=== EVENT ID DEBUG ===")
-                android.util.Log.d("MaintenanceJobTask", "mntId from arguments (string): $mntId")
-                android.util.Log.d("MaintenanceJobTask", "actualEventId from task (number): $actualEventId")
-                android.util.Log.d("MaintenanceJobTask", "taskMntId from task (number): $taskMntId")
-                android.util.Log.d("MaintenanceJobTask", "eventIdToUse for API: $eventIdToUse")
-                
-                // Debug: Check what's in tasks[0]
-                if (tasks.isNotEmpty()) {
-                    android.util.Log.d("MaintenanceJobTask", "First task data: ${tasks[0]}")
-                    android.util.Log.d("MaintenanceJobTask", "First task eventId: ${tasks[0]["eventId"]}")
-                }
-                
                 if (eventIdToUse.isNotEmpty()) {
                     try {
-                        // Debug logging
-                        android.util.Log.d("MaintenanceJobTask", "=== SUBMIT MAINTENANCE DEBUG ===")
-                        android.util.Log.d("MaintenanceJobTask", "mntId: $mntId")
-                        android.util.Log.d("MaintenanceJobTask", "eventIdToUse: $eventIdToUse")
-                        android.util.Log.d("MaintenanceJobTask", "status: done")
-                        android.util.Log.d("MaintenanceJobTask", "notes: $note")
-                        android.util.Log.d("MaintenanceJobTask", "currentPropID: $currentPropID")
-                        
-                                                                // Step 2: Update event status and notes using update_maintenance_event.php (same as Flutter)
-                        android.util.Log.d("MaintenanceJobTask", "=== EVENT UPDATE DEBUG ===")
-                        android.util.Log.d("MaintenanceJobTask", "Updating event status and notes...")
-                        android.util.Log.d("MaintenanceJobTask", "mntId for event: $eventIdToUse")
-                        android.util.Log.d("MaintenanceJobTask", "status: done")
-                        android.util.Log.d("MaintenanceJobTask", "notes: $note")
-                        android.util.Log.d("MaintenanceJobTask", "eventIdToUse type: ${eventIdToUse::class.java.simpleName}")
-                        android.util.Log.d("MaintenanceJobTask", "eventIdToUse length: ${eventIdToUse.length}")
-                        android.util.Log.d("MaintenanceJobTask", "eventIdToUse is numeric: ${eventIdToUse.matches(Regex("^\\d+$"))}")
-                        
+                        // Update only the notes (status already "done" from auto-complete)
                         MaintenanceService.updateMaintenanceEvent(
                             mntId = eventIdToUse,
-                            status = "done",
-                            notes = note // Pass notes directly to updateMaintenanceEvent (same as Flutter)
+                            status = "done", // Keep status as done
+                            notes = note // Update notes
                         )
-                        android.util.Log.d("MaintenanceJobTask", "Event status updated successfully")
                         
                         if (isAdded) {
-                            Toast.makeText(context, "Maintenance completed successfully!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Notes updated successfully!", Toast.LENGTH_SHORT).show()
                             // Navigate back
                             parentFragmentManager.popBackStack()
                         }
                     } catch (eventError: Exception) {
-                        // Debug logging for error
-                        android.util.Log.e("MaintenanceJobTask", "Event update failed: ${eventError.message}")
-                        android.util.Log.e("MaintenanceJobTask", "Stack trace:")
-                        eventError.printStackTrace()
-                        
-                        // If tblevent update fails, still show success for tblmnttask
                         if (isAdded) {
-                            Toast.makeText(context, "Tasks completed but event update failed: ${eventError.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Failed to update notes: ${eventError.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -450,7 +384,7 @@ class MaintenanceJobTaskFragment : Fragment() {
             } finally {
                 isSubmitting = false
                 btnSubmit.isEnabled = true
-                btnSubmit.text = "Submit"
+                btnSubmit.text = "Update Notes"
             }
         }
     }
@@ -476,20 +410,15 @@ class MaintenanceJobTaskFragment : Fragment() {
                 val eventIdToUse = if (actualEventId.isNotEmpty()) actualEventId else if (taskMntId.isNotEmpty()) taskMntId else mntId
                 
                 if (eventIdToUse.isNotEmpty()) {
-                    android.util.Log.d("MaintenanceJobTask", "Loading existing notes for mntId: $eventIdToUse")
-                    
                     val existingNotes = MaintenanceService.getMaintenanceNotes(
                         mntId = eventIdToUse,
                         propID = if (propID.isNotEmpty()) propID else UserService.getCurrentPropID() ?: ""
                     )
                     
-                    android.util.Log.d("MaintenanceJobTask", "Existing notes loaded: $existingNotes")
-                    
                     // Set notes to EditText
                     etNote.setText(existingNotes)
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MaintenanceJobTask", "Error loading existing notes: ${e.message}")
                 // Clear text field if error
                 etNote.setText("")
             }

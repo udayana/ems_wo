@@ -30,12 +30,18 @@ class MaintenanceJobTaskAdapter(
         val taskId = task["id"]?.toString() ?: ""
         val taskTitle = task["title"]?.toString() ?: ""
         val isCompleted = task["completed"] as? Boolean ?: false
+        val doneBy = task["doneBy"]?.toString() ?: ""
 
         // Set task number
         holder.tvTaskNumber.text = taskId
 
-        // Set task title
-        holder.tvTaskTitle.text = taskTitle
+        // Set task title with doneBy info if completed
+        val displayTitle = if (isCompleted && doneBy.isNotEmpty()) {
+            "$taskTitle (by: $doneBy)"
+        } else {
+            taskTitle
+        }
+        holder.tvTaskTitle.text = displayTitle
 
         // Set checkbox state
         holder.checkBox.isChecked = isCompleted

@@ -20,13 +20,24 @@ interface ApiService {
     ): Map<String, Any>
     
     @FormUrlEncoded
+    @POST("register_user.php")
+    suspend fun registerUser(
+        @Field("propID") propID: String,
+        @Field("nama") nama: String,
+        @Field("email") email: String,
+        @Field("telp") telp: String,
+        @Field("dept") dept: String,
+        @Field("password") password: String
+    ): Map<String, Any>
+    
+    @FormUrlEncoded
     @POST("check_login.php")
     suspend fun checkLogin(
         @Field("emailOrHP") emailOrHP: String,
         @Field("password") password: String
     ): Map<String, Any>
     
-    // Profile APIs - sama persis dengan Flutter
+    // Profile APIs - exactly like Flutter
     @FormUrlEncoded
     @POST("user_profile.php")
     suspend fun getUserProfile(
@@ -44,7 +55,7 @@ interface ApiService {
         @Field("phoneNumber") phoneNumber: String
     ): Map<String, Any>
     
-    // Upload profile photo - sama persis dengan Flutter
+    // Upload profile photo - exactly like Flutter
     @Multipart
     @POST("upload_profile.php")
     suspend fun uploadProfilePhoto(
@@ -52,7 +63,7 @@ interface ApiService {
         @Part photo: MultipartBody.Part
     ): Map<String, Any>
     
-    // Work Order APIs - sama persis dengan Flutter
+    // Work Order APIs - exactly like Flutter
     @GET("baca_wo.php")
     suspend fun getWorkOrders(
         @Query("propID") propID: String,
@@ -67,7 +78,7 @@ interface ApiService {
         @Query("woto") woto: String? = null
     ): List<Map<String, Any>>
     
-    // Outbox APIs - sama persis dengan Flutter
+    // Outbox APIs - exactly like Flutter
     @FormUrlEncoded
     @POST("cari_wo_out.php")
     suspend fun getWorkOrdersOut(
@@ -78,7 +89,7 @@ interface ApiService {
         @Field("userDept") userDept: String = ""
     ): List<Map<String, Any>>
     
-    // Submit work order - sama persis dengan Flutter
+    // Submit work order - exactly like Flutter
     @FormUrlEncoded
     @POST("submit_wo.php")
     suspend fun submitWorkOrder(
@@ -92,7 +103,7 @@ interface ApiService {
         @Field("woto") woto: String
     ): Map<String, Any>
     
-    // Update work order status - sama persis dengan Flutter
+    // Update work order status - exactly like Flutter
     @FormUrlEncoded
     @POST("update_status_wo.php")
     suspend fun updateWorkOrderStatus(
@@ -102,64 +113,66 @@ interface ApiService {
         @Field("timeAccept") timeAccept: String? = null
     ): String
     
-    // Get departments - sama persis dengan Flutter
+    // Get departments - exactly like Flutter
     @FormUrlEncoded
     @POST("get_dept.php")
     suspend fun getDepartments(
         @Field("propID") propID: String
     ): List<String>
     
-    // Get categories - sama persis dengan Flutter
+    // Get categories - exactly like Flutter
     @FormUrlEncoded
     @POST("get_category.php")
     suspend fun getCategories(
         @Field("propID") propID: String
     ): List<String>
     
-    // Get locations - sama persis dengan Flutter
+    // Get locations - exactly like Flutter
     @FormUrlEncoded
     @POST("get_lokasi.php")
     suspend fun getLocations(
         @Field("propID") propID: String
     ): List<String>
     
-    // Get property name - sama persis dengan Flutter
+    // Get property name - exactly like Flutter
     @GET("get_propName.php")
     suspend fun getPropertyName(
         @Query("propID") propID: String
     ): Map<String, Any>
     
-    // Search work orders - sama persis dengan Flutter
+    // Search work orders - exactly like Flutter
     @GET("search_wo.php")
     suspend fun searchWorkOrders(
         @Query("propID") propID: String,
         @Query("search") searchTerm: String
     ): List<Map<String, Any>>
     
-    // Delete work order - sama persis dengan Flutter
+    // Delete work order - exactly like Flutter
     @FormUrlEncoded
     @POST("delete_wo.php")
     suspend fun deleteWorkOrder(
         @Field("woId") woId: String
     ): Map<String, Any>
     
-    // Get work order by ID - sama persis dengan Flutter
+    // Get work order by ID - exactly like Flutter
     @GET("get_wo_by_id.php")
     suspend fun getWorkOrderById(
         @Query("woId") woId: String
     ): Map<String, Any>
     
-    // Update work order - sama persis dengan Flutter
+    // Update work order - exactly like Flutter
     @FormUrlEncoded
     @POST("update_wo.php")
     suspend fun updateWorkOrder(
         @Field("woId") woId: String,
         @Field("lokasi") lokasi: String,
         @Field("job") job: String,
-        @Field("priority") priority: String
+        @Field("priority") priority: String,
+        @Field("category") category: String,
+        @Field("woto") woto: String
     ): Map<String, Any>
     
-    // Search work orders by text - sama persis dengan Flutter
+    // Search work orders by text - exactly like Flutter
     @FormUrlEncoded
     @POST("cari_wo.php")
     suspend fun searchWorkOrdersByText(
@@ -167,13 +180,13 @@ interface ApiService {
         @Field("searchText") searchText: String
     ): List<Map<String, Any>>
     
-    // Count new work orders - sama persis dengan Flutter
+    // Count new work orders - exactly like Flutter
     @GET("count_new_wo.php")
     suspend fun countNewWorkOrders(
         @Query("propID") propID: String
     ): Map<String, Any>
     
-    // Update pending/done - sama persis dengan Flutter
+    // Update pending/done - exactly like Flutter
     @Multipart
     @POST("update_pending_done.php")
     suspend fun updatePendingDone(
@@ -181,16 +194,19 @@ interface ApiService {
         @Part("status") status: okhttp3.RequestBody,
         @Part("userName") userName: okhttp3.RequestBody,
         @Part("remarks") remarks: okhttp3.RequestBody,
+        @Part("doneBy") doneBy: okhttp3.RequestBody? = null,
+        @Part("timeDone") timeDone: okhttp3.RequestBody? = null,
+        @Part("timeSpent") timeSpent: okhttp3.RequestBody? = null,
         @Part photoFile: MultipartBody.Part? = null
     ): String
     
-    // Asset API - sama persis dengan Flutter
+    // Asset API - exactly like Flutter
     @GET("get_asset_detail.php")
     suspend fun getAssetDetail(
         @Query("noAsset") noAsset: String
     ): Map<String, Any>
     
-    // Maintenance APIs - sama persis dengan Flutter
+    // Maintenance APIs - exactly like Flutter
     @GET("get_maintenance_this_week.php")
     suspend fun getMaintenanceThisWeek(
         @Query("propID") propID: String
@@ -229,7 +245,9 @@ interface ApiService {
         @Query("propID") propID: String
     ): Map<String, Any>
     
-    // Support Ticket APIs - sama persis dengan Flutter
+    // Support Ticket APIs - exactly like Flutter
+
+    
     @FormUrlEncoded
     @POST("submit_support_ticket.php")
     suspend fun submitSupportTicket(

@@ -11,6 +11,7 @@ import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +24,7 @@ import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.services.UserService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.util.Timer
 import java.util.TimerTask
 
@@ -34,9 +36,9 @@ class HomeFragment : Fragment() {
     private lateinit var btnFilter: ImageButton
     private lateinit var tvEmpty: TextView
     
-    // Sama persis dengan Flutter _BacaWOViewState
+    // Exactly like Flutter _BacaWOViewState
     private var workOrders = mutableListOf<Map<String, Any>>()
-    private var isLoading = true
+    private var isLoading = false
     private var isLoadingMore = false
     private var hasMoreData = true
     private var currentPage = 1
@@ -46,18 +48,23 @@ class HomeFragment : Fragment() {
     private val statusCounts = mutableMapOf<String, Int>()
     private var isLoadingStatusCounts = true
     
-    // Sama persis dengan Flutter statusOptions
+    // Exactly like Flutter statusOptions
     private val statusOptions = listOf("", "new", "received", "on progress", "pending", "done")
     
-    // Search debounce timer (sama seperti Flutter)
+    // Search debounce timer (same as Flutter)
     private var searchDebounce: Timer? = null
     
     // RecyclerView adapter
     private lateinit var workOrderAdapter: WorkOrderAdapter
     
-    // Request codes
-    companion object {
-        private const val REQUEST_CHANGE_STATUS = 1001
+    // Activity result launcher for change status
+    private val changeStatusLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            // Refresh data after status change
+            refreshData()
+        }
     }
     
     override fun onCreateView(
@@ -159,7 +166,7 @@ class HomeFragment : Fragment() {
     private fun showFilterPopup() {
         val popup = PopupMenu(requireContext(), btnFilter)
         
-        // Load status counts when filter is opened (sama seperti Flutter)
+        // Load status counts when filter is opened (same as Flutter)
         lifecycleScope.launch {
             if (currentPropID != null && currentPropID!!.isNotEmpty()) {
                 val userDept = UserService.getCurrentDept()
@@ -222,110 +229,121 @@ class HomeFragment : Fragment() {
         // Navigate to change status activity
         val intent = android.content.Intent(context, com.sofindo.ems.activities.ChangeStatusWOActivity::class.java)
         intent.putExtra("workOrder", workOrder as java.io.Serializable)
-        startActivityForResult(intent, REQUEST_CHANGE_STATUS)
+        changeStatusLauncher.launch(intent)
     }
     
-    // Sama persis dengan Flutter _initializeData()
+    // Exactly like Flutter _initializeData()
     private fun initializeData() {
-        lifecycleScope.launch {
-            try {
-                // Get propID dan department sekaligus (sama seperti Flutter)
-                val propID = UserService.getCurrentPropID()
-                val userDept = UserService.getCurrentDept()
-                val finalDept = userDept ?: "Engineering"
-                
-                android.util.Log.d("HomeFragment", "Debug: propID = $propID")
-                android.util.Log.d("HomeFragment", "Debug: userDept = $userDept")
-                android.util.Log.d("HomeFragment", "Debug: finalDept = $finalDept")
-                
-                currentPropID = propID ?: ""
-                
-                if (!currentPropID.isNullOrEmpty()) {
-                    android.util.Log.d("HomeFragment", "Debug: Loading work orders...")
-                    // Hanya load work orders, counter filter TIDAK di-load otomatis
-                    // Counter filter akan di-load ketika user klik icon filter
-                    loadWorkOrdersParallel(finalDept)
-                } else {
-                    android.util.Log.e("HomeFragment", "Debug: propID is empty or null!")
-                    showEmptyState("No property ID found. Please login again.")
+        // Set loading state and show loading UI
+        isLoading = true
+        showLoadingState()
+        
+        // Try to get data synchronously first for faster initial load
+        val propIDSync = UserService.getCurrentPropIDSync()
+        val userDeptSync = UserService.getCurrentDeptSync()
+        
+        if (!propIDSync.isNullOrEmpty()) {
+            currentPropID = propIDSync
+            val finalDept = userDeptSync ?: "Engineering"
+            
+            // Start loading data immediately with sync data
+            loadWorkOrdersParallel(finalDept)
+        } else {
+            // Fallback to async if sync data not available
+            lifecycleScope.launch {
+                try {
+                    // Get propID and department at once (same as Flutter)
+                    val propID = UserService.getCurrentPropID()
+                    val userDept = UserService.getCurrentDept()
+                    val finalDept = userDept ?: "Engineering"
+                    
+                    // User data loaded
+                    
+                    currentPropID = propID ?: ""
+                    
+                    if (!currentPropID.isNullOrEmpty()) {
+                        // Only load work orders, counter filter is NOT loaded automatically
+                        // Counter filter will be loaded when user clicks filter icon
+                        loadWorkOrdersParallel(finalDept)
+                    } else {
+                        showEmptyState("No property ID found. Please login again.")
+                        isLoading = false
+                        isLoadingStatusCounts = false
+                    }
+                } catch (e: Exception) {
+                    showEmptyState("Error loading data: ${e.message}")
+                    isLoading = false
+                    isLoadingStatusCounts = false
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("HomeFragment", "Error initializing data: ${e.message}")
-                showEmptyState("Error loading data: ${e.message}")
-            } finally {
-                isLoading = false
-                isLoadingStatusCounts = false
-                updateUI()
             }
         }
     }
     
-    // Load work orders saja (tanpa status counts otomatis) - sama seperti Flutter
+            // Load work orders only (without automatic status counts) - same as Flutter
     private fun loadWorkOrdersParallel(department: String) {
         lifecycleScope.launch {
             try {
-                // Debug: Log untuk troubleshooting
-                android.util.Log.d("HomeFragment", "Loading work orders...")
-                android.util.Log.d("HomeFragment", "propID: $currentPropID")
-                android.util.Log.d("HomeFragment", "department: $department")
-                android.util.Log.d("HomeFragment", "status: $selectedStatus")
+                // Load work orders
                 
-                // Debug: Log the full URL
-                val fullUrl = "https://emshotels.net/apiKu/baca_wo.php?propID=${currentPropID}&woto=${department}&status=${selectedStatus}&page=1"
-                android.util.Log.d("HomeFragment", "Full API URL: $fullUrl")
+                // Fetch directly from API without cache with timeout
+                val workOrdersResult = withTimeout(15000) { // 15 seconds timeout
+                    RetrofitClient.apiService.getWorkOrders(
+                        propID = currentPropID!!,
+                        woto = department,
+                        status = selectedStatus,
+                        page = 1
+                    )
+                }
                 
-                // Fetch langsung dari API tanpa cache
-                val workOrdersResult = RetrofitClient.apiService.getWorkOrders(
-                    propID = currentPropID!!,
-                    woto = department,
-                    status = selectedStatus,
-                    page = 1
-                )
-                
-                android.util.Log.d("HomeFragment", "API Response received: ${workOrdersResult.size} items")
-                android.util.Log.d("HomeFragment", "API Response: $workOrdersResult")
+                // API response received
                 
                 if (isAdded) {
                     workOrders.clear()
                     workOrders.addAll(workOrdersResult)
                     hasMoreData = workOrdersResult.size >= 10
-                    currentPage = 2 // Set untuk next page
+                    currentPage = 2 // Set for next page
                     
-                    android.util.Log.d("HomeFragment", "workOrders updated: ${workOrders.size} items")
+                    // Work orders updated
                     
-                    updateUI()
-                    
-                    // Load counter filter setelah work orders berhasil di-load
-                    // Ini memastikan counter tersedia saat pertama kali filter diklik
+                    // Load counter filter after work orders are successfully loaded
+                    // This ensures counter is available when filter is first clicked
                     loadStatusCountsInBackground(department)
+                    
+                    // Set loading to false and update UI after data is loaded
+                    isLoading = false
+                    updateUI()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("HomeFragment", "Error loading work orders", e)
                 // Error loading work orders
                 if (isAdded) {
-                    showEmptyState("Failed to load work orders: ${e.message}")
+                    val errorMessage = when {
+                        e is kotlinx.coroutines.TimeoutCancellationException -> "Request timeout. Please check your connection."
+                        else -> "Failed to load work orders: ${e.message}"
+                    }
+                    showEmptyState(errorMessage)
+                    isLoading = false
                 }
             }
         }
     }
     
-    // Load status counts hanya ketika filter diklik - sama seperti Flutter
+            // Load status counts only when filter is clicked - same as Flutter
     private fun loadStatusCountsInBackground(department: String) {
         isLoadingStatusCounts = true
         
         lifecycleScope.launch {
             try {
-                // Load dari API get_all_statuses
+                // Load from API get_all_statuses
                 val statusData = RetrofitClient.apiService.getAllStatuses(
                     propID = currentPropID!!,
                     woto = department
                 )
                 
-                // Update status counts dari API
+                // Update status counts from API
                 updateStatusCountsFromAPI(statusData)
             } catch (e: Exception) {
                 // API get_all_statuses failed
-                // Set default values jika API gagal
+                // Set default values if API fails
                 statusCounts.clear()
                 statusCounts[""] = 0
                 statusCounts["new"] = 0
@@ -342,7 +360,7 @@ class HomeFragment : Fragment() {
         }
     }
     
-    // Optimasi: Update status counts dari API response - sama seperti Flutter
+            // Optimization: Update status counts from API response - same as Flutter
     private fun updateStatusCountsFromAPI(statusData: List<Map<String, Any>>) {
         if (!isAdded) return
         
@@ -361,16 +379,16 @@ class HomeFragment : Fragment() {
             totalCount += count
         }
         
-        statusCounts[""] = totalCount // Total untuk "All"
+        statusCounts[""] = totalCount // Total for "All"
         
-        // Pastikan semua status yang diperlukan ada
+        // Ensure all required statuses exist
         for (status in statusOptions) {
             if (status.isNotEmpty() && !statusCounts.containsKey(status)) {
                 statusCounts[status] = 0
             }
         }
         
-        // Pastikan 'new' ada
+        // Ensure 'new' exists
         if (!statusCounts.containsKey("new")) {
             statusCounts["new"] = 0
         }
@@ -383,6 +401,8 @@ class HomeFragment : Fragment() {
         if (reset) {
             isLoading = true
             isLoadingMore = false
+            // Show loading state for reset operations
+            showLoadingState()
         } else {
             isLoadingMore = true
         }
@@ -399,18 +419,21 @@ class HomeFragment : Fragment() {
                     if (currentPropID.isNullOrEmpty()) {
                         isLoading = false
                         isLoadingMore = false
+                        showEmptyState("No property ID found. Please login again.")
                         return@launch
                     }
                     
                     val userDept = UserService.getCurrentDept()
                     val finalDept = userDept ?: "Engineering"
                     
-                    val workOrdersResult = RetrofitClient.apiService.getWorkOrders(
-                        propID = currentPropID!!,
-                        woto = finalDept,
-                        status = selectedStatus,
-                        page = currentPage
-                    )
+                    val workOrdersResult = withTimeout(15000) { // 15 seconds timeout
+                        RetrofitClient.apiService.getWorkOrders(
+                            propID = currentPropID!!,
+                            woto = finalDept,
+                            status = selectedStatus,
+                            page = currentPage
+                        )
+                    }
                     
                     if (isAdded) {
                         if (reset) {
@@ -430,14 +453,18 @@ class HomeFragment : Fragment() {
                         isLoadingMore = false
                         updateUI()
                         
-                        // Status counts TIDAK di-update otomatis, hanya ketika filter diklik
+                        // Status counts are NOT updated automatically, only when filter is clicked
                     }
                 }
             } catch (e: Exception) {
                 if (isAdded) {
                     isLoading = false
                     isLoadingMore = false
-                    Toast.makeText(context, "Failed to load work orders: ${e.message}", Toast.LENGTH_SHORT).show()
+                    val errorMessage = when {
+                        e is kotlinx.coroutines.TimeoutCancellationException -> "Request timeout. Please check your connection."
+                        else -> "Failed to load work orders: ${e.message}"
+                    }
+                    showEmptyState(errorMessage)
                 }
             }
         }
@@ -447,12 +474,12 @@ class HomeFragment : Fragment() {
         loadData(reset = true)
     }
     
-    // Load more data for infinite scroll - sama persis dengan Flutter
+            // Load more data for infinite scroll - exactly like Flutter
     private fun loadMoreData() {
         loadData(reset = false)
     }
     
-    // Search dengan debounce - sama seperti Flutter onSearchChanged
+            // Search with debounce - same as Flutter onSearchChanged
     private fun onSearchChanged(value: String) {
         searchText = value
         
@@ -471,7 +498,7 @@ class HomeFragment : Fragment() {
         }, 500) // 500ms debounce
     }
     
-    // Get filtered work orders based on search text - optimasi performa (sama seperti Flutter)
+            // Get filtered work orders based on search text - performance optimization (same as Flutter)
     private fun getFilteredWorkOrders(): List<Map<String, Any>> {
         if (searchText.isEmpty()) {
             return workOrders
@@ -491,35 +518,30 @@ class HomeFragment : Fragment() {
         searchText = ""
         searchView.setText("")
         
-        // Load data dan update status counts - sama persis dengan Flutter
+        // Load data and update status counts - exactly like Flutter
         loadData(reset = true)
         
-        // Setelah data loaded, update status counts untuk filter baru
-        // Status counts akan di-load di background
+        // After data is loaded, update status counts for new filter
+        // Status counts will be loaded in background
     }
     
     private fun updateUI() {
         swipeRefreshLayout.isRefreshing = false
         
-        android.util.Log.d("HomeFragment", "updateUI called")
-        android.util.Log.d("HomeFragment", "workOrders size: ${workOrders.size}")
-        android.util.Log.d("HomeFragment", "searchText: '$searchText'")
-        
         val filteredData = getFilteredWorkOrders()
-        android.util.Log.d("HomeFragment", "filteredData size: ${filteredData.size}")
         
-        if (filteredData.isEmpty()) {
+        if (isLoading) {
+            // Still loading, keep showing loading state
+            showLoadingState()
+        } else if (filteredData.isEmpty()) {
             if (searchText.isNotEmpty()) {
-                android.util.Log.d("HomeFragment", "Showing empty state for search")
                 showEmptyState("No search results")
             } else {
-                android.util.Log.d("HomeFragment", "Showing empty state - no data")
                 showEmptyState("No work orders")
             }
         } else {
-            android.util.Log.d("HomeFragment", "Hiding empty state, showing data")
             hideEmptyState()
-            // Update RecyclerView adapter dengan filteredData
+            // Update RecyclerView adapter with filteredData
             workOrderAdapter.updateData(filteredData)
         }
     }
@@ -535,14 +557,13 @@ class HomeFragment : Fragment() {
         recyclerView.visibility = View.VISIBLE
     }
     
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        
-        if (requestCode == REQUEST_CHANGE_STATUS && resultCode == android.app.Activity.RESULT_OK) {
-            // Refresh data after status change
-            refreshData()
-        }
+    private fun showLoadingState() {
+        tvEmpty.text = "Loading work orders..."
+        tvEmpty.visibility = View.VISIBLE
+        recyclerView.visibility = View.GONE
     }
+    
+
     
     override fun onDestroy() {
         super.onDestroy()

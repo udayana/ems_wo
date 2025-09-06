@@ -34,7 +34,7 @@
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentTop="true"
                     android:src="@drawable/ic_edit"
-                    android:tint="@color/primary"
+                    app:tint="@color/primary"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:padding="4dp" />
 
@@ -118,7 +118,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_email_simple"
-                            android:tint="@color/primary" />
+                            app:tint="@color/primary" />
 
                     </LinearLayout>
 
@@ -164,7 +164,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_phone_simple"
-                            android:tint="@color/primary" />
+                            app:tint="@color/primary" />
 
                     </LinearLayout>
 
@@ -204,52 +204,156 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Change Password Button -->
-            <Button
+            <!-- Change Password Label -->
+            <LinearLayout
                 android:id="@+id/btn_change_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Change Password"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:background="@drawable/outline_button_background"
-                android:textColor="@color/primary"
-                android:padding="12dp"
-                android:layout_marginBottom="12dp"
-                android:drawableStart="@drawable/ic_lock"
-                android:drawablePadding="6dp"
-                android:gravity="center" />
+                android:background="@drawable/label_button_background"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
 
-            <!-- Help &amp; Support Button -->
-            <Button
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_lock"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Change Password"
+                    android:textSize="14sp"
+                    android:textColor="@color/black"
+                    android:textStyle="normal" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/gray" />
+
+            </LinearLayout>
+
+            <!-- Help &amp; Support Label -->
+            <LinearLayout
                 android:id="@+id/btn_help_support"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Help &amp; Support"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:background="@drawable/outline_button_background"
-                android:textColor="@color/primary"
-                android:padding="12dp"
-                android:layout_marginBottom="16dp"
-                android:drawableStart="@drawable/ic_help"
-                android:drawablePadding="6dp"
-                android:gravity="center" />
+                android:background="@drawable/label_button_background"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
 
-            <!-- Logout Button -->
-            <Button
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_help"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Help &amp; Support"
+                    android:textSize="14sp"
+                    android:textColor="@color/black"
+                    android:textStyle="normal" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/gray" />
+
+            </LinearLayout>
+
+            <!-- Update Label -->
+            <LinearLayout
+                android:id="@+id/btn_update"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/label_button_background"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_update"
+                    app:tint="@color/primary"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Update"
+                    android:textSize="14sp"
+                    android:textColor="@color/black"
+                    android:textStyle="normal" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/gray" />
+
+            </LinearLayout>
+
+            <!-- Logout Label -->
+            <LinearLayout
                 android:id="@+id/btn_logout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Logout"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:background="@drawable/logout_button_background"
-                android:textColor="@color/error"
-                android:padding="12dp"
-                android:drawableStart="@drawable/ic_logout"
-                android:drawablePadding="6dp"
-                android:gravity="center" />
+                android:background="@drawable/label_button_background"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_logout"
+                    app:tint="@color/error"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Logout"
+                    android:textSize="14sp"
+                    android:textColor="@color/error"
+                    android:textStyle="normal" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/gray" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

@@ -29,9 +29,10 @@ class ProfileFragment : Fragment() {
     private lateinit var tvName: TextView
     private lateinit var tvEmail: TextView
     private lateinit var tvPhone: TextView
-    private lateinit var btnChangePassword: Button
-    private lateinit var btnHelpSupport: Button
-    private lateinit var btnLogout: Button
+    private lateinit var btnChangePassword: View
+    private lateinit var btnHelpSupport: View
+    private lateinit var btnUpdate: View
+    private lateinit var btnLogout: View
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -64,6 +65,7 @@ class ProfileFragment : Fragment() {
         tvPhone = view.findViewById(R.id.tv_phone)
         btnChangePassword = view.findViewById(R.id.btn_change_password)
         btnHelpSupport = view.findViewById(R.id.btn_help_support)
+        btnUpdate = view.findViewById(R.id.btn_update)
         btnLogout = view.findViewById(R.id.btn_logout)
     }
     
@@ -78,6 +80,10 @@ class ProfileFragment : Fragment() {
         
         btnHelpSupport.setOnClickListener {
             navigateToSupport()
+        }
+        
+        btnUpdate.setOnClickListener {
+            openGooglePlayStore()
         }
         
         btnLogout.setOnClickListener {
@@ -119,7 +125,7 @@ class ProfileFragment : Fragment() {
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("ProfileFragment", "Error loading user data: ${e.message}")
+                // Error loading user data
             }
         }
     }
@@ -190,12 +196,33 @@ class ProfileFragment : Fragment() {
                 requireActivity().finish()
                 
             } catch (e: Exception) {
-                android.util.Log.e("ProfileFragment", "Error during logout", e)
                 // Still logout even if there's an error
                 val intent = Intent(requireContext(), LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
                 requireActivity().finish()
+            }
+        }
+    }
+    
+    private fun openGooglePlayStore() {
+        try {
+            // Try to open Google Play Store for this app
+            val packageName = requireContext().packageName
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
+            startActivity(intent)
+        } catch (e: Exception) {
+            try {
+                // Fallback to web browser if Play Store app is not available
+                val packageName = requireContext().packageName
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))
+                startActivity(intent)
+            } catch (e2: Exception) {
+                Toast.makeText(
+                    requireContext(),
+                    "Cannot open Google Play Store",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }

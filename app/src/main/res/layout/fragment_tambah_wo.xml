@@ -57,28 +57,17 @@
             android:padding="16dp"
             android:layout_marginBottom="20dp">
 
-            <!-- Department Section -->
+            <!-- To Dropdown Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
+                android:orientation="vertical"
                 android:layout_marginBottom="12dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="To:"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/black"
-                    android:layout_marginEnd="12dp" />
 
                 <Spinner
                     android:id="@+id/spinner_department"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
                     android:background="@drawable/spinner_background"
                     android:padding="10dp"
                     android:popupBackground="@drawable/dropdown_popup_background"
@@ -86,7 +75,7 @@
 
             </LinearLayout>
 
-            <!-- Location Section -->
+            <!-- Location Input Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -96,26 +85,27 @@
                 <EditText
                     android:id="@+id/et_location"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Enter location"
+                    android:layout_height="48dp"
+                    android:hint="Location"
                     android:background="@drawable/edittext_background"
                     android:padding="10dp"
                     android:textSize="14sp"
                     android:inputType="text"
                     android:textColor="@color/black"
-                    android:textColorHint="@color/text_secondary" />
-
-                <!-- Location Suggestions -->
-                <LinearLayout
-                    android:id="@+id/layout_location_suggestions"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/suggestions_background"
-                    android:layout_marginTop="4dp"
-                    android:visibility="gone" />
+                    android:textColorHint="@color/text_secondary"
+                    android:gravity="center_vertical" />
 
             </LinearLayout>
+
+            <!-- Location Suggestions -->
+            <LinearLayout
+                android:id="@+id/layout_location_suggestions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/suggestions_background"
+                android:layout_marginTop="4dp"
+                android:visibility="gone" />
 
             <!-- Job Description Section -->
             <LinearLayout
@@ -155,19 +145,10 @@
                     android:orientation="vertical"
                     android:layout_marginEnd="8dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Category"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/black"
-                        android:layout_marginBottom="8dp" />
-
                     <Spinner
                         android:id="@+id/spinner_category"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:background="@drawable/spinner_background"
                         android:padding="10dp"
                         android:popupBackground="@drawable/dropdown_popup_background"
@@ -183,19 +164,10 @@
                     android:orientation="vertical"
                     android:layout_marginStart="8dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Priority"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/black"
-                        android:layout_marginBottom="8dp" />
-
                     <Spinner
                         android:id="@+id/spinner_priority"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:background="@drawable/spinner_background"
                         android:padding="10dp"
                         android:popupBackground="@drawable/dropdown_popup_background"
@@ -228,8 +200,8 @@
 
                 <ImageView
                     android:id="@+id/iv_photo_preview"
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:layout_marginStart="12dp"
                     android:background="@drawable/photo_preview_background"
                     android:scaleType="centerCrop"

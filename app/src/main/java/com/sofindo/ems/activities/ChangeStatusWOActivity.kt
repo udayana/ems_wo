@@ -25,7 +25,7 @@ class ChangeStatusWOActivity : AppCompatActivity() {
     private var userName: String = ""
     private var isLoading = false
     
-    // Status list sesuai dengan Flutter
+    // Status list matching Flutter implementation
     private val statusList = listOf("received", "on progress", "pending", "done")
     
     // UI Components
@@ -42,7 +42,7 @@ class ChangeStatusWOActivity : AppCompatActivity() {
         @Suppress("UNCHECKED_CAST")
         workOrder = intent.getSerializableExtra("workOrder") as? Map<String, Any> ?: emptyMap()
         
-        // Get current user - akan di-set nanti saat update status
+        // Get current user - will be set later when updating status
         userName = ""
         
         setupToolbar()
@@ -130,9 +130,9 @@ class ChangeStatusWOActivity : AppCompatActivity() {
     }
     
     private fun onStatusSelected(status: String) {
-        // Jika status adalah pending atau done, langsung buka form tambahan
+        // If status is pending or done, directly open additional form
         if (status == "pending" || status == "done") {
-            // Navigate langsung ke ChangePendingDoneActivity tanpa dialog
+            // Navigate directly to ChangePendingDoneActivity without dialog
             val intent = Intent(this, ChangePendingDoneActivity::class.java)
             intent.putExtra("workOrder", workOrder as java.io.Serializable)
             intent.putExtra("status", status)
@@ -153,32 +153,27 @@ class ChangeStatusWOActivity : AppCompatActivity() {
         isLoading = true
         showLoading(true)
         
-        android.util.Log.d("ChangeStatusWO", "Updating status to: $newStatus")
-        android.util.Log.d("ChangeStatusWO", "Work Order: ${workOrder["nour"]}")
-        
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val user = UserService.getCurrentUser()
                 val userName = user?.username ?: ""
                 
-                android.util.Log.d("ChangeStatusWO", "User: $userName")
-                
                 val success = callUpdateStatusAPI(newStatus, userName)
                 
                 withContext(Dispatchers.Main) {
                     if (success) {
-                        // Berhasil update
+                        // Successfully updated
                         Toast.makeText(
                             this@ChangeStatusWOActivity,
                             "Status berhasil diupdate ke: ${newStatus.uppercase()}",
                             Toast.LENGTH_LONG
                         ).show()
                         
-                        // Return result untuk refresh
+                        // Return result for refresh
                         setResult(RESULT_OK)
                         finish()
                     } else {
-                        // Gagal update
+                        // Failed to update
                         Toast.makeText(
                             this@ChangeStatusWOActivity,
                             "Gagal mengupdate status",
@@ -205,27 +200,18 @@ class ChangeStatusWOActivity : AppCompatActivity() {
     
     private suspend fun callUpdateStatusAPI(newStatus: String, userName: String): Boolean {
         return try {
-            // Debug: Log semua field yang tersedia di work order
-            android.util.Log.d("ChangeStatusWO", "=== WORK ORDER FIELDS ===")
-            workOrder.forEach { (key, value) ->
-                android.util.Log.d("ChangeStatusWO", "$key: $value")
-            }
             
-            // Gunakan woId (primary key) untuk update status, bukan nour
+            // Use woId (primary key) to update status, not nour
             val woId = workOrder["woId"]?.toString() ?: ""
             
-            // Prepare timeAccept for status 'received' (sesuai PHP)
+            // Prepare timeAccept for status 'received' (matching PHP)
             val timeAccept = if (newStatus.lowercase() == "received") {
                 SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             } else {
                 null
             }
             
-            android.util.Log.d("ChangeStatusWO", "Calling API with:")
-            android.util.Log.d("ChangeStatusWO", "woId: $woId")
-            android.util.Log.d("ChangeStatusWO", "status: $newStatus")
-            android.util.Log.d("ChangeStatusWO", "userName: $userName")
-            android.util.Log.d("ChangeStatusWO", "timeAccept: $timeAccept")
+            // Call API with parameters
             
             // Call API using RetrofitClient
             val response = RetrofitClient.apiService.updateWorkOrderStatus(
@@ -235,16 +221,11 @@ class ChangeStatusWOActivity : AppCompatActivity() {
                 timeAccept = timeAccept
             )
             
-            android.util.Log.d("ChangeStatusWO", "Raw API Response: '$response'")
-            
-            // Simple response parsing sesuai PHP (Success/Failed)
+            // Simple response parsing matching PHP (Success/Failed)
             val success = response.trim().equals("Success", ignoreCase = true)
-            
-            android.util.Log.d("ChangeStatusWO", "Parsed success: $success")
             
             success
         } catch (e: Exception) {
-            android.util.Log.e("ChangeStatusWO", "API Error: ${e.message}", e)
             false
         }
     }
@@ -268,7 +249,7 @@ class ChangeStatusWOActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_PENDING_DONE && resultCode == RESULT_OK) {
-            // Status berhasil diupdate, kembali ke home
+            // Status successfully updated, return to home
             setResult(RESULT_OK)
             finish()
         }

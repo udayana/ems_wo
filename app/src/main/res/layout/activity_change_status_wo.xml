@@ -11,7 +11,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#4CAF50"
+        android:background="#FF1ABC9C"
         android:elevation="0dp"
         app:titleTextColor="#FFFFFF"
         app:title="Update Status" />

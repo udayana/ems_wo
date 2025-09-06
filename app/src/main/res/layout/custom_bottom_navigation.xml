@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:background="@color/swift_tab_background"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <!-- Home Tab -->
+    <LinearLayout
+        android:id="@+id/tab_home"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless">
+
+        <ImageView
+            android:id="@+id/icon1"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_home"
+            android:tint="@color/bottom_nav_item_color" />
+
+        <TextView
+            android:id="@+id/text1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Home"
+            android:textSize="11sp"
+            android:textColor="@color/bottom_nav_item_color"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+    <!-- Out Tab -->
+    <LinearLayout
+        android:id="@+id/tab_out"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless">
+
+        <ImageView
+            android:id="@+id/icon2"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_send"
+            android:tint="@color/bottom_nav_item_color" />
+
+        <TextView
+            android:id="@+id/text2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Out"
+            android:textSize="11sp"
+            android:textColor="@color/bottom_nav_item_color"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+    <!-- Add Tab -->
+    <LinearLayout
+        android:id="@+id/tab_add"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless">
+
+        <ImageView
+            android:id="@+id/icon3"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_add_circle"
+            android:tint="@color/bottom_nav_item_color" />
+
+        <TextView
+            android:id="@+id/text3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add"
+            android:textSize="11sp"
+            android:textColor="@color/bottom_nav_item_color"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+    <!-- Maint Tab -->
+    <LinearLayout
+        android:id="@+id/tab_maint"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless">
+
+        <ImageView
+            android:id="@+id/icon4"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_build"
+            android:tint="@color/bottom_nav_item_color" />
+
+        <TextView
+            android:id="@+id/text4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Maint"
+            android:textSize="11sp"
+            android:textColor="@color/bottom_nav_item_color"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+    <!-- Profile Tab -->
+    <LinearLayout
+        android:id="@+id/tab_profile"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless">
+
+        <ImageView
+            android:id="@+id/icon5"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_person"
+            android:tint="@color/bottom_nav_item_color" />
+
+        <TextView
+            android:id="@+id/text5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Profile"
+            android:textSize="11sp"
+            android:textColor="@color/bottom_nav_item_color"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

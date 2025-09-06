@@ -25,6 +25,7 @@ import com.bumptech.glide.Glide
 import com.sofindo.ems.R
 import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.services.UserService
+import com.sofindo.ems.utils.PermissionUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,7 +91,6 @@ class ChangePendingDoneActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val user = UserService.getCurrentUser()
             userName = user?.username ?: ""
-            android.util.Log.d("ChangePendingDone", "Current user: $userName")
         }
         
         initViews()
@@ -148,7 +148,7 @@ class ChangePendingDoneActivity : AppCompatActivity() {
     
     private fun checkCameraPermission() {
         when {
-            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED -> {
+            PermissionUtils.isCameraPermissionGranted(this) -> {
                 openCamera()
             }
             else -> {
@@ -261,25 +261,86 @@ class ChangePendingDoneActivity : AppCompatActivity() {
         }
     }
     
+    private fun calculateTimeSpent(startTime: String?, doneTime: String?): String {
+        if (startTime.isNullOrEmpty() || doneTime.isNullOrEmpty()) {
+            return "N/A"
+        }
+
+        // Check if done time is "0000-00-00" or similar empty date format
+        if (doneTime == "0000-00-00" || 
+            doneTime == "0000-00-00 00:00:00" || 
+            doneTime.contains("0000-00-00")) {
+            return "-"
+        }
+
+        return try {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val start = dateFormat.parse(startTime)
+            val done = dateFormat.parse(doneTime)
+            
+            if (start == null || done == null) {
+                return "Invalid date format"
+            }
+            
+            val differenceInMillis = done.time - start.time
+            
+            if (differenceInMillis < 0) {
+                return "Invalid time range"
+            }
+
+            val totalMinutes = differenceInMillis / (1000 * 60)
+            val totalHours = differenceInMillis / (1000 * 60 * 60)
+            val totalDays = differenceInMillis / (1000 * 60 * 60 * 24)
+            
+            // Calculate months manually
+            val calendarStart = Calendar.getInstance()
+            calendarStart.time = start
+            val calendarDone = Calendar.getInstance()
+            calendarDone.time = done
+            
+            val totalMonths = (calendarDone.get(Calendar.YEAR) - calendarStart.get(Calendar.YEAR)) * 12 + 
+                             (calendarDone.get(Calendar.MONTH) - calendarStart.get(Calendar.MONTH))
+
+            when {
+                totalMonths > 0 -> "$totalMonths month${if (totalMonths > 1) "s" else ""}"
+                totalDays > 0 -> "$totalDays day${if (totalDays > 1) "s" else ""}"
+                totalHours > 0 -> "$totalHours hour${if (totalHours > 1) "s" else ""}"
+                totalMinutes > 0 -> "$totalMinutes minute${if (totalMinutes > 1) "s" else ""}"
+                else -> "Less than 1 minute"
+            }
+        } catch (e: Exception) {
+            "Invalid date format"
+        }
+    }
+
     private suspend fun callUpdatePendingDoneAPI(remarks: String): Boolean {
         return try {
             val woId = workOrder["woId"]?.toString() ?: ""
             
-            // Format remarks seperti di Flutter
+            // Format remarks like in Flutter
             val currentTime = SimpleDateFormat("dd MMM yyyy  HH:mm", Locale.getDefault()).format(Date())
             val finalRemarks = "$currentTime -> ${status.uppercase()}  ( $userName ) : $remarks"
-            
-            android.util.Log.d("ChangePendingDone", "Calling API with:")
-            android.util.Log.d("ChangePendingDone", "woId: $woId")
-            android.util.Log.d("ChangePendingDone", "status: $status")
-            android.util.Log.d("ChangePendingDone", "userName: $userName")
-            android.util.Log.d("ChangePendingDone", "remarks: $finalRemarks")
             
             // Prepare RequestBody for text fields
             val woIdBody = woId.toRequestBody("text/plain".toMediaTypeOrNull())
             val statusBody = status.toRequestBody("text/plain".toMediaTypeOrNull())
             val userNameBody = userName.toRequestBody("text/plain".toMediaTypeOrNull())
             val remarksBody = finalRemarks.toRequestBody("text/plain".toMediaTypeOrNull())
+            
+            // Prepare additional parameters for status 'done'
+            var doneByBody: okhttp3.RequestBody? = null
+            var timeDoneBody: okhttp3.RequestBody? = null
+            var timeSpentBody: okhttp3.RequestBody? = null
+            
+            if (status.lowercase() == "done") {
+                val currentTimeISO = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val startTime = workOrder["mulainya"]?.toString()
+                val timeSpent = calculateTimeSpent(startTime, currentTimeISO)
+                
+                doneByBody = userName.toRequestBody("text/plain".toMediaTypeOrNull())
+                timeDoneBody = currentTimeISO.toRequestBody("text/plain".toMediaTypeOrNull())
+                timeSpentBody = timeSpent.toRequestBody("text/plain".toMediaTypeOrNull())
+            }
             
             // Prepare photo file if selected
             val photoPart = selectedImageFile?.let { file ->
@@ -294,19 +355,17 @@ class ChangePendingDoneActivity : AppCompatActivity() {
                 status = statusBody,
                 userName = userNameBody,
                 remarks = remarksBody,
+                doneBy = doneByBody,
+                timeDone = timeDoneBody,
+                timeSpent = timeSpentBody,
                 photoFile = photoPart
             )
-            
-            android.util.Log.d("ChangePendingDone", "Raw API Response: '$response'")
             
             // Simple response parsing
             val success = response.trim().equals("Success", ignoreCase = true)
             
-            android.util.Log.d("ChangePendingDone", "Parsed success: $success")
-            
             success
         } catch (e: Exception) {
-            android.util.Log.e("ChangePendingDone", "API Error: ${e.message}", e)
             false
         }
     }

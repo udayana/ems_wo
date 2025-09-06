@@ -270,35 +270,7 @@ class EditProfileFragment : Fragment() {
         }
     }
     
-    private suspend fun resizeAndCompressImage(uri: Uri): ByteArray = withContext(Dispatchers.IO) {
-        val inputStream = requireContext().contentResolver.openInputStream(uri)
-        val originalBitmap = BitmapFactory.decodeStream(inputStream)
-        
-        // Resize image proportionally
-        val maxSize = 640
-        val width = originalBitmap.width
-        val height = originalBitmap.height
-        
-        val scaleFactor = if (width > height) {
-            maxSize.toFloat() / width
-        } else {
-            maxSize.toFloat() / height
-        }
-        
-        val newWidth = (width * scaleFactor).toInt()
-        val newHeight = (height * scaleFactor).toInt()
-        
-        val resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true)
-        
-        // Compress to JPEG
-        val outputStream = ByteArrayOutputStream()
-        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
-        
-        originalBitmap.recycle()
-        resizedBitmap.recycle()
-        
-        outputStream.toByteArray()
-    }
+
     
     private fun updateUploadUI() {
         if (isUploading) {

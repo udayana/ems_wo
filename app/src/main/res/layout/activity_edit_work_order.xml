@@ -121,7 +121,7 @@
                         android:layout_gravity="center_vertical"
                         android:layout_marginEnd="8dp"
                         android:src="@drawable/ic_calendar"
-                        app:tint="@color/green" />
+                        app:tint="@color/primary" />
 
                     <TextView
                         android:id="@+id/tv_wo_date"
@@ -292,6 +292,8 @@
                 </LinearLayout>
 
             </LinearLayout>
+
+
 
             <!-- Buttons -->
             <LinearLayout

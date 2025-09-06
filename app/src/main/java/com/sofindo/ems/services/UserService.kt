@@ -63,6 +63,15 @@ object UserService {
         return@withContext prefs.getString(KEY_DEPT, null)
     }
     
+    // Synchronous versions for faster access
+    fun getCurrentPropIDSync(): String? {
+        return prefs.getString(KEY_PROP_ID, null)
+    }
+    
+    fun getCurrentDeptSync(): String? {
+        return prefs.getString(KEY_DEPT, null)
+    }
+    
     suspend fun getCurrentUsername(): String? = withContext(Dispatchers.IO) {
         return@withContext prefs.getString(KEY_USERNAME, null)
     }
@@ -73,10 +82,8 @@ object UserService {
     
     // Logout but keep user data for display (similar to Flutter implementation)
     suspend fun logout() = withContext(Dispatchers.IO) {
-        android.util.Log.d("UserService", "Logging out user (keeping display data)...")
         // Only remove propID, keep user data for display
         prefs.edit().remove(KEY_PROP_ID).apply()
-        android.util.Log.d("UserService", "Logout completed")
     }
     
     // Get user data for display (even if logged out)
@@ -100,7 +107,6 @@ object UserService {
     suspend fun isLoggedIn(): Boolean = withContext(Dispatchers.IO) {
         val propID = prefs.getString(KEY_PROP_ID, null)
         val hasPropID = !propID.isNullOrEmpty()
-        android.util.Log.d("UserService", "Login check result: $hasPropID (propID: $propID)")
         return@withContext hasPropID
     }
 }

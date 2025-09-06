@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingTop="8dp">
 
     <!-- Search and Filter Bar -->
     <LinearLayout
@@ -11,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:background="#424242">
+        android:background="?attr/colorSurface">
 
         <EditText
             android:id="@+id/search_view"
@@ -19,8 +20,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Search WO Out"
-            android:textColor="#000000"
-            android:textColorHint="#666666"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="?attr/colorOnSurface"
             android:background="@drawable/input_background"
             android:padding="12dp"
             android:textSize="14sp"
@@ -34,7 +35,7 @@
             android:layout_marginStart="8dp"
             android:src="@drawable/ic_filter_list"
             android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="#4CAF50"
+            app:tint="?attr/colorPrimary"
             android:contentDescription="Filter" />
 
     </LinearLayout>
@@ -62,8 +63,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="No outbox items found"
+                android:text=""
                 android:textSize="16sp"
+                android:textColor="?attr/colorOnSurface"
                 android:visibility="gone" />
 
         </FrameLayout>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Custom Bottom Navigation Text Style -->
+    <style name="BottomNavTextStyle" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">11sp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:lineSpacingExtra">0dp</item>
+    </style>
+
+
+</resources>

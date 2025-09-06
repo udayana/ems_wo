@@ -13,8 +13,9 @@
         android:layout_height="?attr/actionBarSize"
         android:background="@color/blue"
         app:navigationIcon="@drawable/ic_arrow_back"
-        app:title="Maintenance Tasks"
-        app:titleTextColor="@color/white" />
+        app:title="Tasks"
+        app:titleTextColor="@color/white"
+        />
 
     <!-- Loading State -->
     <ProgressBar
@@ -39,7 +40,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:src="@drawable/ic_error_outline"
-            android:tint="@color/red" />
+            app:tint="@color/red" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -82,7 +83,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:paddingBottom="100dp">
 
             <!-- Job Details -->
             <LinearLayout
@@ -126,7 +128,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_status_done"
-                    android:tint="@color/blue"
+                    app:tint="@color/blue"
                     android:layout_marginEnd="8dp" />
 
                 <TextView
@@ -195,6 +197,7 @@
                 android:id="@+id/btn_submit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
                 android:text="Submit Maintenance (0/0)"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -203,6 +206,11 @@
                 android:padding="16dp"
                 android:drawableStart="@drawable/ic_status_done"
                 android:drawablePadding="8dp" />
+
+            <!-- Spacer to avoid bottom tab -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="100dp" />
 
         </LinearLayout>
 

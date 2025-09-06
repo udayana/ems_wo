@@ -43,7 +43,7 @@ object ProfileService {
                     return@withContext mapOf<String, Any>("success" to false, "message" to "Image file too large (max 10MB)")
                 }
 
-                // Create multipart request - sama dengan Flutter yang berhasil
+                // Create multipart request - same as successful Flutter implementation
                 val requestBody = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("userID", userID)
@@ -65,25 +65,25 @@ object ProfileService {
                 val response = client.newCall(request).execute()
                 val responseBody = response.body?.string() ?: ""
                 
-                // Parse response - sama dengan Flutter (text parsing, bukan JSON)
+                // Parse response - same as Flutter (text parsing, not JSON)
                 val responseText = responseBody.lowercase()
                 
                 // Clean up temp file
                 file.delete()
                 
-                // Jika response mengandung SUCCESS, anggap berhasil
+                // If response contains SUCCESS, assume successful
                 if (responseText.contains("success")) {
                     mapOf<String, Any>("success" to true, "message" to "Upload successful")
                 }
-                // Jika response mengandung error yang jelas, anggap gagal
+                // If response contains clear error, assume failed
                 else if (responseText.contains("error") || responseText.contains("failed") || responseText.contains("exception")) {
                     mapOf<String, Any>("success" to false, "message" to responseBody)
                 }
-                // Jika tidak ada error yang jelas dan ada data file, anggap berhasil
+                // If no clear error and file data exists, assume successful
                 else if (responseText.contains("tmp_name") || responseText.contains("size")) {
                     mapOf<String, Any>("success" to true, "message" to "Upload successful")
                 }
-                // Default: anggap berhasil jika tidak ada error
+                // Default: assume successful if no error
                 else {
                     mapOf<String, Any>("success" to true, "message" to "Upload successful")
                 }

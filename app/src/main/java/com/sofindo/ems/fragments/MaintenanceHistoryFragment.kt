@@ -79,7 +79,7 @@ class MaintenanceHistoryFragment : Fragment() {
     }
     
     private fun setupToolbar() {
-        toolbar.title = "Maintenance History - $propertyName"
+        toolbar.title = propertyName
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back)
         toolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
@@ -120,14 +120,10 @@ class MaintenanceHistoryFragment : Fragment() {
                     throw Exception("Property ID tidak ditemukan. Silakan login ulang.")
                 }
                 
-                android.util.Log.d("MaintenanceHistory", "Loading history for mntId: $mntId, propID: $currentPropID")
-                
                 val historyData = MaintenanceService.getMaintenanceHistory(
                     mntId = mntId,
                     propID = currentPropID
                 )
-                
-                android.util.Log.d("MaintenanceHistory", "History data loaded: ${historyData.size} records")
                 
                 historyList.clear()
                 historyList.addAll(historyData)
@@ -137,7 +133,6 @@ class MaintenanceHistoryFragment : Fragment() {
                 updateUI()
                 
             } catch (e: Exception) {
-                android.util.Log.e("MaintenanceHistory", "Error loading history: ${e.message}")
                 showError(true, e.message ?: "Terjadi kesalahan saat memuat data")
             } finally {
                 isLoading = false

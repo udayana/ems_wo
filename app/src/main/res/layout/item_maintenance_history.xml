@@ -6,7 +6,7 @@
     android:layout_marginBottom="16dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
-    app:strokeColor="@color/green"
+    app:strokeColor="@color/primary"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -18,7 +18,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/green_light"
+            android:background="@color/primary_light"
             android:orientation="horizontal"
             android:padding="16dp"
             android:gravity="center_vertical">
@@ -27,7 +27,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/ic_calendar"
-                android:tint="@color/green" />
+                app:tint="@color/primary" />
 
             <TextView
                 android:id="@+id/tv_date"
@@ -36,7 +36,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:text="24 August 2025"
-                android:textColor="@color/green"
+                android:textColor="@color/primary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -48,7 +48,7 @@
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp"
                 android:text="Record 1"
-                android:textColor="@color/green"
+                android:textColor="@color/primary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -80,14 +80,14 @@
                         android:layout_width="18dp"
                         android:layout_height="18dp"
                         android:src="@drawable/ic_task"
-                        android:tint="@color/green" />
+                        app:tint="@color/primary" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:text="Job Task"
-                        android:textColor="@color/green"
+                        android:textColor="@color/primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -100,55 +100,13 @@
                     android:background="@drawable/content_background"
                     android:padding="12dp"
                     android:text="25331 - Maintenance Genset 1 at Genset Room"
-                    android:textColor="@color/green"
+                    android:textColor="@color/primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
             </LinearLayout>
 
-            <!-- Done By Section -->
-            <LinearLayout
-                android:id="@+id/layout_done_by"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="16dp">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@drawable/ic_person"
-                        android:tint="@color/green" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="Done By"
-                        android:textColor="@color/green"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tv_done_by"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/content_background"
-                    android:padding="12dp"
-                    android:text="user"
-                    android:textColor="@color/black"
-                    android:textSize="14sp" />
-
-            </LinearLayout>
 
             <!-- Remark Section -->
             <LinearLayout
@@ -168,14 +126,14 @@
                         android:layout_width="18dp"
                         android:layout_height="18dp"
                         android:src="@drawable/ic_note"
-                        android:tint="@color/green" />
+                        app:tint="@color/primary" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="Remark"
-                        android:textColor="@color/green"
+                        android:text="Description"
+                        android:textColor="@color/primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -188,6 +146,50 @@
                     android:background="@drawable/content_background"
                     android:padding="12dp"
                     android:text="Maintenance : done - 1) Check the cooling water in the Radiator. 2) Check the oil level is above the minimum level. 3) Check the battery and charger voltage. 4) Check Fuel or solar level. 5) Keep the generator and its surroundings clean. 6) Warm up for 15 minutes once a week."
+                    android:textColor="@color/black"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <!-- Notes Section -->
+            <LinearLayout
+                android:id="@+id/layout_notes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_note"
+                        app:tint="@color/primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Notes"
+                        android:textColor="@color/primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_notes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/content_background"
+                    android:padding="12dp"
+                    android:text="Additional notes from maintenance event"
                     android:textColor="@color/black"
                     android:textSize="14sp" />
 

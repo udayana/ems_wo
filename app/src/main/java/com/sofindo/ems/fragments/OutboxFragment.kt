@@ -33,7 +33,7 @@ class OutboxFragment : Fragment() {
     private lateinit var tvEmpty: TextView
 
     
-    // Sama persis dengan HomeFragment
+    // Exactly like HomeFragment
     private var workOrders = mutableListOf<Map<String, Any>>()
     private var isLoading = true
     private var isLoadingMore = false
@@ -47,10 +47,10 @@ class OutboxFragment : Fragment() {
     private val statusCounts = mutableMapOf<String, Int>()
     private var isLoadingStatusCounts = true
     
-    // Sama persis dengan Flutter statusOptions
+    // Exactly like Flutter statusOptions
     private val statusOptions = listOf("", "new", "received", "on progress", "pending", "done")
     
-    // Search debounce timer (sama seperti Flutter)
+    // Search debounce timer (same as Flutter)
     private var searchDebounce: Timer? = null
     
     companion object {
@@ -160,13 +160,31 @@ class OutboxFragment : Fragment() {
     private fun showFilterPopup() {
         val popup = PopupMenu(requireContext(), btnFilter)
         
-        // Load status counts when filter is opened (sama seperti Flutter)
+        // Tampilkan placeholder terlebih dahulu
+        popup.menu.clear()
+        popup.menu.add("Loading …")?.isEnabled = false
+        popup.show()
+
+        // Quick calculation from existing data for immediate display
+        recomputeStatusCountsFromWorkOrders()
+
+        // Update menu with quick count
+        updateFilterMenuItems(popup)
+
+        // Then calculate accurately based on all pages asynchronously and update again
         lifecycleScope.launch {
-            if (currentPropID != null && currentPropID!!.isNotEmpty()) {
-                loadStatusCountsInBackground()
+            val precise = fetchOutboxStatusCountsAllPages()
+            if (!isAdded) return@launch
+            if (precise.isNotEmpty()) {
+                statusCounts.clear()
+                statusCounts.putAll(precise)
+                updateFilterMenuItems(popup)
             }
         }
-        
+    }
+
+    private fun updateFilterMenuItems(popup: PopupMenu) {
+        popup.menu.clear()
         statusOptions.forEach { status ->
             val count = if (status.isEmpty()) {
                 statusCounts[""] ?: 0
@@ -175,21 +193,17 @@ class OutboxFragment : Fragment() {
             } else {
                 statusCounts[status] ?: 0
             }
-            
             val displayName = when {
                 status.isEmpty() -> "All"
                 status.lowercase() == "new" -> "NEW"
                 else -> status.uppercase()
             }
-            
             val menuItem = popup.menu.add("$count → $displayName")
             menuItem.setOnMenuItemClickListener {
                 onStatusChanged(status)
                 true
             }
         }
-        
-        popup.show()
     }
     
     private fun onWorkOrderClick(workOrder: Map<String, Any>) {
@@ -208,7 +222,6 @@ class OutboxFragment : Fragment() {
             intent.putExtra("workOrder", workOrder as java.io.Serializable)
             startActivityForResult(intent, EDIT_WO_REQUEST_CODE)
         } catch (e: Exception) {
-            android.util.Log.e("OutboxFragment", "Error launching EditWorkOrderActivity", e)
             Toast.makeText(context, "Error: Cannot open edit screen", Toast.LENGTH_SHORT).show()
         }
     }
@@ -256,7 +269,6 @@ class OutboxFragment : Fragment() {
                 }
                 
             } catch (e: Exception) {
-                android.util.Log.e("OutboxFragment", "Error deleting work order", e)
                 Toast.makeText(context, "Error deleting work order: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
@@ -277,7 +289,7 @@ class OutboxFragment : Fragment() {
     
 
     
-    // Sama persis dengan HomeFragment tapi untuk outbox
+    // Exactly like HomeFragment but for outbox
     private fun initializeData() {
         lifecycleScope.launch {
             try {
@@ -287,24 +299,19 @@ class OutboxFragment : Fragment() {
                 username = user?.username ?: user?.email
                 userDept = user?.dept
                 
-                android.util.Log.d("OutboxFragment", "Debug: propID = $propID")
-                android.util.Log.d("OutboxFragment", "Debug: username = $username")
-                android.util.Log.d("OutboxFragment", "Debug: userDept = $userDept")
+                // User data loaded
                 
                 currentPropID = propID ?: ""
                 
 
                 
                 if (!currentPropID.isNullOrEmpty() && !username.isNullOrEmpty()) {
-                    android.util.Log.d("OutboxFragment", "Debug: Loading outbox work orders...")
                     // Load outbox work orders
                     loadOutboxWorkOrdersParallel()
                 } else {
-                    android.util.Log.e("OutboxFragment", "Debug: Missing required data!")
                     showEmptyState("Missing user data. Please login again.")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("OutboxFragment", "Error initializing data: ${e.message}")
                 showEmptyState("Error loading data: ${e.message}")
             } finally {
                 isLoading = false
@@ -314,35 +321,21 @@ class OutboxFragment : Fragment() {
         }
     }
     
-    // Load outbox work orders - menggunakan API outbox
+            // Load all work orders - using work orders API
     private fun loadOutboxWorkOrdersParallel() {
         lifecycleScope.launch {
             try {
-                // Debug: Log untuk troubleshooting
-                android.util.Log.d("OutboxFragment", "Loading outbox work orders...")
-                android.util.Log.d("OutboxFragment", "propID: $currentPropID")
-                android.util.Log.d("OutboxFragment", "username: $username")
-                android.util.Log.d("OutboxFragment", "userDept: $userDept")
-                android.util.Log.d("OutboxFragment", "status: $selectedStatus")
-                android.util.Log.d("OutboxFragment", "searchText: $searchText")
+                // Load outbox work orders
                 
-                // DEBUG: Log data penting untuk outbox
-                android.util.Log.d("OutboxFragment", "=== DEBUG OUTBOX DATA ===")
-                android.util.Log.d("OutboxFragment", "userDept: ${userDept ?: ""}")
-                android.util.Log.d("OutboxFragment", "orderBy: $username")
-                android.util.Log.d("OutboxFragment", "=== END DEBUG ===")
-                
-                // Fetch dari API outbox
-                val workOrdersResult = RetrofitClient.apiService.getWorkOrdersOut(
+                // Fetch from work orders API (all work orders)
+                val workOrdersResult = RetrofitClient.apiService.getWorkOrders(
                     propID = currentPropID!!,
-                    orderBy = username!!,
+                    woto = null, // null to display all departments
                     status = selectedStatus,
-                    page = 1,
-                    userDept = userDept ?: ""
+                    page = 1
                 )
                 
-                android.util.Log.d("OutboxFragment", "API Response received: ${workOrdersResult.size} items")
-                android.util.Log.d("OutboxFragment", "API Response: $workOrdersResult")
+                // API response received
                 
                 if (isAdded) {
                     workOrders.clear()
@@ -352,18 +345,15 @@ class OutboxFragment : Fragment() {
                     sortWorkOrdersByWONumber(workOrders)
                     
                     hasMoreData = workOrdersResult.size >= 10
-                    currentPage = 2 // Set untuk next page
+                    currentPage = 2 // Set for next page
                     
-                    android.util.Log.d("OutboxFragment", "workOrders updated: ${workOrders.size} items")
-                    android.util.Log.d("OutboxFragment", "Work orders sorted by WO number (highest first)")
+                    // Work orders updated and sorted
                     
+                    // Update UI and recalculate status counter
                     updateUI()
-                    
-                    // Load counter filter setelah work orders berhasil di-load
-                    loadStatusCountsInBackground()
+                    recomputeStatusCountsFromWorkOrders()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("OutboxFragment", "Error loading outbox work orders", e)
                 // Error loading work orders
                 if (isAdded) {
                     showEmptyState("Failed to load outbox work orders: ${e.message}")
@@ -372,40 +362,69 @@ class OutboxFragment : Fragment() {
         }
     }
     
-    // Load status counts untuk outbox
-    private fun loadStatusCountsInBackground() {
+    // Calculate status counts from loaded workOrders data (based on dept/user)
+    private fun recomputeStatusCountsFromWorkOrders() {
+        if (!isAdded) return
         isLoadingStatusCounts = true
-        
-        lifecycleScope.launch {
-            try {
-                // Set default values karena getAllStatusesOutbox tidak ada
-                statusCounts.clear()
-                statusCounts[""] = 0
-                statusCounts["new"] = 0
-                for (status in statusOptions) {
-                    if (status.isNotEmpty()) {
-                        statusCounts[status] = 0
-                    }
+        val localCounts = mutableMapOf<String, Int>()
+        // Initialize all status options
+        localCounts[""] = 0
+        for (s in statusOptions) localCounts.putIfAbsent(s, 0)
+        var total = 0
+        for (wo in workOrders) {
+            val raw = wo["status"]?.toString()?.lowercase() ?: ""
+            val key = if (raw.isEmpty()) "new" else raw
+            localCounts[key] = (localCounts[key] ?: 0) + 1
+            total++
+        }
+        localCounts[""] = total
+        // Ensure all keys exist
+        for (s in statusOptions) localCounts.putIfAbsent(s, 0)
+        statusCounts.clear()
+        statusCounts.putAll(localCounts)
+        isLoadingStatusCounts = false
+    }
+
+    // Get all Outbox pages to calculate accurate counter per status
+    private suspend fun fetchOutboxStatusCountsAllPages(): Map<String, Int> {
+        return try {
+            val prop = currentPropID ?: return emptyMap()
+            val user = username ?: return emptyMap()
+            val dept = userDept ?: ""
+            val localCounts = mutableMapOf<String, Int>()
+            localCounts[""] = 0
+            for (s in statusOptions) localCounts.putIfAbsent(s, 0)
+
+            var pageNum = 1
+            var total = 0
+            while (true) {
+                val pageData = RetrofitClient.apiService.getWorkOrdersOut(
+                    propID = prop,
+                    orderBy = user,
+                    status = "",
+                    page = pageNum,
+                    userDept = dept
+                )
+                if (pageData.isEmpty()) break
+                for (wo in pageData) {
+                    val raw = wo["status"]?.toString()?.lowercase() ?: ""
+                    val key = if (raw.isEmpty()) "new" else raw
+                    localCounts[key] = (localCounts[key] ?: 0) + 1
+                    total++
                 }
-            } catch (e: Exception) {
-                // Set default values jika API gagal
-                statusCounts.clear()
-                statusCounts[""] = 0
-                statusCounts["new"] = 0
-                for (status in statusOptions) {
-                    if (status.isNotEmpty()) {
-                        statusCounts[status] = 0
-                    }
-                }
-            } finally {
-                if (isAdded) {
-                    isLoadingStatusCounts = false
-                }
+                // If server pagination is 10/item, continue until less than 10
+                if (pageData.size < 10) break
+                pageNum++
             }
+            localCounts[""] = total
+            for (s in statusOptions) localCounts.putIfAbsent(s, 0)
+            localCounts
+        } catch (e: Exception) {
+            emptyMap()
         }
     }
     
-    // Optimasi: Update status counts dari API response
+    // Optimization: Update status counts from API response
     private fun updateStatusCountsFromAPI(statusData: List<Map<String, Any>>) {
         if (!isAdded) return
         
@@ -424,16 +443,16 @@ class OutboxFragment : Fragment() {
             totalCount += count
         }
         
-        statusCounts[""] = totalCount // Total untuk "All"
+        statusCounts[""] = totalCount // Total for "All"
         
-        // Pastikan semua status yang diperlukan ada
+        // Ensure all required statuses exist
         for (status in statusOptions) {
             if (status.isNotEmpty() && !statusCounts.containsKey(status)) {
                 statusCounts[status] = 0
             }
         }
         
-        // Pastikan 'new' ada
+        // Ensure 'new' exists
         if (!statusCounts.containsKey("new")) {
             statusCounts["new"] = 0
         }
@@ -464,7 +483,7 @@ class OutboxFragment : Fragment() {
                     return@launch
                 }
                 
-                // Load dari API outbox
+                // Load from outbox API
                 val workOrdersResult = RetrofitClient.apiService.getWorkOrdersOut(
                     propID = currentPropID!!,
                     orderBy = username!!,
@@ -492,7 +511,9 @@ class OutboxFragment : Fragment() {
                     
                     isLoading = false
                     isLoadingMore = false
+                    // Update UI and recalculate status counter
                     updateUI()
+                    recomputeStatusCountsFromWorkOrders()
                 }
             } catch (e: Exception) {
                 if (isAdded) {
@@ -513,7 +534,7 @@ class OutboxFragment : Fragment() {
         loadData(reset = false)
     }
     
-    // Search dengan debounce - sama seperti Flutter onSearchChanged
+    // Search with debounce - same as Flutter onSearchChanged
     private fun onSearchChanged(value: String) {
         searchText = value
         
@@ -544,7 +565,7 @@ class OutboxFragment : Fragment() {
         }
     }
     
-    // Get filtered work orders based on search text - optimasi performa (sama seperti Flutter)
+    // Get filtered work orders based on search text - performance optimization (same as Flutter)
     private fun getFilteredWorkOrders(): List<Map<String, Any>> {
         if (searchText.isEmpty()) {
             return workOrders
@@ -564,32 +585,24 @@ class OutboxFragment : Fragment() {
         searchText = ""
         searchView.setText("")
         
-        // Load data dan update status counts
+        // Load data and update status counts
         loadData(reset = true)
     }
     
     private fun updateUI() {
         swipeRefreshLayout.isRefreshing = false
         
-        android.util.Log.d("OutboxFragment", "updateUI called")
-        android.util.Log.d("OutboxFragment", "workOrders size: ${workOrders.size}")
-        android.util.Log.d("OutboxFragment", "searchText: '$searchText'")
-        
         val filteredData = getFilteredWorkOrders()
-        android.util.Log.d("OutboxFragment", "filteredData size: ${filteredData.size}")
         
         if (filteredData.isEmpty()) {
             if (searchText.isNotEmpty()) {
-                android.util.Log.d("OutboxFragment", "Showing empty state for search")
                 showEmptyState("No search results")
             } else {
-                android.util.Log.d("OutboxFragment", "Showing empty state - no data")
-                showEmptyState("No outbox work orders")
+                showEmptyState("") // Empty string instead of "No outbox work orders"
             }
         } else {
-            android.util.Log.d("OutboxFragment", "Hiding empty state, showing data")
             hideEmptyState()
-            // Update RecyclerView adapter dengan filteredData
+            // Update RecyclerView adapter with filteredData
             workOrderAdapter.updateData(filteredData)
         }
     }

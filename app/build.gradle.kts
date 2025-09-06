@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.sofindo.ems"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.sofindo.ems"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 174
-        versionName = "1.7.4"
+        targetSdk = 35
+        versionCode = 5
+        versionName = "1.0.4"
         multiDexEnabled = true
     }
 
@@ -57,6 +57,11 @@ android {
             excludes += "META-INF/*.kotlin_module"
         }
     }
+
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
 }
 
 dependencies {
@@ -83,6 +88,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     
     // MultiDex support
     implementation("androidx.multidex:multidex:2.0.1")

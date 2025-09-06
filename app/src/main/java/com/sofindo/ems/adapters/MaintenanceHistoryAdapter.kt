@@ -17,11 +17,11 @@ class MaintenanceHistoryAdapter(
         val tvDate: TextView = itemView.findViewById(R.id.tv_date)
         val tvRecordNumber: TextView = itemView.findViewById(R.id.tv_record_number)
         val tvJobTask: TextView = itemView.findViewById(R.id.tv_job_task)
-        val tvDoneBy: TextView = itemView.findViewById(R.id.tv_done_by)
         val tvRemark: TextView = itemView.findViewById(R.id.tv_remark)
+        val tvNotes: TextView = itemView.findViewById(R.id.tv_notes)
         val layoutJobTask: View = itemView.findViewById(R.id.layout_job_task)
-        val layoutDoneBy: View = itemView.findViewById(R.id.layout_done_by)
         val layoutRemark: View = itemView.findViewById(R.id.layout_remark)
+        val layoutNotes: View = itemView.findViewById(R.id.layout_notes)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoryViewHolder {
@@ -33,6 +33,9 @@ class MaintenanceHistoryAdapter(
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
         val history = historyList[position]
         val context = holder.itemView.context
+        
+        // Debug: Log all data for this record
+        android.util.Log.d("MaintenanceHistory", "Record ${position + 1} data: $history")
 
         // Set date
         val date = history["date"]?.toString() ?: ""
@@ -50,22 +53,23 @@ class MaintenanceHistoryAdapter(
             holder.layoutJobTask.visibility = View.GONE
         }
 
-        // Set done by
-        val doneBy = history["doneby"]?.toString() ?: ""
-        if (doneBy.isNotEmpty()) {
-            holder.layoutDoneBy.visibility = View.VISIBLE
-            holder.tvDoneBy.text = doneBy
-        } else {
-            holder.layoutDoneBy.visibility = View.GONE
-        }
-
-        // Set remark
+        // Set remark (description)
         val remark = history["remark"]?.toString() ?: ""
         if (remark.isNotEmpty()) {
             holder.layoutRemark.visibility = View.VISIBLE
             holder.tvRemark.text = remark
         } else {
             holder.layoutRemark.visibility = View.GONE
+        }
+
+        // Set notes (from tblevent via LEFT JOIN)
+        val notes = history["notes"]?.toString()?.trim() ?: ""
+        
+        if (notes.isNotEmpty() && notes != "null") {
+            holder.layoutNotes.visibility = View.VISIBLE
+            holder.tvNotes.text = notes
+        } else {
+            holder.layoutNotes.visibility = View.GONE
         }
     }
 

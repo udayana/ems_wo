@@ -8,6 +8,7 @@
 
     <!-- App Bar -->
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/primary"
@@ -18,19 +19,21 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            app:title="Asset Detail"
             app:titleTextColor="@color/white"
             app:titleTextAppearance="@style/TextAppearance.AppCompat.Title"
             app:navigationIcon="@drawable/ic_arrow_back" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
+
+
     <!-- Content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:paddingBottom="120dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -69,7 +72,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Asset Specifications"
+                    android:text="Asset Detail"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/on_surface"
@@ -406,17 +409,19 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp">
 
                 <!-- View Job Tasks Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_view_job_tasks"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="56dp"
-                    android:layout_marginBottom="12dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
                     android:text="View Job Tasks"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/white"
                     app:icon="@drawable/ic_task"
@@ -429,20 +434,27 @@
                 <!-- View History Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_view_history"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
                     android:text="View History"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/white"
                     app:icon="@drawable/ic_history"
                     app:iconGravity="textStart"
                     app:iconTint="@color/white"
-                    app:backgroundTint="@color/success"
+                    app:backgroundTint="@color/primary"
                     app:cornerRadius="10dp"
                     app:elevation="2dp" />
 
             </LinearLayout>
+
+            <!-- Spacer to avoid bottom tab -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="100dp" />
 
         </LinearLayout>
 

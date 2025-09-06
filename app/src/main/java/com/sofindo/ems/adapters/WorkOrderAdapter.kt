@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.ImageButton
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.sofindo.ems.R
@@ -37,7 +38,17 @@ class WorkOrderAdapter(
         val tvPriority: TextView = itemView.findViewById(R.id.tv_priority)
         
         // Menu button (hidden but kept for reference)
-        val btnMenu: android.widget.ImageButton = itemView.findViewById(R.id.btn_menu)
+        val btnMenu: ImageButton = itemView.findViewById(R.id.btn_menu)
+
+        // To UI controls (look up by name to avoid NoSuchFieldError if IDs not compiled yet)
+        val ivToIcon: ImageView? = run {
+            val resId = itemView.resources.getIdentifier("iv_to_icon", "id", itemView.context.packageName)
+            if (resId != 0) itemView.findViewById(resId) else null
+        }
+        val tvToLabel: TextView? = run {
+            val resId = itemView.resources.getIdentifier("tv_to_label", "id", itemView.context.packageName)
+            if (resId != 0) itemView.findViewById(resId) else null
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WorkOrderViewHolder {
@@ -59,17 +70,25 @@ class WorkOrderAdapter(
         // Bind Location
         holder.tvLocation.text = workOrder["lokasi"]?.toString() ?: "No Location"
         
-        // Bind right-side label: either woto (department) or orderBy (sender)
+        // Bind right-side label depending on fragment
         val orderByValue = workOrder["orderBy"]?.toString() ?: workOrder["orderby"]?.toString()
         val wotoValue = workOrder["woto"]?.toString()
-        if (replaceWotoWithOrderBy) {
+        if (isHomeFragment) {
+            // In Home: show "by: <orderBy>" and hide "To:" label, show person icon
+            holder.ivToIcon?.setImageResource(R.drawable.ic_person)
+            holder.tvToLabel?.visibility = View.GONE
+            holder.ivToIcon?.visibility = View.VISIBLE
             holder.tvDepartment.text = "by: ${orderByValue ?: "Unknown"}"
         } else {
+            // In Outbox: show "To: <woto>" with send icon
+            holder.ivToIcon?.setImageResource(R.drawable.ic_send)
+            holder.tvToLabel?.visibility = View.VISIBLE
+            holder.ivToIcon?.visibility = View.VISIBLE
             holder.tvDepartment.text = wotoValue ?: "Unknown"
         }
         
-        // Bind Date
-        holder.tvDate.text = formatDateInline(workOrder["mulainya"]?.toString())
+        // Bind Date (use start date-time from 'mulainya')
+        holder.tvDate.text = formatDateTime(workOrder["mulainya"]?.toString())
         
         // Bind Priority
         val priority = workOrder["priority"]?.toString() ?: ""
@@ -84,7 +103,7 @@ class WorkOrderAdapter(
         val statusColor = getStatusColor(status)
         holder.tvWoStatus.backgroundTintList = android.content.res.ColorStateList.valueOf(statusColor)
         
-        // Handle image (sama seperti Flutter)
+        // Handle image (same as Flutter)
         val photoUrl = workOrder["photo"]?.toString()
         
         if (!photoUrl.isNullOrEmpty()) {
@@ -145,10 +164,9 @@ class WorkOrderAdapter(
             if (popupWindow is android.widget.PopupWindow) {
                 popupWindow.setBackgroundDrawable(view.context.getDrawable(R.drawable.popup_menu_background))
                 popupWindow.elevation = 8f
-                android.util.Log.d("WorkOrderAdapter", "Successfully set popup menu background")
             }
         } catch (e: Exception) {
-            android.util.Log.w("WorkOrderAdapter", "Could not set popup menu background", e)
+            // Popup menu background setting failed
         }
         
         // Set click listener for all cases
@@ -177,14 +195,14 @@ class WorkOrderAdapter(
         popupMenu.show()
     }
     
-    // Helper functions (sama persis dengan Flutter)
+    // Helper functions (exactly like Flutter)
     private fun getPriorityText(priority: String): String {
         return if (priority.isEmpty()) "LOW" else priority.uppercase()
     }
     
     private fun getStatusColor(status: String): Int {
         return when (status.lowercase()) {
-            "done" -> android.graphics.Color.parseColor("#4CAF50")
+            "done" -> android.graphics.Color.parseColor("#FF1ABC9C")
             "pending" -> android.graphics.Color.parseColor("#FFC107")
             "on progress" -> android.graphics.Color.parseColor("#FF9800")
             "received" -> android.graphics.Color.parseColor("#2196F3")
@@ -193,19 +211,29 @@ class WorkOrderAdapter(
         }
     }
     
-    private fun formatDateInline(dateTimeStr: String?): String {
-        if (dateTimeStr.isNullOrEmpty()) return "N/A"
-        if (dateTimeStr == "0000-00-00" || dateTimeStr.contains("0000-00-00")) {
-            return "-"
+    private fun formatDateTime(dateTimeStr: String?): String {
+        if (dateTimeStr.isNullOrEmpty()) return "-"
+        if (dateTimeStr.startsWith("0000-00-00")) return "-"
+
+        val candidates = listOf(
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd"
+        )
+
+        for (pattern in candidates) {
+            try {
+                val parser = SimpleDateFormat(pattern, Locale.getDefault())
+                val date = parser.parse(dateTimeStr)
+                if (date != null) {
+                    val output = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
+                    return output.format(date)
+                }
+            } catch (_: Exception) { }
         }
 
-        return try {
-            val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateTimeStr)
-            val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-            outputFormat.format(date ?: Date())
-        } catch (e: Exception) {
-            dateTimeStr
-        }
+        return dateTimeStr
     }
 }
 

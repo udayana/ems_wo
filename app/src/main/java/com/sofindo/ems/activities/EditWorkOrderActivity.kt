@@ -1,5 +1,4 @@
 package com.sofindo.ems.activities
-
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -43,15 +42,16 @@ class EditWorkOrderActivity : AppCompatActivity() {
     
     private val priorities = listOf("Low", "Medium", "High")
     
+    companion object {
+        private const val EDIT_WO_REQUEST_CODE = 1001
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         try {
-            android.util.Log.d("EditWorkOrderActivity", "onCreate started")
             setContentView(R.layout.activity_edit_work_order)
-            android.util.Log.d("EditWorkOrderActivity", "setContentView completed")
         } catch (e: Exception) {
-            android.util.Log.e("EditWorkOrderActivity", "Error in onCreate", e)
             Toast.makeText(this, "Error: Cannot load edit screen", Toast.LENGTH_SHORT).show()
             finish()
             return
@@ -68,26 +68,18 @@ class EditWorkOrderActivity : AppCompatActivity() {
                 return
             }
         } catch (e: Exception) {
-            android.util.Log.e("EditWorkOrderActivity", "Error parsing work order data", e)
             Toast.makeText(this, "Error: Invalid work order data", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
         
         try {
-            android.util.Log.d("EditWorkOrderActivity", "Initializing views")
             initViews()
-            android.util.Log.d("EditWorkOrderActivity", "Setting up toolbar")
             setupToolbar()
-            android.util.Log.d("EditWorkOrderActivity", "Loading data")
             loadData()
-            android.util.Log.d("EditWorkOrderActivity", "Setting up listeners")
             setupListeners()
-            android.util.Log.d("EditWorkOrderActivity", "Loading master data")
             loadMasterData()
-            android.util.Log.d("EditWorkOrderActivity", "onCreate completed successfully")
         } catch (e: Exception) {
-            android.util.Log.e("EditWorkOrderActivity", "Error in onCreate setup", e)
             Toast.makeText(this, "Error: Cannot initialize edit screen", Toast.LENGTH_SHORT).show()
             finish()
         }
@@ -108,7 +100,6 @@ class EditWorkOrderActivity : AppCompatActivity() {
             btnCancel = findViewById(R.id.btn_cancel)
             layoutLocationSuggestions = findViewById(R.id.layout_location_suggestions)
         } catch (e: Exception) {
-            android.util.Log.e("EditWorkOrderActivity", "Error initializing views", e)
             Toast.makeText(this, "Error: Cannot initialize UI", Toast.LENGTH_SHORT).show()
             finish()
         }
@@ -163,7 +154,6 @@ class EditWorkOrderActivity : AppCompatActivity() {
             try {
                 val propID = workOrder?.get("propID")?.toString() ?: ""
                 if (propID.isEmpty()) {
-                    android.util.Log.e("EditWorkOrderActivity", "propID is empty")
                     return@launch
                 }
                 
@@ -212,7 +202,6 @@ class EditWorkOrderActivity : AppCompatActivity() {
                 updateUI()
                 
             } catch (e: Exception) {
-                android.util.Log.e("EditWorkOrderActivity", "Error loading master data", e)
                 // Set fallback data
                 categories = mutableListOf("General", "Maintenance", "Housekeeping", "Security")
                 departments = mutableListOf("Engineering", "Housekeeping", "Security", "Front Office")
@@ -350,7 +339,9 @@ class EditWorkOrderActivity : AppCompatActivity() {
                     woId = woId,
                     lokasi = location,
                     job = job,
-                    priority = priority
+                    priority = priority,
+                    category = category,
+                    woto = department
                 )
                 
                 val success = response["success"] as? Boolean ?: false
@@ -365,7 +356,6 @@ class EditWorkOrderActivity : AppCompatActivity() {
                 }
                 
             } catch (e: Exception) {
-                android.util.Log.e("EditWorkOrderActivity", "Error updating work order", e)
                 Toast.makeText(this@EditWorkOrderActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false

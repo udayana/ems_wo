@@ -10,14 +10,14 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/green"
+        android:background="@color/primary"
         android:elevation="0dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/green"
+            android:background="@color/primary"
             app:titleTextColor="@color/white"
             app:titleTextAppearance="@style/TextAppearance.AppCompat.Title" />
 
@@ -55,7 +55,7 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:src="@drawable/ic_error_outline"
-                    android:tint="@color/error" />
+                    app:tint="@color/error" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -81,7 +81,7 @@
                     android:layout_marginTop="24dp"
                     android:text="Retry"
                     android:textColor="@color/white"
-                    app:backgroundTint="@color/green"
+                    app:backgroundTint="@color/primary"
                     app:icon="@drawable/ic_refresh"
                     app:iconTint="@color/white" />
 
@@ -100,7 +100,7 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:src="@drawable/ic_history"
-                    android:tint="@color/grey" />
+                    app:tint="@color/grey" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -124,12 +124,31 @@
             </LinearLayout>
 
             <!-- Content -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_view"
+            <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="16dp"
-                android:clipToPadding="false" />
+                android:fillViewport="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false" />
+
+                    <!-- Spacer to avoid bottom tab -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp" />
+
+                </LinearLayout>
+
+            </ScrollView>
 
         </FrameLayout>
 

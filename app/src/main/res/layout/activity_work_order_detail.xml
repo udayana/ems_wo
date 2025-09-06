@@ -13,8 +13,11 @@
         android:layout_height="?attr/actionBarSize"
         android:background="#424242"
         android:elevation="0dp"
+        android:paddingTop="8dp"
+        android:minHeight="?attr/actionBarSize"
         app:titleTextColor="#FFFFFF"
-        app:title="Detail Work Order" />
+        app:title="Detail Work Order"
+        app:titleTextAppearance="@style/ToolbarTitleStyle" />
 
     <!-- Content -->
     <ScrollView
