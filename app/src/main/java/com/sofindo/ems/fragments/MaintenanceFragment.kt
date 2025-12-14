@@ -1,27 +1,45 @@
 package com.sofindo.ems.fragments
 
-import android.content.Intent
+import android.Manifest
+import android.app.AlertDialog
+import android.content.ContentValues
+import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import androidx.core.graphics.scale
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
-
 import com.sofindo.ems.R
 import com.sofindo.ems.adapters.MaintenanceAdapter
 import com.sofindo.ems.models.Maintenance
 import com.sofindo.ems.services.MaintenanceService
 import com.sofindo.ems.services.UserService
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MaintenanceFragment : Fragment() {
     
@@ -31,8 +49,35 @@ class MaintenanceFragment : Fragment() {
     private lateinit var tvError: TextView
     private lateinit var tvEmpty: TextView
     private lateinit var btnOpenScanner: MaterialButton
+    private lateinit var btnMenu: android.widget.ImageButton
+    private lateinit var btnCamera: android.widget.ImageButton
     
     private var maintenanceList: List<Maintenance> = emptyList()
+    
+    // Camera related
+    private var cameraPhotoFile: File? = null
+    private var cameraPhotoUri: Uri? = null
+    
+    // Activity result launchers
+    private val cameraLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            cameraPhotoFile?.let { file ->
+                handleCameraImage(file)
+            }
+        }
+    }
+    
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            openCamera()
+        } else {
+            Toast.makeText(requireContext(), "Camera permission is required", Toast.LENGTH_SHORT).show()
+        }
+    }
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,6 +101,18 @@ class MaintenanceFragment : Fragment() {
         tvError = view.findViewById(R.id.tv_error)
         tvEmpty = view.findViewById(R.id.tv_empty)
         btnOpenScanner = view.findViewById(R.id.btn_open_scanner_custom)
+        btnMenu = view.findViewById(R.id.btn_menu)
+        btnCamera = view.findViewById(R.id.btn_camera)
+        
+        // Setup Menu Button
+        btnMenu.setOnClickListener {
+            navigateToAsset()
+        }
+        
+        // Setup Camera Button
+        btnCamera.setOnClickListener {
+            checkCameraPermission()
+        }
         
         // Setup Open Scanner Button
         btnOpenScanner.setOnClickListener {
@@ -64,6 +121,22 @@ class MaintenanceFragment : Fragment() {
         
         // Setup RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
+    }
+    
+    private fun navigateToProfile() {
+        val profileFragment = ProfileFragment()
+        requireActivity().supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, profileFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+    
+    private fun navigateToAsset() {
+        val assetFragment = AssetFragment()
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, assetFragment)
+            .addToBackStack(null)
+            .commit()
     }
     
     private fun loadMaintenanceData() {
@@ -101,10 +174,7 @@ class MaintenanceFragment : Fragment() {
     }
     
     private fun showMaintenanceList() {
-        val adapter = MaintenanceAdapter(maintenanceList) { maintenance ->
-            // Handle item click - navigate to detail
-            navigateToMaintenanceDetail(maintenance)
-        }
+        val adapter = MaintenanceAdapter(maintenanceList)
         
         recyclerView.adapter = adapter
         recyclerView.visibility = View.VISIBLE
@@ -137,18 +207,6 @@ class MaintenanceFragment : Fragment() {
         tvEmpty.visibility = View.GONE
     }
     
-    private fun navigateToMaintenanceDetail(maintenance: Maintenance) {
-        // Navigate to MaintenanceDetailFragment
-        val detailFragment = com.sofindo.ems.fragments.MaintenanceDetailFragment.newInstance(
-            maintenance.id.toString(), 
-            maintenance.propID
-        )
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, detailFragment)
-            .addToBackStack(null)
-            .commit()
-    }
-    
     private fun openScanner() {
         // Navigate to QR Scanner Fragment
         val qrScannerFragment = com.sofindo.ems.fragments.QRScannerFragment.newInstance()
@@ -162,6 +220,229 @@ class MaintenanceFragment : Fragment() {
         super.onResume()
         // Refresh data when returning to this fragment
         loadMaintenanceData()
+    }
+    
+    // Camera functions
+    private fun checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) 
+            == PackageManager.PERMISSION_GRANTED) {
+            openCamera()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+    
+    private fun openCamera() {
+        try {
+            cameraPhotoFile = createImageFile()
+            cameraPhotoUri = FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                cameraPhotoFile!!
+            )
+            cameraLauncher.launch(cameraPhotoUri)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Failed to open camera: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun createImageFile(): File {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir = requireContext().getExternalFilesDir(null)
+        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    }
+    
+    private fun handleCameraImage(file: File) {
+        lifecycleScope.launch {
+            try {
+                // Resize so longest side = 420px (proportional)
+                val resizedFile = withContext(Dispatchers.IO) {
+                    resizeJpegInPlace(file, maxSide = 420, quality = 90)
+                }
+                
+                // Show dialog to input photo name
+                withContext(Dispatchers.Main) {
+                    showPhotoNameDialog(resizedFile)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Failed to process image: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    
+    private fun showPhotoNameDialog(photoFile: File) {
+        val input = EditText(requireContext())
+        input.hint = "Enter photo name"
+        
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Save Photo")
+            .setMessage("Enter a name for this photo:")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val photoName = input.text.toString().trim()
+                if (photoName.isNotEmpty()) {
+                    // Convert to uppercase
+                    savePhotoWithName(photoFile, photoName.uppercase())
+                } else {
+                    // Use timestamp as default name
+                    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                    savePhotoWithName(photoFile, "PHOTO_$timeStamp")
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+        
+        // Show keyboard and focus on input when dialog is shown
+        dialog.setOnShowListener {
+            // Change Save button color to green
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(
+                ContextCompat.getColor(requireContext(), R.color.green)
+            )
+            
+            // Post to ensure dialog is fully displayed before requesting focus
+            input.post {
+                input.requestFocus()
+                // Show keyboard
+                val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            }
+        }
+        
+        dialog.show()
+    }
+    
+    private fun savePhotoWithName(sourceFile: File, photoName: String) {
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    // Convert to uppercase and only remove truly invalid characters (keep spaces)
+                    val sanitizedName = photoName.uppercase().replace(Regex("[^A-Z0-9 ._-]"), "")
+                    val fileName = "${sanitizedName}.jpg"
+                    
+                    // Save to MediaStore (Gallery) for Android 10+ (API 29+)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val contentValues = ContentValues().apply {
+                            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/EMS")
+                            put(MediaStore.Images.Media.IS_PENDING, 1)
+                        }
+                        
+                        val uri = requireContext().contentResolver.insert(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            contentValues
+                        )
+                        
+                        uri?.let {
+                            requireContext().contentResolver.openOutputStream(it)?.use { outputStream ->
+                                sourceFile.inputStream().use { inputStream ->
+                                    inputStream.copyTo(outputStream)
+                                }
+                            }
+                            
+                            // Mark as not pending so it appears in gallery
+                            contentValues.clear()
+                            contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+                            requireContext().contentResolver.update(it, contentValues, null, null)
+                            
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Photo saved to Gallery: $fileName",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } ?: throw Exception("Failed to create MediaStore entry")
+                    } else {
+                        // For Android 9 and below, save to Pictures directory
+                        val picturesDir = Environment.getExternalStoragePublicDirectory(
+                            Environment.DIRECTORY_PICTURES
+                        )
+                        val emsDir = File(picturesDir, "EMS")
+                        if (!emsDir.exists()) {
+                            emsDir.mkdirs()
+                        }
+                        
+                        val finalFile = File(emsDir, fileName)
+                        
+                        // Copy resized file to Pictures/EMS directory
+                        sourceFile.inputStream().use { input ->
+                            finalFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        
+                        // Notify MediaStore about the new file
+                        val contentValues = ContentValues().apply {
+                            put(MediaStore.Images.Media.DATA, finalFile.absolutePath)
+                            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                        }
+                        requireContext().contentResolver.insert(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            contentValues
+                        )
+                        
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Photo saved to Gallery/Pictures/EMS: $fileName",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to save photo: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+    
+    private fun resizeJpegInPlace(file: File, maxSide: Int = 420, quality: Int = 90): File {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+        val srcW = bounds.outWidth
+        val srcH = bounds.outHeight
+        if (srcW <= 0 || srcH <= 0) return file
+        
+        val sample = calculateInSampleSize(srcW, srcH, maxSide)
+        val decodeOpts = BitmapFactory.Options().apply {
+            inSampleSize = sample
+            inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888
+        }
+        var bmp = BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
+        
+        val longest = kotlin.math.max(bmp.width, bmp.height)
+        val scale = longest.toFloat() / maxSide
+        val finalBmp = if (scale > 1f) {
+            val w = (bmp.width / scale).toInt()
+            val h = (bmp.height / scale).toInt()
+            android.graphics.Bitmap.createScaledBitmap(bmp, w, h, true)
+        } else bmp
+        
+        FileOutputStream(file, false).use { out ->
+            finalBmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, out)
+            out.flush()
+        }
+        
+        if (finalBmp !== bmp) bmp.recycle()
+        return file
+    }
+    
+    private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
+        var inSampleSize = 1
+        val longest = kotlin.math.max(srcW, srcH)
+        while (longest / inSampleSize > reqMaxSide * 2) {
+            inSampleSize *= 2
+        }
+        return inSampleSize
     }
 }
 

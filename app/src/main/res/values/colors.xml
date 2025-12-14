@@ -36,12 +36,30 @@
     <color name="green_light">#FFE8F5E8</color>
     <color name="grey_light">#FFF5F5F5</color>
     <color name="orange">#FFFF9800</color>
+    <color name="light_yellow">#FFFFF9C4</color>
     
     <!-- Swift App Bottom Tab Colors -->
-    <color name="swift_tab_background">#FF595959</color>
+    <color name="swift_tab_background">#FF1abc9c</color>
     <color name="swift_tab_active">#FFFFFFFF</color>
     <color name="swift_tab_active_bright">#FFFFFFFF</color>
     <color name="swift_tab_inactive">#80FFFFFF</color>
-    <color name="swift_tab_inactive_dimmed">#4DFFFFFF</color>
+    <color name="swift_tab_inactive_dimmed">#80FFFFFF</color>
     <color name="swift_tab_inactive_medium">#66FFFFFF</color>
+    
+    <!-- ABT Page Colors -->
+    <color name="primary_color">#FF1ABC9C</color>
+    <color name="divider_color">#FFE0E0E0</color>
+    
+    <!-- Additional colors for fuel page -->
+    <color name="background_color">#FFF8F9FA</color>
+    <color name="primary_color_light">#FFE8F5E8</color>
+    <color name="text_primary">#FF1C1B1F</color>
+    <color name="gray_light">#FFE0E0E0</color>
+    
+    <!-- Star colors -->
+    <color name="star_filled">#FFD700</color>
+    <color name="star_empty">#FF9E9E9E</color>
+    
+    <!-- Project row alternating background -->
+    <color name="project_row_even">#FFE1F5F7</color>
 </resources>

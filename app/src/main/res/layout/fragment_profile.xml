@@ -50,18 +50,30 @@
                         android:id="@+id/tv_property_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$PROPERTY NAME"
-                        android:textSize="14sp"
+                        android:text="Demo Hotel"
+                        android:textSize="20sp"
                         android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:gravity="center"
+                        android:layout_marginBottom="4dp" />
+
+                    <!-- Department -->
+                    <TextView
+                        android:id="@+id/tv_department"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Engineering"
+                        android:textSize="16sp"
+                        android:textStyle="normal"
                         android:textColor="@color/primary"
                         android:gravity="center"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="16dp" />
 
                     <!-- Profile Image -->
                     <ImageView
                         android:id="@+id/iv_profile"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
                         android:background="@drawable/circle_profile_background"
                         android:src="@drawable/ic_person"
                         android:scaleType="centerCrop"
@@ -72,8 +84,8 @@
                         android:id="@+id/tv_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Loading..."
-                        android:textSize="18sp"
+                        android:text="Chief"
+                        android:textSize="22sp"
                         android:textStyle="bold"
                         android:textColor="@color/black"
                         android:gravity="center" />
@@ -301,14 +313,21 @@
                     app:tint="@color/primary"
                     android:layout_marginEnd="12dp" />
 
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Update"
-                    android:textSize="14sp"
-                    android:textColor="@color/black"
-                    android:textStyle="normal" />
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Version 1.0.7 (8). Check Update"
+                        android:textSize="14sp"
+                        android:textColor="@color/black"
+                        android:textStyle="normal" />
+
+                </LinearLayout>
 
                 <ImageView
                     android:layout_width="16dp"

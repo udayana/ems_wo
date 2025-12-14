@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:minHeight="36dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <!-- Date Column -->
+    <TextView
+        android:id="@+id/date_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="1/10"
+        android:textSize="12sp"
+        android:textColor="@android:color/black" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/divider_color" />
+
+    <!-- Temperature Record Column -->
+    <TextView
+        android:id="@+id/temp_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="25.5"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/divider_color" />
+
+    <!-- Diff Column -->
+    <TextView
+        android:id="@+id/diff_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="2.5"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/divider_color" />
+
+    <!-- Up/Down Column -->
+    <TextView
+        android:id="@+id/up_down_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="↑"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/divider_color" />
+
+    <!-- Rec. By Column -->
+    <TextView
+        android:id="@+id/rec_by_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Mr. Chief"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Hidden Delete Button -->
+    <View
+        android:id="@+id/delete_button"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+</LinearLayout>
+
+
+
+
+
+

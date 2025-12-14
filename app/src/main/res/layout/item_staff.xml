@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="16dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Staff Photo -->
+    <ImageView
+        android:id="@+id/iv_staff_photo"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@drawable/ic_person"
+        android:scaleType="centerCrop"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/circle_background" />
+
+    <!-- Staff Name -->
+    <TextView
+        android:id="@+id/tv_staff_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Staff Name"
+        android:textSize="16sp"
+        android:textStyle="normal"
+        android:textColor="?attr/colorOnSurface"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp" />
+
+    <!-- Chevron -->
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_arrow_right"
+        android:tint="#9E9E9E" />
+
+</LinearLayout>
+

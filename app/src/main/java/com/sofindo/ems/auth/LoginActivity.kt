@@ -1,8 +1,9 @@
 package com.sofindo.ems.auth
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.method.PasswordTransformationMethod
@@ -22,7 +23,10 @@ import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.models.User
 import com.sofindo.ems.services.UserService
 import com.sofindo.ems.auth.RegisterActivity
+import com.sofindo.ems.utils.applyTopAndBottomInsets
+import com.sofindo.ems.utils.setupEdgeToEdge
 import kotlinx.coroutines.launch
+import com.google.firebase.messaging.FirebaseMessaging
 
 class LoginActivity : AppCompatActivity() {
     
@@ -43,11 +47,45 @@ class LoginActivity : AppCompatActivity() {
     private var savedPassword = ""
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Enable edge-to-edge for Android 15+ (SDK 35)
+        setupEdgeToEdge()
+        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         
+        // Apply window insets to root layout
+        findViewById<android.view.ViewGroup>(android.R.id.content)?.getChildAt(0)?.let { rootView ->
+            rootView.applyTopAndBottomInsets()
+        }
+        
         initViews()
         setupListeners()
+        
+        // Check if redirected from forgot password with auto-login
+        val email = intent.getStringExtra("email")
+        val password = intent.getStringExtra("password")
+        val autoLogin = intent.getBooleanExtra("autoLogin", false)
+        
+        if (!email.isNullOrEmpty() && !password.isNullOrEmpty()) {
+            etEmail.setText(email)
+            etPassword.setText(password)
+            
+            // Auto-login after password change (like iOS)
+            if (autoLogin) {
+                // Delay auto-login like iOS (0.5 seconds)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    handleLogin()
+                }, 500)
+            }
+        } else {
+            // Fallback for old format (email_or_hp)
+            val emailOrHp = intent.getStringExtra("email_or_hp")
+            val passwordOld = intent.getStringExtra("password")
+            if (!emailOrHp.isNullOrEmpty() && !passwordOld.isNullOrEmpty()) {
+                etEmail.setText(emailOrHp)
+                etPassword.setText(passwordOld)
+            }
+        }
     }
     
     private fun initViews() {
@@ -185,7 +223,8 @@ class LoginActivity : AppCompatActivity() {
                 profileImage = result["photoprofile"]?.toString(),
                 role = result["role"]?.toString() ?: "user",
                 propID = propID,
-                dept = result["dept"]?.toString()
+                dept = result["dept"]?.toString(),
+                jabatan = result["jabatan"]?.toString()
             )
             
             // Create user object
@@ -214,6 +253,23 @@ class LoginActivity : AppCompatActivity() {
                             showRememberMeDialog(user.email)
                         }
                     }
+                    
+                    // Send initial FCM token after login (best-effort)
+                    try {
+                        FirebaseMessaging.getInstance().token
+                            .addOnSuccessListener { token ->
+                                lifecycleScope.launch {
+                                    try {
+                                        val dept = user.dept ?: ""
+                                        RetrofitClient.apiService.saveFcmToken(
+                                            token = token,
+                                            email = user.email,
+                                            dept = dept
+                                        )
+                                    } catch (_: Exception) {}
+                                }
+                            }
+                    } catch (_: Exception) {}
                 } catch (e: Exception) {
                     handleLoginError("Failed to save user data: ${e.message}")
                 }
@@ -271,13 +327,8 @@ class LoginActivity : AppCompatActivity() {
     }
     
     private fun openForgotPassword() {
-        try {
-            val url = "https://emshotels.net/member/forgot-password.php"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(this, "Cannot open forgot password link", Toast.LENGTH_SHORT).show()
-        }
+        val intent = Intent(this, ForgotPasswordActivity::class.java)
+        startActivity(intent)
     }
     
     private fun loadUserProfileImage() {

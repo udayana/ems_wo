@@ -2,6 +2,7 @@ package com.sofindo.ems.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
@@ -14,9 +15,12 @@ import com.sofindo.ems.R
 import com.sofindo.ems.services.MaintenanceService
 import com.sofindo.ems.services.UserService
 import com.sofindo.ems.services.AssetService
+import com.sofindo.ems.models.Maintenance
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MaintenanceDetailFragment : Fragment() {
     
@@ -34,14 +38,27 @@ class MaintenanceDetailFragment : Fragment() {
     private lateinit var tvMaintenanceId: TextView
     private lateinit var tvDescription: TextView
     private lateinit var layoutDescription: View
-    private lateinit var btnViewJobTasks: MaterialButton
-    private lateinit var btnViewHistory: MaterialButton
+    private lateinit var btnViewJobTasksPast: MaterialButton
+    private lateinit var btnViewJobTasksNearest: MaterialButton
+    private lateinit var btnViewJobTasksUpcoming: MaterialButton
+    private lateinit var tvNoScheduleMessage: TextView
     private lateinit var progressBar: ProgressBar
     
     private var mntId: String = ""
     private var propID: String = ""
     private var assetUrl: String = ""
     private var assetData: Map<String, Any>? = null
+    
+    // Schedule data
+    private var pastSchedule: Maintenance? = null
+    private var nearestSchedule: Maintenance? = null
+    private var upcomingSchedule: Maintenance? = null
+    
+    // Store schedule data with mntId and status for navigation and button state
+    private var scheduleDataMap: Map<Int, Map<String, Any>> = emptyMap()
+    
+    // Track if no schedule message has been shown to avoid duplicate toasts
+    private var hasShownNoScheduleMessage = false
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,6 +79,7 @@ class MaintenanceDetailFragment : Fragment() {
         }
         
         initViews(view)
+        setupToolbarMenu()
         loadMaintenanceDetails()
     }
     
@@ -80,8 +98,10 @@ class MaintenanceDetailFragment : Fragment() {
         tvMaintenanceId = view.findViewById(R.id.tv_maintenance_id)
         tvDescription = view.findViewById(R.id.tv_description)
         layoutDescription = view.findViewById(R.id.layout_description)
-        btnViewJobTasks = view.findViewById(R.id.btn_view_job_tasks)
-        btnViewHistory = view.findViewById(R.id.btn_view_history)
+        btnViewJobTasksPast = view.findViewById(R.id.btn_view_job_tasks_past)
+        btnViewJobTasksNearest = view.findViewById(R.id.btn_view_job_tasks_nearest)
+        btnViewJobTasksUpcoming = view.findViewById(R.id.btn_view_job_tasks_upcoming)
+        tvNoScheduleMessage = view.findViewById(R.id.tv_no_schedule_message)
         progressBar = view.findViewById(R.id.progress_bar)
         
         // Setup toolbar back button
@@ -90,36 +110,110 @@ class MaintenanceDetailFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
         
+        // Set navigation icon color to primary (green)
+        toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary, null))
+        
         // Set initial title
         toolbar.title = "Asset Detail"
         
-        btnViewJobTasks.setOnClickListener { 
-            // Navigate to Maintenance Job Task Fragment
-            val fragment = MaintenanceJobTaskFragment.newInstance(
-                assetNo = assetData?.get("no")?.toString() ?: "",
-                mntId = assetData?.get("mntId")?.toString() ?: "",
-                propertyName = assetData?.get("property")?.toString() ?: "",
-                propID = propID
-            )
-            
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .addToBackStack("maintenance_job_task")
-                .commit()
+        // Setup button click listeners
+        btnViewJobTasksPast.setOnClickListener {
+            pastSchedule?.let { schedule ->
+                navigateToJobTasks(schedule)
+            }
         }
-        btnViewHistory.setOnClickListener { 
-            // Navigate to Maintenance History Fragment
-            val fragment = MaintenanceHistoryFragment.newInstance(
-                assetNo = assetData?.get("no")?.toString() ?: "",
-                mntId = assetData?.get("no")?.toString() ?: "", // Use asset number as mntId for history
-                propertyName = assetData?.get("property")?.toString() ?: "",
-                propID = propID
-            )
-            
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .addToBackStack("maintenance_history")
-                .commit()
+        
+        btnViewJobTasksNearest.setOnClickListener {
+            nearestSchedule?.let { schedule ->
+                navigateToJobTasks(schedule)
+            }
+        }
+        
+        btnViewJobTasksUpcoming.setOnClickListener {
+            upcomingSchedule?.let { schedule ->
+                navigateToJobTasks(schedule)
+            }
+        }
+    }
+    
+    private fun navigateToJobTasks(schedule: Maintenance) {
+        // Get schedule data from map
+        val scheduleData = scheduleDataMap[schedule.id]
+        
+        // Get eventId from schedule (this is the actual event ID from tblevent)
+        val eventId = schedule.id.toString()
+        
+        // Get mntId from schedule data map if available
+        val mntIdToUse = scheduleData?.get("mntId")?.toString() 
+            ?: assetData?.get("mntId")?.toString() 
+            ?: schedule.id.toString() // schedule.id.toString() always returns non-null String
+        
+        // Get formatted date from schedule (for display)
+        val scheduleFormattedDate = scheduleData?.get("formatted_date")?.toString() 
+            ?: schedule.formattedDate
+        
+        // Get start_date from schedule (for filtering tasks)
+        val scheduleStartDate = scheduleData?.get("start_date")?.toString() 
+            ?: schedule.startDate
+        
+        val fragment = MaintenanceJobTaskFragment.newInstance(
+            assetNo = assetData?.get("no")?.toString() ?: "",
+            mntId = mntIdToUse,
+            propertyName = assetData?.get("property")?.toString() ?: "",
+            propID = propID,
+            scheduleDate = scheduleFormattedDate,
+            scheduleStartDate = scheduleStartDate,
+            eventId = eventId
+        )
+        
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .addToBackStack("maintenance_job_task")
+            .commit()
+    }
+    
+    private fun setupToolbarMenu() {
+        val toolbar = view?.findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        val context = this.context ?: return
+        
+        // Create custom action view for History menu item
+        toolbar?.post {
+            val menuItem = toolbar.menu.findItem(R.id.action_view_history)
+            menuItem?.let {
+                // Create a custom view with icon and text
+                val actionView = LayoutInflater.from(context).inflate(
+                    R.layout.menu_item_history_action,
+                    null
+                )
+                
+                // Set click listener on the action view
+                actionView.setOnClickListener {
+                    // Navigate to Maintenance History Fragment
+                    val fragment = MaintenanceHistoryFragment.newInstance(
+                        assetNo = assetData?.get("no")?.toString() ?: "",
+                        mntId = assetData?.get("no")?.toString() ?: "", // Use asset number as mntId for history
+                        propertyName = assetData?.get("property")?.toString() ?: "",
+                        propID = propID
+                    )
+                    
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack("maintenance_history")
+                        .commit()
+                }
+                
+                it.actionView = actionView
+            }
+        }
+        
+        toolbar?.setOnMenuItemClickListener { item: MenuItem ->
+            when (item.itemId) {
+                R.id.action_view_history -> {
+                    // This will be handled by the action view click listener
+                    true
+                }
+                else -> false
+            }
         }
     }
     
@@ -202,8 +296,311 @@ class MaintenanceDetailFragment : Fragment() {
                 ivAssetImage.setImageResource(R.drawable.ic_image_placeholder)
             }
             
+            // Load maintenance schedules after asset data is loaded
+            loadMaintenanceSchedules()
+            
         } catch (e: Exception) {
             Toast.makeText(context, "Error loading asset: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun loadMaintenanceSchedules() {
+        lifecycleScope.launch {
+            try {
+                val currentPropID = if (propID.isNotEmpty()) propID else UserService.getCurrentPropID() ?: ""
+                if (currentPropID.isEmpty()) {
+                    android.util.Log.e("MaintenanceDetail", "propID is empty")
+                    hideAllScheduleButtons()
+                    return@launch
+                }
+                
+                // Get Asset No from assetData (preferred) or from displayed TextView as fallback
+                var assetNo = assetData?.get("no")?.toString()?.trim()
+                
+                // If not found in assetData, try to get from TextView
+                if (assetNo.isNullOrEmpty()) {
+                    assetNo = tvAssetNo.text.toString().trim()
+                    // Remove "Asset No:" prefix if present
+                    assetNo = assetNo.replace("Asset No:", "").trim()
+                }
+                
+                android.util.Log.d("MaintenanceDetail", "Loading schedules for Asset No: '$assetNo', propID: '$currentPropID'")
+                android.util.Log.d("MaintenanceDetail", "Asset Data: $assetData")
+                
+                if (assetNo.isNullOrEmpty() || assetNo == "N/A") {
+                    android.util.Log.e("MaintenanceDetail", "Asset No is empty or N/A")
+                    hideAllScheduleButtons()
+                    return@launch
+                }
+                
+                // Get asset schedules from new endpoint
+                val scheduleDataList = MaintenanceService.getAssetSchedule(assetNo, currentPropID)
+                
+                android.util.Log.d("MaintenanceDetail", "Found ${scheduleDataList.size} schedules")
+                
+                if (scheduleDataList.isEmpty()) {
+                    android.util.Log.d("MaintenanceDetail", "No schedules found, hiding buttons")
+                    hideAllScheduleButtons()
+                    return@launch
+                }
+                
+                // Convert schedule data to Maintenance objects for categorization
+                // Store original schedule data for later use in navigation
+                val maintenanceList = scheduleDataList.mapNotNull { scheduleData ->
+                    try {
+                        Maintenance(
+                            id = (scheduleData["id"] as? Number)?.toInt() ?: 0,
+                            title = scheduleData["property"]?.toString() ?: "",
+                            description = scheduleData["location"]?.toString() ?: "",
+                            startDate = scheduleData["start_date"]?.toString() ?: "",
+                            endDate = scheduleData["end_date"]?.toString() ?: "",
+                            status = scheduleData["status"]?.toString() ?: "",
+                            propID = currentPropID,
+                            formattedDate = scheduleData["formatted_date"]?.toString() ?: ""
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                
+                // Store schedule data with mntId for navigation
+                scheduleDataMap = scheduleDataList.associateBy { 
+                    (it["id"] as? Number)?.toInt() ?: 0 
+                }
+                
+                android.util.Log.d("MaintenanceDetail", "Converted ${maintenanceList.size} schedules for categorization")
+                
+                if (maintenanceList.isEmpty()) {
+                    android.util.Log.d("MaintenanceDetail", "No valid schedules after conversion")
+                    hideAllScheduleButtons()
+                    return@launch
+                }
+                
+                categorizeSchedules(maintenanceList)
+                
+            } catch (e: Exception) {
+                // Log error with details
+                android.util.Log.e("MaintenanceDetail", "Error loading schedules: ${e.message}", e)
+                e.printStackTrace()
+                // Show error toast for debugging
+                view?.let {
+                    Toast.makeText(context, "Error loading schedules: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+                hideAllScheduleButtons()
+            }
+        }
+    }
+    
+    private fun hideAllScheduleButtons() {
+        view?.let {
+            btnViewJobTasksPast.visibility = View.GONE
+            btnViewJobTasksNearest.visibility = View.GONE
+            btnViewJobTasksUpcoming.visibility = View.GONE
+            // Show no schedule message
+            tvNoScheduleMessage.visibility = View.VISIBLE
+            // Show toast notification only once
+            if (!hasShownNoScheduleMessage) {
+                Toast.makeText(context, "No maintenance schedule available", Toast.LENGTH_SHORT).show()
+                hasShownNoScheduleMessage = true
+            }
+        }
+    }
+    
+    private fun categorizeSchedules(schedules: List<Maintenance>) {
+        val dateOnlyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val displayDateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) // Short format: 15 Dec 2025
+        val today = Calendar.getInstance()
+        today.set(Calendar.HOUR_OF_DAY, 0)
+        today.set(Calendar.MINUTE, 0)
+        today.set(Calendar.SECOND, 0)
+        today.set(Calendar.MILLISECOND, 0)
+        
+        // Parse and sort schedules by startDate, and group by unique dates
+        val parsedSchedules = schedules.mapNotNull { maintenance ->
+            try {
+                val dateStr = maintenance.startDate.split(" ")[0] // Get date only
+                val date = dateOnlyFormat.parse(dateStr)
+                if (date != null) {
+                    Pair(maintenance, date)
+                } else null
+            } catch (e: Exception) {
+                null
+            }
+        }.sortedBy { it.second }
+        
+        // Group by unique dates to avoid duplicates
+        val uniqueDateSchedules = mutableListOf<Pair<Maintenance, Date>>()
+        val seenDates = mutableSetOf<String>()
+        for (pair in parsedSchedules) {
+            val dateStr = dateOnlyFormat.format(pair.second)
+            if (!seenDates.contains(dateStr)) {
+                seenDates.add(dateStr)
+                uniqueDateSchedules.add(pair)
+            }
+        }
+        
+        // Categorize schedules using unique dates
+        val pastSchedules = uniqueDateSchedules.filter { it.second.before(today.time) }
+        val todaySchedules = uniqueDateSchedules.filter { 
+            val cal = Calendar.getInstance()
+            cal.time = it.second
+            cal.set(Calendar.HOUR_OF_DAY, 0)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            cal.timeInMillis == today.timeInMillis
+        }
+        val futureSchedules = uniqueDateSchedules.filter { it.second.after(today.time) }
+        
+        // Find past schedule (closest to today - the most recent past)
+        pastSchedule = pastSchedules.lastOrNull()?.first
+        
+        // Find nearest schedule (today or closest future)
+        nearestSchedule = when {
+            todaySchedules.isNotEmpty() -> todaySchedules.firstOrNull()?.first
+            futureSchedules.isNotEmpty() -> futureSchedules.firstOrNull()?.first
+            else -> null
+        }
+        
+        // Find upcoming schedule (next after nearest - must be different date)
+        // Since we already have unique dates, we can simply get the next schedule in the list
+        upcomingSchedule = when {
+            // If nearest is today, upcoming is the first future schedule
+            todaySchedules.isNotEmpty() && futureSchedules.isNotEmpty() -> {
+                futureSchedules.firstOrNull()?.first
+            }
+            // If nearest is a future schedule, upcoming is the next one in the list
+            // (which is guaranteed to have a different date since we filtered for unique dates)
+            futureSchedules.size > 1 -> {
+                // Find the index of nearest schedule in futureSchedules
+                val nearestIndex = futureSchedules.indexOfFirst { 
+                    it.first.id == nearestSchedule?.id 
+                }
+                // Get the next schedule after nearest
+                if (nearestIndex >= 0 && nearestIndex < futureSchedules.size - 1) {
+                    futureSchedules[nearestIndex + 1].first
+                } else {
+                    null
+                }
+            }
+            else -> null
+        }
+        
+        // Update UI with buttons
+        updateScheduleButtons(displayDateFormat)
+    }
+    
+    private fun updateScheduleButtons(dateFormat: SimpleDateFormat) {
+        view?.let {
+            // Hide no schedule message when there are schedules
+            tvNoScheduleMessage.visibility = View.GONE
+            // Reset flag when schedules are found
+            hasShownNoScheduleMessage = false
+            
+            // Update Past button
+            pastSchedule?.let { schedule ->
+                try {
+                    val dateStr = schedule.startDate.split(" ")[0]
+                    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr)
+                    val formattedDate = date?.let { dateFormat.format(it) } ?: schedule.formattedDate
+                    btnViewJobTasksPast.text = "View Job Task $formattedDate"
+                    btnViewJobTasksPast.visibility = View.VISIBLE
+                    
+                    // Get status from schedule data map
+                    val scheduleData = scheduleDataMap[schedule.id]
+                    val status = (scheduleData?.get("status")?.toString()?.trim() ?: schedule.status.trim()).ifEmpty { "" }
+                    // Only disable if status is exactly "done" (case-insensitive)
+                    // Status kosong, null, atau pecahan seperti "2/6 done" tetap enable
+                    val isDone = status.lowercase() == "done"
+                    
+                    btnViewJobTasksPast.isEnabled = !isDone
+                    btnViewJobTasksPast.alpha = if (isDone) 0.5f else 1.0f
+                } catch (e: Exception) {
+                    btnViewJobTasksPast.text = "View Job Task ${schedule.formattedDate}"
+                    btnViewJobTasksPast.visibility = View.VISIBLE
+                    
+                    val scheduleData = scheduleDataMap[schedule.id]
+                    val status = (scheduleData?.get("status")?.toString()?.trim() ?: schedule.status.trim()).ifEmpty { "" }
+                    // Only disable if status is exactly "done" (case-insensitive)
+                    // Status kosong, null, atau pecahan seperti "2/6 done" tetap enable
+                    val isDone = status.lowercase() == "done"
+                    
+                    btnViewJobTasksPast.isEnabled = !isDone
+                    btnViewJobTasksPast.alpha = if (isDone) 0.5f else 1.0f
+                }
+            } ?: run {
+                btnViewJobTasksPast.visibility = View.GONE
+            }
+            
+            // Update Nearest button
+            nearestSchedule?.let { schedule ->
+                try {
+                    val dateStr = schedule.startDate.split(" ")[0]
+                    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr)
+                    val formattedDate = date?.let { dateFormat.format(it) } ?: schedule.formattedDate
+                    btnViewJobTasksNearest.text = "View Job Task $formattedDate"
+                    btnViewJobTasksNearest.visibility = View.VISIBLE
+                    
+                    // Get status from schedule data map
+                    val scheduleData = scheduleDataMap[schedule.id]
+                    val status = (scheduleData?.get("status")?.toString()?.trim() ?: schedule.status.trim()).ifEmpty { "" }
+                    // Only disable if status is exactly "done" (case-insensitive)
+                    // Status kosong, null, atau pecahan seperti "2/6 done" tetap enable
+                    val isDone = status.lowercase() == "done"
+                    
+                    btnViewJobTasksNearest.isEnabled = !isDone
+                    btnViewJobTasksNearest.alpha = if (isDone) 0.5f else 1.0f
+                } catch (e: Exception) {
+                    btnViewJobTasksNearest.text = "View Job Task ${schedule.formattedDate}"
+                    btnViewJobTasksNearest.visibility = View.VISIBLE
+                    
+                    val scheduleData = scheduleDataMap[schedule.id]
+                    val status = (scheduleData?.get("status")?.toString()?.trim() ?: schedule.status.trim()).ifEmpty { "" }
+                    // Only disable if status is exactly "done" (case-insensitive)
+                    // Status kosong, null, atau pecahan seperti "2/6 done" tetap enable
+                    val isDone = status.lowercase() == "done"
+                    
+                    btnViewJobTasksNearest.isEnabled = !isDone
+                    btnViewJobTasksNearest.alpha = if (isDone) 0.5f else 1.0f
+                }
+            } ?: run {
+                btnViewJobTasksNearest.visibility = View.GONE
+            }
+            
+            // Update Upcoming button
+            upcomingSchedule?.let { schedule ->
+                try {
+                    val dateStr = schedule.startDate.split(" ")[0]
+                    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateStr)
+                    val formattedDate = date?.let { dateFormat.format(it) } ?: schedule.formattedDate
+                    btnViewJobTasksUpcoming.text = "View Job Task $formattedDate"
+                    btnViewJobTasksUpcoming.visibility = View.VISIBLE
+                    
+                    // Get status from schedule data map
+                    val scheduleData = scheduleDataMap[schedule.id]
+                    val status = (scheduleData?.get("status")?.toString()?.trim() ?: schedule.status.trim()).ifEmpty { "" }
+                    // Only disable if status is exactly "done" (case-insensitive)
+                    // Status kosong, null, atau pecahan seperti "2/6 done" tetap enable
+                    val isDone = status.lowercase() == "done"
+                    
+                    btnViewJobTasksUpcoming.isEnabled = !isDone
+                    btnViewJobTasksUpcoming.alpha = if (isDone) 0.5f else 1.0f
+                } catch (e: Exception) {
+                    btnViewJobTasksUpcoming.text = "View Job Task ${schedule.formattedDate}"
+                    btnViewJobTasksUpcoming.visibility = View.VISIBLE
+                    
+                    val scheduleData = scheduleDataMap[schedule.id]
+                    val status = (scheduleData?.get("status")?.toString()?.trim() ?: schedule.status.trim()).ifEmpty { "" }
+                    // Only disable if status is exactly "done" (case-insensitive)
+                    // Status kosong, null, atau pecahan seperti "2/6 done" tetap enable
+                    val isDone = status.lowercase() == "done"
+                    
+                    btnViewJobTasksUpcoming.isEnabled = !isDone
+                    btnViewJobTasksUpcoming.alpha = if (isDone) 0.5f else 1.0f
+                }
+            } ?: run {
+                btnViewJobTasksUpcoming.visibility = View.GONE
+            }
         }
     }
     

@@ -11,17 +11,20 @@
         android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/primary"
+        android:background="@android:color/transparent"
         android:elevation="0dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/primary"
-            app:titleTextColor="@color/white"
+            android:background="@android:color/transparent"
+            android:theme="@style/ToolbarTheme"
+            app:titleTextColor="@color/primary"
             app:titleTextAppearance="@style/TextAppearance.AppCompat.Title"
-            app:navigationIcon="@drawable/ic_arrow_back" />
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:iconTint="@color/primary"
+            app:menu="@menu/menu_maintenance_detail" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -409,17 +412,28 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp">
 
-                <!-- View Job Tasks Button -->
+                <!-- No Schedule Message -->
+                <TextView
+                    android:id="@+id/tv_no_schedule_message"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No maintenance schedule available"
+                    android:textSize="14sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:gravity="center"
+                    android:padding="16dp"
+                    android:visibility="gone" />
+
+                <!-- View Job Tasks Button - Past (Closest) -->
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_view_job_tasks"
-                    android:layout_width="0dp"
+                    android:id="@+id/btn_view_job_tasks_past"
+                    android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="8dp"
                     android:text="View Job Tasks"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -429,25 +443,43 @@
                     app:iconTint="@color/white"
                     app:backgroundTint="@color/primary"
                     app:cornerRadius="10dp"
-                    app:elevation="2dp" />
+                    app:elevation="2dp"
+                    android:visibility="gone" />
 
-                <!-- View History Button -->
+                <!-- View Job Tasks Button - Nearest -->
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_view_history"
-                    android:layout_width="0dp"
+                    android:id="@+id/btn_view_job_tasks_nearest"
+                    android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:text="View History"
+                    android:layout_marginBottom="8dp"
+                    android:text="View Job Tasks"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/white"
-                    app:icon="@drawable/ic_history"
+                    app:icon="@drawable/ic_task"
                     app:iconGravity="textStart"
                     app:iconTint="@color/white"
                     app:backgroundTint="@color/primary"
                     app:cornerRadius="10dp"
-                    app:elevation="2dp" />
+                    app:elevation="2dp"
+                    android:visibility="gone" />
+
+                <!-- View Job Tasks Button - Upcoming -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_view_job_tasks_upcoming"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="View Job Tasks"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    app:icon="@drawable/ic_task"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/white"
+                    app:backgroundTint="@color/primary"
+                    app:cornerRadius="10dp"
+                    app:elevation="2dp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 

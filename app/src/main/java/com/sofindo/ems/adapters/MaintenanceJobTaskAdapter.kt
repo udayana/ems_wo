@@ -26,6 +26,10 @@ class MaintenanceJobTaskAdapter(
     }
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
+        // Validate position to prevent IndexOutOfBoundsException
+        if (position < 0 || position >= tasks.size) {
+            return
+        }
         val task = tasks[position]
         val taskId = task["id"]?.toString() ?: ""
         val taskTitle = task["title"]?.toString() ?: ""
@@ -43,9 +47,6 @@ class MaintenanceJobTaskAdapter(
         }
         holder.tvTaskTitle.text = displayTitle
 
-        // Set checkbox state
-        holder.checkBox.isChecked = isCompleted
-
         // Set text color and style based on completion status
         if (isCompleted) {
             holder.tvTaskTitle.setTextColor(holder.itemView.context.getColor(R.color.grey))
@@ -62,29 +63,70 @@ class MaintenanceJobTaskAdapter(
             holder.itemView.context.getColor(R.color.status_done)
         )
 
-        // Handle checkbox click - prevent infinite loop
-        holder.checkBox.setOnCheckedChangeListener(null) // Remove previous listener
-        holder.checkBox.isChecked = isCompleted // Set state without triggering listener
+        // CRITICAL: Remove previous listener FIRST to prevent wrong binding
+        holder.checkBox.setOnCheckedChangeListener(null)
         
-        holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
-            // Only call if state actually changed
-            if (isChecked != isCompleted) {
-                onTaskToggle(taskId, isChecked)
+        // CRITICAL: Store taskId in tag BEFORE setting state to prevent wrong binding
+        holder.checkBox.tag = taskId
+        holder.itemView.tag = taskId
+        
+        // Set checkbox state WITHOUT triggering listener (must be after removing listener)
+        holder.checkBox.isChecked = isCompleted
+        
+        // Set new listener that uses tag to ensure correct task (not position)
+        // This ensures even if view is recycled, listener always uses correct taskId
+        holder.checkBox.setOnCheckedChangeListener { checkBox, isChecked ->
+            // Get taskId from tag (this is the correct task for this view, regardless of position)
+            val taggedTaskId = checkBox.tag as? String
+            if (taggedTaskId.isNullOrEmpty() || taggedTaskId != taskId) {
+                // Tag doesn't match current task - ignore (view was recycled)
+                return@setOnCheckedChangeListener
+            }
+            
+            // Find the task by taskId (not by position) to get current state
+            val currentTask = tasks.find { it["id"]?.toString() == taggedTaskId }
+            if (currentTask == null) {
+                return@setOnCheckedChangeListener
+            }
+            
+            val currentIsCompleted = currentTask["completed"] as? Boolean ?: false
+            
+            // Only trigger if state actually changed
+            if (isChecked != currentIsCompleted) {
+                onTaskToggle(taggedTaskId, isChecked)
             }
         }
 
-        // Make entire item clickable - but only if checkbox is not already being handled
+        // Make entire item clickable - toggle checkbox when item is clicked
         holder.itemView.setOnClickListener {
-            // Only trigger if the click is not on the checkbox itself
-            // This prevents double-triggering when clicking the checkbox
+            // Get taskId from tag
+            val taggedTaskId = holder.itemView.tag as? String
+            if (taggedTaskId.isNullOrEmpty()) {
+                return@setOnClickListener
+            }
+            
+            // Toggle checkbox (this will trigger the OnCheckedChangeListener)
+            holder.checkBox.toggle()
         }
     }
 
-    override fun getItemCount(): Int = tasks.size
+    override fun getItemCount(): Int {
+        return try {
+            tasks.size
+        } catch (e: Exception) {
+            0
+        }
+    }
 
     fun updateTasks(newTasks: List<Map<String, Any>>) {
         tasks = newTasks
-        notifyDataSetChanged()
+        try {
+            // Use notifyDataSetChanged to ensure all views are properly rebound with correct tags
+            // This is safer than notifyItemChanged when dealing with view recycling issues
+            notifyDataSetChanged()
+        } catch (e: Exception) {
+            android.util.Log.e("MaintenanceJobTaskAdapter", "Error in notifyDataSetChanged: ${e.message}", e)
+        }
     }
     
 

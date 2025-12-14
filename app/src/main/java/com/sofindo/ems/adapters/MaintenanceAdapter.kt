@@ -10,8 +10,7 @@ import com.sofindo.ems.R
 import com.sofindo.ems.models.Maintenance
 
 class MaintenanceAdapter(
-    private val maintenanceList: List<Maintenance>,
-    private val onItemClick: (Maintenance) -> Unit
+    private val maintenanceList: List<Maintenance>
 ) : RecyclerView.Adapter<MaintenanceAdapter.MaintenanceViewHolder>() {
 
     class MaintenanceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -29,6 +28,11 @@ class MaintenanceAdapter(
     }
 
     override fun onBindViewHolder(holder: MaintenanceViewHolder, position: Int) {
+        // Validate position to prevent IndexOutOfBoundsException
+        if (position < 0 || position >= maintenanceList.size) {
+            return
+        }
+        
         val maintenance = maintenanceList[position]
         
         holder.tvDate.text = maintenance.formattedDate
@@ -81,10 +85,15 @@ class MaintenanceAdapter(
         }
         holder.itemView.setBackgroundColor(backgroundColor)
         
-        holder.itemView.setOnClickListener {
-            onItemClick(maintenance)
-        }
+        holder.itemView.isClickable = false
+        holder.itemView.isFocusable = false
     }
 
-    override fun getItemCount(): Int = maintenanceList.size
+    override fun getItemCount(): Int {
+        return try {
+            maintenanceList.size
+        } catch (e: Exception) {
+            0
+        }
+    }
 }

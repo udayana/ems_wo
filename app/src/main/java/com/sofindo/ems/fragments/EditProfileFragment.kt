@@ -2,11 +2,8 @@ package com.sofindo.ems.fragments
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,7 +24,6 @@ import com.sofindo.ems.services.ProfileService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 
 class EditProfileFragment : Fragment() {
     
@@ -50,7 +46,9 @@ class EditProfileFragment : Fragment() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri ->
+            val intentData = result.data
+            val selectedUri = intentData?.data ?: intentData?.clipData?.getItemAt(0)?.uri
+            selectedUri?.let { uri ->
                 selectedImageUri = uri
                 loadSelectedImage(uri)
                 btnUploadPhoto.visibility = View.VISIBLE
@@ -130,8 +128,12 @@ class EditProfileFragment : Fragment() {
     }
     
     private fun openImagePicker() {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        pickImage.launch(intent)
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "image/*"
+            addCategory(Intent.CATEGORY_OPENABLE)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        pickImage.launch(Intent.createChooser(intent, "Select Photo"))
     }
     
     private fun loadSelectedImage(uri: Uri) {

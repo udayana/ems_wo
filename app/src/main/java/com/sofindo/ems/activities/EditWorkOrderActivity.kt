@@ -9,10 +9,13 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.sofindo.ems.R
 import com.sofindo.ems.api.RetrofitClient
+import com.sofindo.ems.utils.applyTopAndBottomInsets
+import com.sofindo.ems.utils.setupEdgeToEdge
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -47,7 +50,15 @@ class EditWorkOrderActivity : AppCompatActivity() {
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Enable edge-to-edge for Android 15+ (SDK 35)
+        setupEdgeToEdge()
+        
         super.onCreate(savedInstanceState)
+        
+        // Apply window insets to root layout
+        findViewById<android.view.ViewGroup>(android.R.id.content)?.getChildAt(0)?.let { rootView ->
+            rootView.applyTopAndBottomInsets()
+        }
         
         try {
             setContentView(R.layout.activity_edit_work_order)
@@ -58,7 +69,7 @@ class EditWorkOrderActivity : AppCompatActivity() {
         }
         
         // Get work order data from intent
-        @Suppress("DEPRECATION")
+        @Suppress("DEPRECATION", "UNCHECKED_CAST")
         try {
             workOrder = intent.getSerializableExtra("workOrder") as? Map<String, Any>
             
@@ -79,10 +90,23 @@ class EditWorkOrderActivity : AppCompatActivity() {
             loadData()
             setupListeners()
             loadMasterData()
+            setupBackPressHandler()
         } catch (e: Exception) {
             Toast.makeText(this, "Error: Cannot initialize edit screen", Toast.LENGTH_SHORT).show()
             finish()
         }
+    }
+    
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (isLoading) {
+                    Toast.makeText(this@EditWorkOrderActivity, "Please wait, updating work order...", Toast.LENGTH_SHORT).show()
+                } else {
+                    finish()
+                }
+            }
+        })
     }
     
     private fun initViews() {
@@ -383,18 +407,14 @@ class EditWorkOrderActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                onBackPressed()
+                if (isLoading) {
+                    Toast.makeText(this, "Please wait, updating work order...", Toast.LENGTH_SHORT).show()
+                } else {
+                    finish()
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)
-        }
-    }
-    
-    override fun onBackPressed() {
-        if (isLoading) {
-            Toast.makeText(this, "Please wait, updating work order...", Toast.LENGTH_SHORT).show()
-        } else {
-            super.onBackPressed()
         }
     }
 }

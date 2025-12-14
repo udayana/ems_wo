@@ -3,6 +3,7 @@ package com.sofindo.ems.fragments
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import com.sofindo.ems.activities.CreateProjectActivity
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -26,6 +27,7 @@ import com.sofindo.ems.MainActivity
 import com.sofindo.ems.R
 import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.services.UserService
+import com.sofindo.ems.services.NotificationService
 import com.sofindo.ems.utils.PermissionUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,6 +55,7 @@ class TambahWOFragment : Fragment() {
     private lateinit var btnSubmit: Button
     private lateinit var btnCancel: Button
     private lateinit var btnPhoto: Button
+    private lateinit var btnCreateProject: Button
     private lateinit var ivPhotoPreview: ImageView
     private lateinit var progressBar: ProgressBar
     private lateinit var tvProgress: TextView
@@ -146,6 +149,7 @@ class TambahWOFragment : Fragment() {
         btnSubmit = view.findViewById(R.id.btn_submit)
         btnCancel = view.findViewById(R.id.btn_cancel)
         btnPhoto = view.findViewById(R.id.btn_photo)
+        btnCreateProject = view.findViewById(R.id.btn_create_project)
         ivPhotoPreview = view.findViewById(R.id.iv_photo_preview)
         progressBar = view.findViewById(R.id.progress_bar)
         tvProgress = view.findViewById(R.id.tv_progress)
@@ -167,6 +171,11 @@ class TambahWOFragment : Fragment() {
         btnPhoto.setOnClickListener {
             hideKeyboard() // Hide keyboard before showing image dialog
             showImageSourceDialog()
+        }
+        
+        btnCreateProject.setOnClickListener {
+            hideKeyboard()
+            navigateToCreateProject()
         }
         
         // Job text area - capitalize first letter of each sentence
@@ -361,18 +370,24 @@ class TambahWOFragment : Fragment() {
         // Set defaults with post to ensure proper rendering
         spinnerCategory.post {
             if (categories.isNotEmpty()) {
-                spinnerCategory.setSelection(0) // General
+                // Set default to "General" if available, otherwise first item
+                val generalIndex = categories.indexOf("General")
+                spinnerCategory.setSelection(if (generalIndex > 0) generalIndex else 1)
             }
         }
         
         spinnerDepartment.post {
             if (departments.isNotEmpty()) {
-                spinnerDepartment.setSelection(0) // "To:" placeholder
+                // Set default to "Engineering" if available, otherwise first item after placeholder
+                val engineeringIndex = departments.indexOf("Engineering")
+                spinnerDepartment.setSelection(if (engineeringIndex > 0) engineeringIndex else 1)
             }
         }
         
         spinnerPriority.post {
-            spinnerPriority.setSelection(0) // Low
+            // Set default to "Low" if available, otherwise first item after placeholder
+            val lowIndex = priorities.indexOf("Low")
+            spinnerPriority.setSelection(if (lowIndex > 0) lowIndex else 1)
         }
     }
     
@@ -471,19 +486,11 @@ class TambahWOFragment : Fragment() {
     }
     
     private fun openGallery() {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        // Use Android Photo Picker - no permission required
+        val intent = Intent(MediaStore.ACTION_PICK_IMAGES)
         galleryLauncher.launch(intent)
     }
     
-    private fun handleImageResult() {
-        // Handle camera result
-        try {
-            selectedImageFile = createImageFile()
-            updatePhotoUI()
-        } catch (e: Exception) {
-            showSnackbar("Failed to process camera image: ${e.message}", false)
-        }
-    }
     
     private fun handleGalleryImage(uri: Uri) {
         lifecycleScope.launch {
@@ -669,7 +676,8 @@ class TambahWOFragment : Fragment() {
                     "dept" to userDept,  // Department of logged in user (automatic)
                     "priority" to priority,
                     "orderBy" to username!!,
-                    "woto" to selectedDepartment  // Department selected by user in "To:" spinner
+                    "woto" to selectedDepartment,  // Department selected by user in "To:" spinner
+                    "status" to "new"  // ✅ Set default status to "new" instead of empty
                 )
                 
                 val result = if (selectedImageFile != null) {
@@ -693,7 +701,8 @@ class TambahWOFragment : Fragment() {
                                 category = category,
                                 dept = userDept,  // Department of logged in user (automatic)
                                 priority = priority,
-                                woto = selectedDepartment  // Department selected by user in "To:" spinner
+                                woto = selectedDepartment,  // Department selected by user in "To:" spinner
+                                status = "new"  // ✅ Set default status to "new" instead of empty
                             )
                         }
                         resultMap.putAll(response)
@@ -716,7 +725,8 @@ class TambahWOFragment : Fragment() {
                                 category = category,
                                 dept = userDept,  // Department of logged in user (automatic)
                                 priority = priority,
-                                woto = selectedDepartment  // Department selected by user in "To:" spinner
+                                woto = selectedDepartment,  // Department selected by user in "To:" spinner
+                                status = "new"  // ✅ Set default status to "new" instead of empty
                             )
                         }
                         resultMap.putAll(response)
@@ -728,6 +738,10 @@ class TambahWOFragment : Fragment() {
                 
                 if (result["status"] == "success" || result["id"] != null || result["success"] == true) {
                     showSnackbar("Work order added successfully!", true)
+                    
+                    // Send notification to target department (fixed with better error handling)
+                    sendWorkOrderNotification(job, location, selectedDepartment)
+                    
                     clearForm()
                     navigateToOutbox()
                 } else {
@@ -815,9 +829,17 @@ class TambahWOFragment : Fragment() {
     private fun clearForm() {
         etJob.text.clear()
         etLocation.text.clear()
-        spinnerCategory.setSelection(0)
-        // Department spinner doesn't need to be reset because user must select target department
-        spinnerPriority.setSelection(0)
+        
+        // Set default values instead of placeholder
+        val generalIndex = categories.indexOf("General")
+        spinnerCategory.setSelection(if (generalIndex > 0) generalIndex else 1)
+        
+        val engineeringIndex = departments.indexOf("Engineering")
+        spinnerDepartment.setSelection(if (engineeringIndex > 0) engineeringIndex else 1)
+        
+        val lowIndex = priorities.indexOf("Low")
+        spinnerPriority.setSelection(if (lowIndex > 0) lowIndex else 1)
+        
         selectedImageFile = null
         ivPhotoPreview.visibility = View.GONE
         btnPhoto.text = "📷 Upload"
@@ -834,6 +856,11 @@ class TambahWOFragment : Fragment() {
     
     private fun navigateToOutbox() {
         (activity as? MainActivity)?.switchToTab(1) // Switch to Outbox tab
+    }
+    
+    private fun navigateToCreateProject() {
+        val intent = Intent(context, com.sofindo.ems.activities.CreateProjectActivity::class.java)
+        startActivity(intent)
     }
     
 
@@ -891,6 +918,45 @@ class TambahWOFragment : Fragment() {
             snackbar.setBackgroundTint(resources.getColor(android.R.color.holo_red_dark, null))
         }
         snackbar.show()
+    }
+    
+    private fun sendWorkOrderNotification(job: String, location: String, targetDepartment: String) {
+        try {
+            // Log for debugging
+            android.util.Log.d("TambahWOFragment", "Sending notification to department: $targetDepartment for job: $job")
+            
+            NotificationService.sendWorkOrderNotification(
+                workOrderTitle = job,
+                workOrderDescription = "Location: $location",
+                targetDepartment = targetDepartment,
+                onSuccess = {
+                    // Notification sent successfully - run on main thread
+                    activity?.runOnUiThread {
+                        // Check if fragment is still attached and has view
+                        if (isAdded && view != null) {
+                            showSnackbar("Notification sent to $targetDepartment department", true)
+                        }
+                    }
+                },
+                onError = { error ->
+                    // Notification failed, but work order was still submitted - run on main thread
+                    activity?.runOnUiThread {
+                        // Check if fragment is still attached and has view
+                        if (isAdded && view != null) {
+                            showSnackbar("Work order submitted, but notification failed: $error", false)
+                        }
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            // If notification service itself crashes, don't crash the app
+            activity?.runOnUiThread {
+                // Check if fragment is still attached and has view
+                if (isAdded && view != null) {
+                    showSnackbar("Work order submitted, notification service error: ${e.message}", false)
+                }
+            }
+        }
     }
     
     private fun hideKeyboard() {

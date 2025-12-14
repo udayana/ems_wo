@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp"
+    android:layout_marginBottom="8dp">
+
+    <!-- Before Photo -->
+    <FrameLayout
+        android:id="@+id/fl_before_photo"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginEnd="8dp" />
+
+    <!-- Arrow -->
+    <TextView
+        android:id="@+id/tv_arrow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary_color"
+        android:layout_marginHorizontal="8dp" />
+
+    <!-- After Photo (PhotoDone) Container -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginEnd="8dp">
+
+        <!-- After Photo (PhotoDone) -->
+        <FrameLayout
+            android:id="@+id/fl_after_photo"
+            android:layout_width="100dp"
+            android:layout_height="100dp" />
+
+        <!-- Upload Button (ImagePicker Icon) - Below PhotoDone -->
+        <ImageButton
+            android:id="@+id/btn_upload"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/ic_camera_simple"
+            android:background="@drawable/btn_view_project_background"
+            android:contentDescription="Upload photo"
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            android:tint="@color/white" />
+
+    </LinearLayout>
+
+</LinearLayout>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

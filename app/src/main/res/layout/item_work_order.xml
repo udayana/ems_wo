@@ -58,6 +58,17 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
+            <!-- Forward Button (visible only for head) -->
+            <ImageButton
+                android:id="@+id/btn_forward"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_forward"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Forward"
+                android:padding="4dp"
+                android:visibility="gone" />
+
             <!-- Menu Popup Button -->
             <ImageButton
                 android:id="@+id/btn_menu"
@@ -136,6 +147,33 @@
 
         </LinearLayout>
 
+        <!-- Assign To Row (only visible if assignto is not empty) -->
+        <LinearLayout
+            android:id="@+id/ll_assign_to"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_person"
+                android:layout_marginEnd="4dp"
+                android:layout_gravity="center_vertical"
+                app:tint="#2196F3" />
+
+            <TextView
+                android:id="@+id/tv_assign_to"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Assign to: "
+                android:textColor="#2196F3"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
         <!-- Date and Priority Row -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -178,6 +216,87 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
+
+        <!-- Review Section (only visible if is_review == 1) -->
+        <LinearLayout
+            android:id="@+id/ll_review"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tv_review_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Review: "
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginEnd="4dp" />
+
+            <LinearLayout
+                android:id="@+id/ll_rating_stars"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/iv_star_1"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_star"
+                    android:layout_marginEnd="2dp"
+                    app:tint="#FF9E9E9E" />
+
+                <ImageView
+                    android:id="@+id/iv_star_2"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_star"
+                    android:layout_marginEnd="2dp"
+                    app:tint="#FF9E9E9E" />
+
+                <ImageView
+                    android:id="@+id/iv_star_3"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_star"
+                    android:layout_marginEnd="2dp"
+                    app:tint="#FF9E9E9E" />
+
+                <ImageView
+                    android:id="@+id/iv_star_4"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_star"
+                    android:layout_marginEnd="2dp"
+                    app:tint="#FF9E9E9E" />
+
+                <ImageView
+                    android:id="@+id/iv_star_5"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/ic_star"
+                    app:tint="#FF9E9E9E" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Need Review Button (only visible in Outbox for done status with orderBy matching current user) -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_need_review"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Need Review"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:background="@drawable/status_badge_background"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:contentDescription="Need Review" />
 
     </LinearLayout>
 

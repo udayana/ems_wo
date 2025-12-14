@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/register_gradient_background">
+
+    <!-- App Bar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        android:elevation="0dp"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:titleTextColor="@color/black" />
+
+    <!-- Main Content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:padding="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <!-- Form Container -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/register_form_background"
+                android:padding="16dp"
+                android:layout_marginTop="60dp"
+                android:layout_marginBottom="20dp">
+
+                <!-- Title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Verify OTP"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Sent To -->
+                <TextView
+                    android:id="@+id/tv_sent_to"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="OTP sent to: ***@example.com"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="24dp" />
+
+                <!-- OTP Section (shown when OTP not verified) -->
+                <LinearLayout
+                    android:id="@+id/ll_otp_section"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Masukkan OTP yang anda terima dari Email"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- OTP Code Field -->
+                    <EditText
+                        android:id="@+id/et_otp_code"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Enter 4-digit OTP"
+                        android:inputType="number"
+                        android:textColor="@color/black"
+                        android:textColorHint="@color/text_secondary"
+                        android:background="@drawable/register_input_background"
+                        android:padding="12dp"
+                        android:layout_marginBottom="16dp"
+                        android:textSize="16sp" />
+
+                    <!-- Error Message -->
+                    <TextView
+                        android:id="@+id/tv_error"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:padding="12dp"
+                        android:background="@drawable/error_background"
+                        android:textColor="@color/error_red"
+                        android:textSize="14sp"
+                        android:gravity="center"
+                        android:visibility="gone" />
+
+                    <!-- Verify Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_verify"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:text="Verify"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:padding="14dp"
+                        android:backgroundTint="@color/primary"
+                        app:cornerRadius="10dp" />
+
+                    <!-- Resend OTP Button -->
+                    <TextView
+                        android:id="@+id/btn_resend_otp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="Resend OTP"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary"
+                        android:padding="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackground" />
+
+                </LinearLayout>
+
+                <!-- OTP Verified Indicator (shown when OTP verified) -->
+                <LinearLayout
+                    android:id="@+id/ll_otp_verified"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="#E8F5E9"
+                    android:padding="12dp"
+                    android:layout_marginBottom="24dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:text="✓"
+                        android:textSize="20sp"
+                        android:textColor="@android:color/holo_green_dark"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="OTP Benar"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/holo_green_dark" />
+
+                </LinearLayout>
+
+                <!-- Password Section (shown when OTP verified) -->
+                <LinearLayout
+                    android:id="@+id/ll_password_section"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Masukkan Password baru anda"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary"
+                        android:layout_marginBottom="8dp" />
+
+                    <!-- New Password Field -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:background="@drawable/register_input_background"
+                        android:layout_marginBottom="16dp"
+                        android:gravity="center_vertical">
+
+                        <EditText
+                            android:id="@+id/et_new_password"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:hint="Enter new password"
+                            android:inputType="textPassword"
+                            android:textColor="@color/black"
+                            android:textColorHint="@color/text_secondary"
+                            android:background="@android:color/transparent"
+                            android:padding="12dp"
+                            android:textSize="16sp" />
+
+                        <ImageView
+                            android:id="@+id/iv_password_toggle"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="12dp"
+                            android:src="@drawable/ic_visibility_off"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:contentDescription="Toggle password visibility" />
+
+                    </LinearLayout>
+
+                    <!-- Error Message for Password -->
+                    <TextView
+                        android:id="@+id/tv_error_password"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:padding="12dp"
+                        android:background="@drawable/error_background"
+                        android:textColor="@color/error_red"
+                        android:textSize="14sp"
+                        android:gravity="center"
+                        android:visibility="gone" />
+
+                    <!-- Password Change Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_password_change"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:text="Password Change"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:padding="14dp"
+                        android:backgroundTint="@color/primary"
+                        app:cornerRadius="10dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

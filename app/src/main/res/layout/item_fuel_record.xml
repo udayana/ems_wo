@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="44dp"
+    android:orientation="horizontal"
+    android:background="@color/white"
+    android:gravity="center_vertical">
+
+    <!-- Date -->
+    <TextView
+        android:id="@+id/date_text"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="1/1"
+        android:textAlignment="center"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:paddingVertical="4dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray_light" />
+
+    <!-- New Fuel -->
+    <TextView
+        android:id="@+id/new_fuel_text"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="100 ltr"
+        android:textAlignment="center"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingVertical="4dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray_light" />
+
+    <!-- Total Fuel -->
+    <TextView
+        android:id="@+id/total_fuel_text"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="1000 ltr"
+        android:textAlignment="center"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:paddingVertical="4dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray_light" />
+
+    <!-- Total Cost -->
+    <TextView
+        android:id="@+id/total_cost_text"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="Rp1,000,000"
+        android:textAlignment="center"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:paddingVertical="4dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray_light" />
+
+    <!-- Rec. By -->
+    <TextView
+        android:id="@+id/rec_by_text"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:text="User"
+        android:textAlignment="center"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:paddingVertical="4dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Hidden delete button (for swipe functionality) -->
+    <View
+        android:id="@+id/delete_button"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:background="@color/red"
+        android:visibility="gone" />
+
+</LinearLayout>

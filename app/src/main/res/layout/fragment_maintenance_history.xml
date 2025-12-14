@@ -10,16 +10,17 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/primary"
+        android:background="@android:color/transparent"
         android:elevation="0dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/primary"
-            app:titleTextColor="@color/white"
-            app:titleTextAppearance="@style/TextAppearance.AppCompat.Title" />
+            android:background="@android:color/transparent"
+            app:titleTextColor="@color/primary"
+            app:titleTextAppearance="@style/TextAppearance.AppCompat.Title"
+            app:iconTint="@color/primary" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

@@ -27,7 +27,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/ic_calendar"
-                app:tint="@color/primary" />
+                app:tint="@color/white" />
 
             <TextView
                 android:id="@+id/tv_date"
@@ -36,7 +36,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:text="24 August 2025"
-                android:textColor="@color/primary"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -48,7 +48,7 @@
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp"
                 android:text="Record 1"
-                android:textColor="@color/primary"
+                android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -148,6 +148,84 @@
                     android:text="Maintenance : done - 1) Check the cooling water in the Radiator. 2) Check the oil level is above the minimum level. 3) Check the battery and charger voltage. 4) Check Fuel or solar level. 5) Keep the generator and its surroundings clean. 6) Warm up for 15 minutes once a week."
                     android:textColor="@color/black"
                     android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <!-- Photos Section -->
+            <LinearLayout
+                android:id="@+id/layout_photos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_task"
+                        app:tint="@color/primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Photos"
+                        android:textColor="@color/primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <!-- Photos Container -->
+                <LinearLayout
+                    android:id="@+id/layout_photos_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <!-- Photo 1 -->
+                    <ImageView
+                        android:id="@+id/iv_photo_1"
+                        android:layout_width="0dp"
+                        android:layout_height="120dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/content_background"
+                        android:contentDescription="Photo 1"
+                        android:visibility="gone" />
+
+                    <!-- Photo 2 -->
+                    <ImageView
+                        android:id="@+id/iv_photo_2"
+                        android:layout_width="0dp"
+                        android:layout_height="120dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/content_background"
+                        android:contentDescription="Photo 2"
+                        android:visibility="gone" />
+
+                    <!-- Photo 3 -->
+                    <ImageView
+                        android:id="@+id/iv_photo_3"
+                        android:layout_width="0dp"
+                        android:layout_height="120dp"
+                        android:layout_weight="1"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/content_background"
+                        android:contentDescription="Photo 3"
+                        android:visibility="gone" />
+
+                </LinearLayout>
 
             </LinearLayout>
 

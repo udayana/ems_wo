@@ -11,11 +11,13 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/blue"
+        android:background="@android:color/transparent"
         app:navigationIcon="@drawable/ic_arrow_back"
-        app:title="Tasks"
-        app:titleTextColor="@color/white"
-        />
+        app:title=""
+        app:subtitle=""
+        app:titleTextColor="@color/primary"
+        app:subtitleTextColor="@color/grey"
+        app:iconTint="@color/primary" />
 
     <!-- Loading State -->
     <ProgressBar
@@ -83,35 +85,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp"
+            android:padding="12dp"
             android:paddingBottom="100dp">
-
-            <!-- Job Details -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:id="@+id/tv_job_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Indoor AC Pici-Pici"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/black" />
-
-                <TextView
-                    android:id="@+id/tv_period"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Periode: monthly"
-                    android:textSize="14sp"
-                    android:textColor="@color/grey" />
-
-            </LinearLayout>
 
             <!-- Progress Indicator -->
             <LinearLayout
@@ -119,8 +94,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:background="@drawable/progress_background"
-                android:padding="12dp"
-                android:layout_marginBottom="16dp"
+                android:padding="10dp"
+                android:layout_marginBottom="12dp"
                 android:gravity="center_vertical">
 
                 <ImageView
@@ -128,7 +103,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_status_done"
-                    app:tint="@color/blue"
+                    app:tint="@color/primary"
                     android:layout_marginEnd="8dp" />
 
                 <TextView
@@ -138,7 +113,7 @@
                     android:layout_weight="1"
                     android:text="Progress: 8/8 tasks completed"
                     android:textSize="14sp"
-                    android:textColor="@color/blue"
+                    android:textColor="@color/primary"
                     android:textStyle="bold" />
 
             </LinearLayout>
@@ -151,20 +126,20 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/black"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="6dp" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="12dp" />
 
             <!-- Additional Notes Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="12dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -173,7 +148,7 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="@color/black"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="6dp" />
 
                 <EditText
                     android:id="@+id/et_note"
@@ -188,7 +163,156 @@
                     android:gravity="top"
                     android:inputType="textMultiLine" />
 
+            </LinearLayout>
 
+            <!-- Photo Upload Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Photos (optional-3 photos)"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    android:layout_marginBottom="6dp" />
+
+                <!-- Photo Container -->
+                <LinearLayout
+                    android:id="@+id/layout_photos_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <!-- Photo 1 -->
+                    <LinearLayout
+                        android:id="@+id/layout_photo_1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginEnd="8dp"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:id="@+id/iv_photo_1"
+                            android:layout_width="match_parent"
+                            android:layout_height="120dp"
+                            android:scaleType="centerCrop"
+                            android:background="@drawable/edittext_background"
+                            android:contentDescription="Photo 1" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:layout_marginTop="4dp">
+
+                            <ImageButton
+                                android:id="@+id/btn_remove_photo_1"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@android:drawable/ic_menu_delete"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="Remove photo 1" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Photo 2 -->
+                    <LinearLayout
+                        android:id="@+id/layout_photo_2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginEnd="8dp"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:id="@+id/iv_photo_2"
+                            android:layout_width="match_parent"
+                            android:layout_height="120dp"
+                            android:scaleType="centerCrop"
+                            android:background="@drawable/edittext_background"
+                            android:contentDescription="Photo 2" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:layout_marginTop="4dp">
+
+                            <ImageButton
+                                android:id="@+id/btn_remove_photo_2"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@android:drawable/ic_menu_delete"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="Remove photo 2" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Photo 3 -->
+                    <LinearLayout
+                        android:id="@+id/layout_photo_3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:id="@+id/iv_photo_3"
+                            android:layout_width="match_parent"
+                            android:layout_height="120dp"
+                            android:scaleType="centerCrop"
+                            android:background="@drawable/edittext_background"
+                            android:contentDescription="Photo 3" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:layout_marginTop="4dp">
+
+                            <ImageButton
+                                android:id="@+id/btn_remove_photo_3"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@android:drawable/ic_menu_delete"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="Remove photo 3" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Add Photo Button -->
+                <Button
+                    android:id="@+id/btn_add_photo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="📷 Add Photo"
+                    android:textSize="14sp"
+                    android:background="@drawable/submit_button_background"
+                    android:textColor="@color/white"
+                    android:padding="8dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp" />
 
             </LinearLayout>
 

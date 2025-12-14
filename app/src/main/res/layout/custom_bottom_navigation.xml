@@ -37,7 +37,7 @@
 
     </LinearLayout>
 
-    <!-- Out Tab -->
+    <!-- Project Tab -->
     <LinearLayout
         android:id="@+id/tab_out"
         android:layout_width="0dp"
@@ -53,14 +53,14 @@
             android:id="@+id/icon2"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:src="@drawable/ic_send"
+            android:src="@drawable/ic_folder"
             android:tint="@color/bottom_nav_item_color" />
 
         <TextView
             android:id="@+id/text2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Out"
+            android:text="Project"
             android:textSize="11sp"
             android:textColor="@color/bottom_nav_item_color"
             android:layout_marginTop="4dp" />
@@ -120,14 +120,14 @@
             android:id="@+id/text4"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Maint"
+            android:text="Maint."
             android:textSize="11sp"
             android:textColor="@color/bottom_nav_item_color"
             android:layout_marginTop="4dp" />
 
     </LinearLayout>
 
-    <!-- Profile Tab -->
+    <!-- Utility Tab -->
     <LinearLayout
         android:id="@+id/tab_profile"
         android:layout_width="0dp"
@@ -143,14 +143,14 @@
             android:id="@+id/icon5"
             android:layout_width="22dp"
             android:layout_height="22dp"
-            android:src="@drawable/ic_person"
+            android:src="@drawable/ic_gauge"
             android:tint="@color/bottom_nav_item_color" />
 
         <TextView
             android:id="@+id/text5"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Profile"
+            android:text="Utility"
             android:textSize="11sp"
             android:textColor="@color/bottom_nav_item_color"
             android:layout_marginTop="4dp" />

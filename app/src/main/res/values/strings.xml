@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">EMS WO</string>
+    <string name="no_assets_found">No assets found</string>
+    <string name="type_at_least_2_characters">Type at least 2 characters to search</string>
+    <string name="asset_created">Asset created</string>
+    <string name="uploading">Uploading…</string>
+    <string name="upload">UPLOAD</string>
+    <string name="asset_creation_cancelled">Asset creation cancelled</string>
+    <string name="asset_deleted">Asset deleted</string>
 </resources>

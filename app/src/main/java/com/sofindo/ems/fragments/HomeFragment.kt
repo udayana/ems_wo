@@ -6,7 +6,10 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.content.SharedPreferences
+import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
@@ -18,13 +21,20 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.sofindo.ems.MainActivity
 import com.sofindo.ems.R
 import com.sofindo.ems.adapters.WorkOrderAdapter
 import com.sofindo.ems.api.RetrofitClient
+import com.sofindo.ems.dialogs.AssignStaffDialog
+import com.sofindo.ems.models.Staff
 import com.sofindo.ems.services.UserService
+import com.sofindo.ems.utils.NetworkUtils
+import androidx.appcompat.app.AlertDialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import java.net.ConnectException
+import java.net.UnknownHostException
 import java.util.Timer
 import java.util.TimerTask
 
@@ -35,6 +45,17 @@ class HomeFragment : Fragment() {
     private lateinit var searchView: EditText
     private lateinit var btnFilter: ImageButton
     private lateinit var tvEmpty: TextView
+    private lateinit var btnTabIn: Button
+    private lateinit var btnTabOut: Button
+    private lateinit var indicatorActiveTab: View
+    private lateinit var contentContainer: FrameLayout
+    
+    // Tab state - mirip iOS @AppStorage("lastSelectedHomeTab")
+    private lateinit var sharedPreferences: SharedPreferences
+    private var lastSelectedTab: String = "in"
+    
+    // Child fragments
+    private var outboxContentFragment: Fragment? = null
     
     // Exactly like Flutter _BacaWOViewState
     private var workOrders = mutableListOf<Map<String, Any>>()
@@ -56,6 +77,7 @@ class HomeFragment : Fragment() {
     
     // RecyclerView adapter
     private lateinit var workOrderAdapter: WorkOrderAdapter
+    private var userJabatan: String? = null
     
     // Activity result launcher for change status
     private val changeStatusLauncher = registerForActivityResult(
@@ -66,6 +88,10 @@ class HomeFragment : Fragment() {
             refreshData()
         }
     }
+
+    private val highlightHandler = Handler(Looper.getMainLooper())
+    private var clearHighlightRunnable: Runnable? = null
+    private var pendingFocusWoId: String? = null
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -84,43 +110,92 @@ class HomeFragment : Fragment() {
     }
     
     private fun initViews(view: View) {
+        btnTabIn = view.findViewById(R.id.btn_tab_in)
+        btnTabOut = view.findViewById(R.id.btn_tab_out)
+        indicatorActiveTab = view.findViewById(R.id.indicator_active_tab)
+        contentContainer = view.findViewById(R.id.content_container)
+        
         recyclerView = view.findViewById(R.id.recycler_view)
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh)
         searchView = view.findViewById(R.id.search_view)
         btnFilter = view.findViewById(R.id.btn_filter)
         tvEmpty = view.findViewById(R.id.tv_empty)
         
+        // Get shared preferences untuk menyimpan tab selection (mirip iOS @AppStorage)
+        sharedPreferences = requireContext().getSharedPreferences("ems_user_prefs", android.content.Context.MODE_PRIVATE)
+        lastSelectedTab = sharedPreferences.getString("lastSelectedHomeTab", "in") ?: "in"
+        
+        // Log saved tab state for debugging
+        android.util.Log.d("HomeFragment", "Restored last selected tab: $lastSelectedTab")
+        
         // Setup RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
         
-        // Initialize adapter with menu callbacks for Home (Detail and Follow Up only)
-        workOrderAdapter = WorkOrderAdapter(
-            onItemClick = { workOrder ->
-                // Handle work order click (this won't be used since we're using card click for menu)
-                onWorkOrderClick(workOrder)
-            },
-            onEditClick = { workOrder ->
-                // Handle edit click (not used in Home)
-                onEditWorkOrder(workOrder)
-            },
-            onDeleteClick = { workOrder ->
-                // Handle delete click (not used in Home)
-                onDeleteWorkOrder(workOrder)
-            },
-            onDetailClick = { workOrder ->
-                // Handle detail click
-                onDetailWorkOrder(workOrder)
-            },
-            onFollowUpClick = { workOrder ->
-                // Handle follow up click
-                onFollowUpWorkOrder(workOrder)
-            },
-            showSender = false, 
-            replaceWotoWithOrderBy = true,
-            isHomeFragment = true
-        )
+        // Ensure RecyclerView starts from top when first loaded
+        recyclerView.post {
+            if (recyclerView.layoutManager != null) {
+                (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(0, 0)
+            }
+        }
         
-        recyclerView.adapter = workOrderAdapter
+        // Setup tab indicator position based on saved state
+        updateTabIndicator()
+        
+        // Load initial tab content based on saved state
+        switchTabContent()
+        
+        // Get user jabatan and initialize adapter
+        lifecycleScope.launch {
+            val user = UserService.getCurrentUser()
+            userJabatan = user?.jabatan
+            val currentUserName = user?.fullName ?: user?.username ?: user?.email
+            
+            // Initialize adapter with menu callbacks for Home (Detail and Follow Up only)
+            workOrderAdapter = WorkOrderAdapter(
+                onItemClick = { workOrder ->
+                    // Handle work order click (this won't be used since we're using card click for menu)
+                    onWorkOrderClick(workOrder)
+                },
+                onEditClick = { workOrder ->
+                    // Handle edit click (not used in Home)
+                    onEditWorkOrder(workOrder)
+                },
+                onDeleteClick = { workOrder ->
+                    // Handle delete click (not used in Home)
+                    onDeleteWorkOrder(workOrder)
+                },
+                onDetailClick = { workOrder ->
+                    // Handle detail click
+                    onDetailWorkOrder(workOrder)
+                },
+                onFollowUpClick = { workOrder ->
+                    // Handle follow up click
+                    onFollowUpWorkOrder(workOrder)
+                },
+                onForwardClick = { workOrder ->
+                    // Handle forward click
+                    onForwardWorkOrder(workOrder)
+                },
+                onNeedReviewClick = { workOrder ->
+                    // Not used in HomeFragment
+                },
+                onReviewClick = { workOrder ->
+                    // Not used in HomeFragment
+                },
+                showSender = false, 
+                replaceWotoWithOrderBy = true,
+                isHomeFragment = true,
+                userJabatan = userJabatan,
+                currentUserName = currentUserName
+            )
+            
+            recyclerView.adapter = workOrderAdapter
+
+            pendingFocusWoId?.let {
+                android.util.Log.d("HomeFragment", "Adapter initialized, retry focus for WO: $it")
+                tryScrollToPendingWorkOrder()
+            }
+        }
         
         // Add infinite scroll listener
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -146,6 +221,27 @@ class HomeFragment : Fragment() {
     }
     
     private fun setupListeners() {
+        // Tab switcher listeners - mirip iOS
+        btnTabIn.setOnClickListener {
+            if (lastSelectedTab != "in") {
+                lastSelectedTab = "in"
+                sharedPreferences.edit().putString("lastSelectedHomeTab", "in").apply()
+                android.util.Log.d("HomeFragment", "Tab switched to: in (saved to SharedPreferences)")
+                updateTabIndicator()
+                switchTabContent()
+            }
+        }
+        
+        btnTabOut.setOnClickListener {
+            if (lastSelectedTab != "out") {
+                lastSelectedTab = "out"
+                sharedPreferences.edit().putString("lastSelectedHomeTab", "out").apply()
+                android.util.Log.d("HomeFragment", "Tab switched to: out (saved to SharedPreferences)")
+                updateTabIndicator()
+                switchTabContent()
+            }
+        }
+        
         swipeRefreshLayout.setOnRefreshListener {
             refreshData()
         }
@@ -160,6 +256,151 @@ class HomeFragment : Fragment() {
         
         btnFilter.setOnClickListener {
             showFilterPopup()
+        }
+    }
+    
+    private fun updateTabIndicator() {
+        // Update tab button styles dan indicator position - mirip iOS
+        if (lastSelectedTab == "in") {
+            btnTabIn.textSize = 14f
+            btnTabIn.typeface = android.graphics.Typeface.DEFAULT_BOLD
+            btnTabIn.setTextColor(resources.getColor(R.color.primary_color, null))
+            
+            btnTabOut.textSize = 14f
+            btnTabOut.typeface = android.graphics.Typeface.DEFAULT
+            btnTabOut.setTextColor(resources.getColor(android.R.color.darker_gray, null))
+            
+            // Move indicator to left (first half)
+            val parentLayout = indicatorActiveTab.parent as? android.view.ViewGroup
+            if (parentLayout != null) {
+                val params = indicatorActiveTab.layoutParams as? android.widget.LinearLayout.LayoutParams
+                    ?: android.widget.LinearLayout.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+                val parentWidth = parentLayout.width
+                if (parentWidth > 0) {
+                    params.width = (parentWidth / 2) - 32 // Half width minus margins
+                    params.weight = 0f
+                    params.setMargins(16, 0, 0, 0)
+                    indicatorActiveTab.layoutParams = params
+                } else {
+                    // Fallback: use weight when width is not available yet
+                    params.width = 0
+                    params.weight = 0.5f
+                    params.setMargins(16, 0, 0, 0)
+                    indicatorActiveTab.layoutParams = params
+                }
+            }
+        } else {
+            btnTabOut.textSize = 14f
+            btnTabOut.typeface = android.graphics.Typeface.DEFAULT_BOLD
+            btnTabOut.setTextColor(resources.getColor(R.color.primary_color, null))
+            
+            btnTabIn.textSize = 14f
+            btnTabIn.typeface = android.graphics.Typeface.DEFAULT
+            btnTabIn.setTextColor(resources.getColor(android.R.color.darker_gray, null))
+            
+            // Move indicator to right (second half)
+            val parentLayout = indicatorActiveTab.parent as? android.view.ViewGroup
+            if (parentLayout != null) {
+                val params = indicatorActiveTab.layoutParams as? android.widget.LinearLayout.LayoutParams
+                    ?: android.widget.LinearLayout.LayoutParams(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+                val parentWidth = parentLayout.width
+                if (parentWidth > 0) {
+                    params.width = (parentWidth / 2) - 32 // Half width minus margins
+                    params.weight = 0f
+                    params.setMargins(parentWidth / 2 + 16, 0, 16, 0)
+                    indicatorActiveTab.layoutParams = params
+                } else {
+                    // Fallback: use weight when width is not available yet
+                    params.width = 0
+                    params.weight = 0.5f
+                    params.setMargins(android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0, 16, 0)
+                    indicatorActiveTab.layoutParams = params
+                }
+            }
+        }
+    }
+    
+    private fun switchTabContent() {
+        // Switch antara Home content dan Outbox content - mirip iOS
+        try {
+            if (lastSelectedTab == "in") {
+                // Show Home content (current implementation)
+                swipeRefreshLayout.visibility = View.VISIBLE
+                searchView.visibility = View.VISIBLE
+                btnFilter.visibility = View.VISIBLE
+                
+                // Hide Outbox content if exists
+                outboxContentFragment?.let { fragment ->
+                    if (fragment.isAdded) {
+                        childFragmentManager.beginTransaction()
+                            .hide(fragment)
+                            .commit()
+                    }
+                }
+            } else {
+                // Show Outbox content - load OutboxFragment as child fragment
+                swipeRefreshLayout.visibility = View.GONE
+                searchView.visibility = View.GONE
+                btnFilter.visibility = View.GONE
+                
+                if (outboxContentFragment == null || !outboxContentFragment!!.isAdded) {
+                    outboxContentFragment = OutboxFragment()
+                    childFragmentManager.beginTransaction()
+                        .add(R.id.content_container, outboxContentFragment!!, "outbox")
+                        .commit()
+                } else {
+                    childFragmentManager.beginTransaction()
+                        .show(outboxContentFragment!!)
+                        .commit()
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HomeFragment", "Error switching tab content", e)
+        }
+    }
+    
+    fun focusOnWorkOrder(woId: String) {
+        pendingFocusWoId = woId
+        android.util.Log.d("HomeFragment", "focusOnWorkOrder called with $woId")
+        tryScrollToPendingWorkOrder()
+    }
+    
+    private fun tryScrollToPendingWorkOrder() {
+        val targetWoId = pendingFocusWoId ?: return
+        if (!isAdded) {
+            android.util.Log.d("HomeFragment", "Fragment not attached, waiting for WO: $targetWoId")
+            return
+        }
+        if (!::recyclerView.isInitialized || !::workOrderAdapter.isInitialized) {
+            android.util.Log.d("HomeFragment", "Views not initialized, waiting for WO: $targetWoId")
+            return
+        }
+        val filteredData = getFilteredWorkOrders()
+        val targetIndex = filteredData.indexOfFirst { workOrder ->
+            val woIdValue = workOrder["woId"]?.toString()?.takeIf { it.isNotEmpty() }
+            val nourValue = workOrder["nour"]?.toString()?.takeIf { it.isNotEmpty() }
+            targetWoId.equals(woIdValue, ignoreCase = true) || targetWoId.equals(nourValue, ignoreCase = true)
+        }
+        if (targetIndex < 0) {
+            android.util.Log.d("HomeFragment", "Work order $targetWoId not in current dataset yet")
+            return
+        }
+        pendingFocusWoId = null
+        val targetWorkOrder = filteredData[targetIndex]
+        recyclerView.post {
+            recyclerView.smoothScrollToPosition(targetIndex)
+            workOrderAdapter.setHighlightForWorkOrder(targetWorkOrder)
+            clearHighlightRunnable?.let { highlightHandler.removeCallbacks(it) }
+            clearHighlightRunnable = Runnable {
+                workOrderAdapter.clearHighlight()
+            }
+            highlightHandler.postDelayed(clearHighlightRunnable!!, 4000)
         }
     }
     
@@ -230,6 +471,118 @@ class HomeFragment : Fragment() {
         val intent = android.content.Intent(context, com.sofindo.ems.activities.ChangeStatusWOActivity::class.java)
         intent.putExtra("workOrder", workOrder as java.io.Serializable)
         changeStatusLauncher.launch(intent)
+    }
+    
+    private fun onForwardWorkOrder(workOrder: Map<String, Any>) {
+        // Load staff list and show dialog
+        lifecycleScope.launch {
+            try {
+                val user = UserService.getCurrentUser()
+                val propID = currentPropID ?: user?.propID
+                val dept = UserService.getCurrentDept() ?: user?.dept
+                
+                android.util.Log.d("HomeFragment", "onForwardWorkOrder - propID: $propID, dept: $dept")
+                
+                if (propID.isNullOrEmpty() || dept.isNullOrEmpty()) {
+                    android.util.Log.e("HomeFragment", "propID or dept is empty")
+                    Toast.makeText(context, "Unable to get property or department information", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                
+                // Show loading dialog
+                val loadingDialog = android.app.ProgressDialog(context).apply {
+                    setMessage("Loading staff list...")
+                    setCancelable(false)
+                    show()
+                }
+                
+                try {
+                    // Load staff list
+                    val apiService = RetrofitClient.apiService
+                    android.util.Log.d("HomeFragment", "Calling getStaffList API...")
+                    val staffList = apiService.getStaffList(propID = propID, dept = dept)
+                    android.util.Log.d("HomeFragment", "Staff list loaded: ${staffList.size} staff")
+                    
+                    loadingDialog.dismiss()
+                    
+                    // Show dialog
+                    val dialog = AssignStaffDialog(
+                        context = requireContext(),
+                        staffList = staffList,
+                        onStaffSelected = { staff ->
+                            assignWorkOrderToStaff(workOrder, staff)
+                        }
+                    )
+                    dialog.show()
+                    
+                } catch (e: retrofit2.HttpException) {
+                    loadingDialog.dismiss()
+                    android.util.Log.e("HomeFragment", "HTTP error loading staff: ${e.code()} - ${e.message()}")
+                    val errorBody = e.response()?.errorBody()?.string()
+                    android.util.Log.e("HomeFragment", "Error body: $errorBody")
+                    Toast.makeText(context, "Error loading staff: ${e.message()}", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    loadingDialog.dismiss()
+                    android.util.Log.e("HomeFragment", "Error loading staff list", e)
+                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+                
+            } catch (e: Exception) {
+                android.util.Log.e("HomeFragment", "Unexpected error in onForwardWorkOrder", e)
+                Toast.makeText(context, "Error loading staff list: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    private fun assignWorkOrderToStaff(workOrder: Map<String, Any>, staff: Staff) {
+        lifecycleScope.launch {
+            try {
+                val propID = currentPropID
+                val woId = workOrder["woId"]?.toString()?.takeIf { it.isNotEmpty() }
+                val nour = workOrder["nour"]?.toString()
+                
+                if (propID.isNullOrEmpty()) {
+                    Toast.makeText(context, "Unable to get property information", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                
+                android.util.Log.d("HomeFragment", "Assigning WO - woId: $woId, nour: $nour, propID: $propID, namaAssign: ${staff.nama}")
+                
+                val apiService = RetrofitClient.apiService
+                
+                // Use woId if available, otherwise use nour + propID (exactly like Swift)
+                val result = if (!woId.isNullOrEmpty()) {
+                    // UPDATE tblwo SET assignto=$namaAssign WHERE woId=$woId
+                    apiService.assignWorkOrder(
+                        namaAssign = staff.nama,
+                        woId = woId,
+                        nour = null,
+                        propID = null
+                    )
+                } else {
+                    // UPDATE tblwo SET assignto=$namaAssign WHERE nour=$nour AND propID=$propID
+                    apiService.assignWorkOrder(
+                        namaAssign = staff.nama,
+                        woId = null,
+                        nour = nour?.takeIf { it.isNotEmpty() },
+                        propID = propID
+                    )
+                }
+                
+                val success = result["success"] as? Boolean ?: false
+                if (success) {
+                    Toast.makeText(context, "Work order assigned to ${staff.nama}", Toast.LENGTH_SHORT).show()
+                    // Refresh data
+                    refreshData()
+                } else {
+                    val message = result["message"]?.toString() ?: "Failed to assign work order"
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                }
+                
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error assigning work order: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
     
     // Exactly like Flutter _initializeData()
@@ -312,16 +665,16 @@ class HomeFragment : Fragment() {
                     // Set loading to false and update UI after data is loaded
                     isLoading = false
                     updateUI()
+                    // Scroll to top after data is loaded
+                    recyclerView.post {
+                        recyclerView.scrollToPosition(0)
+                    }
                 }
             } catch (e: Exception) {
                 // Error loading work orders
                 if (isAdded) {
-                    val errorMessage = when {
-                        e is kotlinx.coroutines.TimeoutCancellationException -> "Request timeout. Please check your connection."
-                        else -> "Failed to load work orders: ${e.message}"
-                    }
-                    showEmptyState(errorMessage)
                     isLoading = false
+                    handleLoadError(e)
                 }
             }
         }
@@ -453,6 +806,13 @@ class HomeFragment : Fragment() {
                         isLoadingMore = false
                         updateUI()
                         
+                        // Scroll to top when reset (first load)
+                        if (reset) {
+                            recyclerView.post {
+                                recyclerView.scrollToPosition(0)
+                            }
+                        }
+                        
                         // Status counts are NOT updated automatically, only when filter is clicked
                     }
                 }
@@ -460,17 +820,15 @@ class HomeFragment : Fragment() {
                 if (isAdded) {
                     isLoading = false
                     isLoadingMore = false
-                    val errorMessage = when {
-                        e is kotlinx.coroutines.TimeoutCancellationException -> "Request timeout. Please check your connection."
-                        else -> "Failed to load work orders: ${e.message}"
-                    }
-                    showEmptyState(errorMessage)
+                    handleLoadError(e)
                 }
             }
         }
     }
     
     private fun refreshData() {
+        // Scroll to top before refreshing
+        recyclerView.scrollToPosition(0)
         loadData(reset = true)
     }
     
@@ -541,8 +899,10 @@ class HomeFragment : Fragment() {
             }
         } else {
             hideEmptyState()
-            // Update RecyclerView adapter with filteredData
-            workOrderAdapter.updateData(filteredData)
+            if (::workOrderAdapter.isInitialized) {
+                workOrderAdapter.updateData(filteredData)
+                tryScrollToPendingWorkOrder()
+            }
         }
     }
     
@@ -563,12 +923,45 @@ class HomeFragment : Fragment() {
         recyclerView.visibility = View.GONE
     }
     
+    private fun handleLoadError(e: Exception) {
+        // Check if offline mode based on exception type and message
+        val isOffline = (e.message?.contains("Unable to resolve host", ignoreCase = true) == true) ||
+                       (e.message?.contains("No address associated", ignoreCase = true) == true) ||
+                       (e is java.net.UnknownHostException) ||
+                       (e is java.net.ConnectException) ||
+                       (!NetworkUtils.isNetworkAvailable(requireContext()))
+        
+        if (isOffline) {
+            showOfflineModeDialog()
+        } else {
+            val errorMessage = when {
+                e is kotlinx.coroutines.TimeoutCancellationException -> "Request timeout. Please check your connection."
+                else -> "Failed to load work orders: ${e.message}"
+            }
+            showEmptyState(errorMessage)
+        }
+    }
+    
+    private fun showOfflineModeDialog() {
+        if (!isAdded) return
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("Offline Mode")
+            .setMessage("Tidak ada koneksi internet. Data akan disinkronkan saat koneksi tersedia.")
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+                showEmptyState("Offline Mode")
+            }
+            .setCancelable(false)
+            .show()
+    }
 
     
     override fun onDestroy() {
         super.onDestroy()
         // Cleanup search debounce timer
         searchDebounce?.cancel()
+        clearHighlightRunnable?.let { highlightHandler.removeCallbacks(it) }
     }
 }
 

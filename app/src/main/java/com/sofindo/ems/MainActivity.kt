@@ -6,25 +6,38 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import com.sofindo.ems.activities.WorkOrderDetailActivity
+import android.util.Log
+import android.widget.Toast
+import com.google.firebase.messaging.FirebaseMessaging
 import com.sofindo.ems.auth.LoginActivity
-import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.fragments.HomeFragment
 import com.sofindo.ems.fragments.OutboxFragment
 import com.sofindo.ems.fragments.TambahWOFragment
 import com.sofindo.ems.fragments.MaintenanceFragment
 import com.sofindo.ems.fragments.ProfileFragment
+import com.sofindo.ems.fragments.UtilityFragment
 import com.sofindo.ems.fragments.EditProfileFragment
 import com.sofindo.ems.services.UserService
+import com.sofindo.ems.utils.applyTopAndBottomInsets
+import com.sofindo.ems.utils.setupEdgeToEdge
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-    
+
+    companion object {
+        const val EXTRA_TARGET_WO_ID = "extra_target_wo_id"
+        const val ACTION_OPEN_WORK_ORDER = "OPEN_WORKORDER"
+    }
+
     private lateinit var customBottomNavigation: View
     private lateinit var tabHome: View
     private lateinit var tabOut: View
@@ -32,14 +45,31 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabMaint: View
     private lateinit var tabProfile: View
     private var currentFragment: Fragment? = null
+    private var homeFragment: HomeFragment? = null
+    private var pendingNavigateWoId: String? = null
+    private var isUiReady: Boolean = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Enable edge-to-edge for Android 15+ (SDK 35)
+        setupEdgeToEdge()
+        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        
+        // Apply window insets to root layout
+        findViewById<android.view.ViewGroup>(android.R.id.content)?.getChildAt(0)?.let { rootView ->
+            rootView.applyTopAndBottomInsets()
+        }
         
         // Handle deep link if app was opened via deep link
         handleDeepLink(intent)
         
+        // Request notification permission on Android 13+
+        requestNotificationPermissionIfNeeded()
+        
+        // Get FCM token for testing - disabled to avoid showing token on login
+        // getFcmTokenForTesting()
+
         // Check if user is logged in
         lifecycleScope.launch {
             val currentUser = UserService.getCurrentUser()
@@ -59,12 +89,57 @@ class MainActivity : AppCompatActivity() {
             // User is logged in, setup UI
             setupBottomNavigation()
             
+            // Check if there's a selected tab from intent (e.g., from ProjectViewActivity)
+            val selectedTabIndex = intent.getIntExtra("selected_tab", -1)
+            
             // Set default fragment to Home and activate Home tab
             if (savedInstanceState == null) {
-                loadFragment(HomeFragment())
-                updateTabSelection(0) // Ensure Home tab is active
+                if (selectedTabIndex >= 0 && selectedTabIndex <= 4) {
+                    // Navigate to specific tab
+                    switchToTab(selectedTabIndex)
+                } else {
+                    loadFragment(HomeFragment())
+                    updateTabSelection(0) // Ensure Home tab is active
+                }
+                isUiReady = true
+                deliverPendingWorkOrderIfPossible()
+            } else {
+                currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+                if (currentFragment is HomeFragment) {
+                    homeFragment = currentFragment as HomeFragment
+                }
+                isUiReady = true
+                deliverPendingWorkOrderIfPossible()
             }
         }
+    }
+    
+    private fun requestNotificationPermissionIfNeeded() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val granted = ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1001
+                )
+            }
+        }
+    }
+    
+    private fun getFcmTokenForTesting() {
+        FirebaseMessaging.getInstance().token
+            .addOnSuccessListener { token ->
+                Log.d("FCM_TOKEN", "FCM Token: $token")
+                // Copy token ini untuk testing di Firebase Console
+                Toast.makeText(this, "FCM Token: ${token.take(20)}...", Toast.LENGTH_LONG).show()
+            }
+            .addOnFailureListener { e ->
+                Log.e("FCM_TOKEN", "Failed to get FCM token", e)
+            }
     }
     
     override fun onNewIntent(intent: Intent?) {
@@ -74,20 +149,43 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun handleDeepLink(intent: Intent?) {
-        intent?.data?.let { uri ->
+        if (intent == null) {
+            android.util.Log.d("DeepLink", "Intent is null")
+            return
+        }
+
+        val directWoId = intent.getStringExtra(EXTRA_TARGET_WO_ID)
+            ?: intent.getStringExtra("woId")
+            ?: intent.getStringExtra("workorder_id")
+            ?: intent.extras?.getString("woId")
+            ?: intent.extras?.getString("workorder_id")
+
+        if (!directWoId.isNullOrEmpty()) {
+            android.util.Log.d("DeepLink", "Found WO ID in extras: $directWoId")
+            focusOnWorkOrder(directWoId)
+            return
+        }
+
+        if (intent.action == ACTION_OPEN_WORK_ORDER) {
+            val actionWoId = intent.extras?.getString("workorder_id")
+            if (!actionWoId.isNullOrEmpty()) {
+                android.util.Log.d("DeepLink", "Found WO ID from action: $actionWoId")
+                focusOnWorkOrder(actionWoId)
+                return
+            }
+        }
+
+        intent.data?.let { uri ->
             android.util.Log.d("DeepLink", "Received URI: $uri")
             android.util.Log.d("DeepLink", "Scheme: ${uri.scheme}, Host: ${uri.host}, Path: ${uri.lastPathSegment}")
             
             if (uri.scheme == "emswo" && uri.host == "workorder") {
-                // Extract work order ID from deep link
                 val woId = uri.lastPathSegment
-                android.util.Log.d("DeepLink", "Extracted WO ID: $woId")
-                
+                android.util.Log.d("DeepLink", "Extracted WO ID from URI: $woId")
                 if (!woId.isNullOrEmpty()) {
-                    // Navigate to work order detail
-                    navigateToWorkOrderDetail(woId)
+                    focusOnWorkOrder(woId)
                 } else {
-                    android.util.Log.e("DeepLink", "WO ID is null or empty")
+                    android.util.Log.e("DeepLink", "WO ID is null or empty in URI")
                     android.widget.Toast.makeText(this, "Invalid Work Order ID", android.widget.Toast.LENGTH_SHORT).show()
                 }
             } else {
@@ -98,35 +196,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
-    private fun navigateToWorkOrderDetail(woId: String) {
-        android.util.Log.d("DeepLink", "Starting navigation to WO: $woId")
-        
-        lifecycleScope.launch {
-            try {
-                // Show loading message
-                android.widget.Toast.makeText(this@MainActivity, "Loading Work Order: $woId", android.widget.Toast.LENGTH_SHORT).show()
-                android.util.Log.d("DeepLink", "Making API call to getWorkOrderById: $woId")
-                
-                // Fetch work order data from API
-                val workOrderData = RetrofitClient.apiService.getWorkOrderById(woId)
-                android.util.Log.d("DeepLink", "API response received: ${workOrderData.size} fields")
-                
-                // Check if work order exists
-                if (workOrderData.isNotEmpty() && workOrderData.containsKey("nour")) {
-                    android.util.Log.d("DeepLink", "Work order found, launching WorkOrderDetailActivity")
-                    // Launch WorkOrderDetailActivity with the data
-                    val intent = Intent(this@MainActivity, WorkOrderDetailActivity::class.java)
-                    intent.putExtra("workOrder", workOrderData as java.io.Serializable)
-                    startActivity(intent)
-                } else {
-                    android.util.Log.e("DeepLink", "Work order not found or invalid data")
-                    android.widget.Toast.makeText(this@MainActivity, "Work Order not found: $woId", android.widget.Toast.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("DeepLink", "Error loading work order", e)
-                android.widget.Toast.makeText(this@MainActivity, "Error loading Work Order: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
-            }
-        }
+    private fun focusOnWorkOrder(woId: String) {
+        android.util.Log.d("DeepLink", "Request focus on WO: $woId")
+        pendingNavigateWoId = woId
+        deliverPendingWorkOrderIfPossible()
     }
     
     private fun setupBottomNavigation() {
@@ -144,8 +217,10 @@ class MainActivity : AppCompatActivity() {
         }
         
         tabOut.setOnClickListener {
-            loadFragment(OutboxFragment())
-            updateTabSelection(1)
+            // Navigate to ProjectViewActivity instead of OutboxFragment
+            val intent = Intent(this, com.sofindo.ems.activities.ProjectViewActivity::class.java)
+            startActivity(intent)
+            // Keep current tab selection (don't change bottom nav selection)
         }
         
         tabAdd.setOnClickListener {
@@ -159,12 +234,29 @@ class MainActivity : AppCompatActivity() {
         }
         
         tabProfile.setOnClickListener {
-            loadFragment(ProfileFragment())
+            loadFragment(UtilityFragment())
             updateTabSelection(4)
         }
         
         // Set initial selection
         updateTabSelection(0)
+        
+        // Setup back press handler
+        setupBackPressHandler()
+    }
+    
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
+                    updateAppBar()
+                } else {
+                    // Finish activity if no back stack
+                    finish()
+                }
+            }
+        })
     }
     
     private fun updateTabSelection(selectedIndex: Int) {
@@ -198,12 +290,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+    private fun deliverPendingWorkOrderIfPossible() {
+        if (!isUiReady) {
+            android.util.Log.d("DeepLink", "UI not ready yet, pending WO remains $pendingNavigateWoId")
+            return
+        }
+
+        val woId = pendingNavigateWoId ?: return
+        val needToSwitchTab = currentFragment !is HomeFragment
+        if (needToSwitchTab) {
+            android.util.Log.d("DeepLink", "Switching to Home tab for WO: $woId")
+            loadFragment(HomeFragment())
+            updateTabSelection(0)
+        }
+
+        val targetFragment = homeFragment
+        if (targetFragment != null && ::customBottomNavigation.isInitialized) {
+            targetFragment.focusOnWorkOrder(woId)
+            pendingNavigateWoId = null
+        } else {
+            android.util.Log.d("DeepLink", "HomeFragment not ready, keep pending WO: $woId")
+        }
+    }
+
     private fun loadFragment(fragment: Fragment) {
         currentFragment = fragment
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
         
+        homeFragment = if (fragment is HomeFragment) fragment else null
+
         // Update app bar title and menu
         updateAppBar()
     }
@@ -214,7 +331,7 @@ class MainActivity : AppCompatActivity() {
             is OutboxFragment -> "Outbox"
             is TambahWOFragment -> "Add Work Order"
             is MaintenanceFragment -> "Maintenance"
-            is ProfileFragment -> "Profile"
+            is UtilityFragment -> "Utility"
             is EditProfileFragment -> "Edit Profile"
             else -> "EMS WO"
         }
@@ -267,18 +384,10 @@ class MainActivity : AppCompatActivity() {
                 updateTabSelection(3)
             }
             4 -> {
-                loadFragment(ProfileFragment())
+                loadFragment(UtilityFragment())
                 updateTabSelection(4)
             }
         }
     }
     
-    override fun onBackPressed() {
-        if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStack()
-            updateAppBar()
-        } else {
-            super.onBackPressed()
-        }
-    }
 }

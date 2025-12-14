@@ -7,8 +7,55 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingTop="8dp">
+        android:orientation="vertical">
+
+        <!-- Tab Switcher - mirip iOS (Work Order In / Work Order Out) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="1dp"
+            android:background="?attr/colorSurface"
+            android:gravity="center_vertical">
+
+            <!-- Work Order In Tab -->
+            <Button
+                android:id="@+id/btn_tab_in"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Work Order In"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_color"
+                android:background="@android:color/transparent"
+                android:paddingVertical="8dp"
+                android:minHeight="40dp" />
+
+            <!-- Work Order Out Tab -->
+            <Button
+                android:id="@+id/btn_tab_out"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Work Order Out"
+                android:textSize="14sp"
+                android:textStyle="normal"
+                android:textColor="?attr/colorOnSurface"
+                android:background="@android:color/transparent"
+                android:paddingVertical="8dp"
+                android:minHeight="40dp" />
+
+        </LinearLayout>
+
+        <!-- Active Tab Indicator - Hidden -->
+        <View
+            android:id="@+id/indicator_active_tab"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
         <!-- Search and Filter Bar - sama persis dengan Flutter -->
         <LinearLayout
@@ -16,8 +63,8 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="8dp"
-            android:layout_marginTop="1dp"
-            android:layout_marginBottom="1dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="4dp"
             android:background="?attr/colorSurface">
 
             <LinearLayout
@@ -57,37 +104,47 @@
 
         </LinearLayout>
 
-        <!-- Content -->
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipe_refresh"
+        <!-- Content Container for tab switching -->
+        <FrameLayout
+            android:id="@+id/content_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
 
-            <FrameLayout
+            <!-- Home Content (Work Order In) -->
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipe_refresh"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recycler_view"
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:clipToPadding="false"
-                    android:paddingBottom="80dp" />
+                    android:layout_height="match_parent">
 
-                <TextView
-                    android:id="@+id/tv_empty"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="No work orders found"
-                    android:textSize="16sp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:visibility="gone" />
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipToPadding="false"
+                        android:paddingBottom="80dp"
+                        android:scrollbars="vertical"
+                        android:fadeScrollbars="false" />
 
-            </FrameLayout>
+                    <TextView
+                        android:id="@+id/tv_empty"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="No work orders found"
+                        android:textSize="16sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:visibility="gone" />
 
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+                </FrameLayout>
+
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+        </FrameLayout>
 
     </LinearLayout>
 

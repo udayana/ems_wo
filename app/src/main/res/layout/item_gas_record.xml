@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@color/white"
+    android:padding="8dp">
+
+    <!-- Date Column -->
+    <TextView
+        android:id="@+id/date_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="1/1"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        android:gravity="center"
+        android:padding="4dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray_light" />
+
+    <!-- New Gas Column -->
+    <TextView
+        android:id="@+id/new_gas_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="10 tabung"
+        android:textSize="12sp"
+        android:textColor="@color/primary_color"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="4dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray_light" />
+
+    <!-- Total Gas Column -->
+    <TextView
+        android:id="@+id/total_gas_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="100 tabung"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        android:gravity="center"
+        android:padding="4dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray_light" />
+
+    <!-- Total Cost Column -->
+    <TextView
+        android:id="@+id/total_cost_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="1,000,000"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        android:gravity="center"
+        android:padding="4dp" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray_light" />
+
+    <!-- Rec. By Column -->
+    <TextView
+        android:id="@+id/rec_by_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="User"
+        android:textSize="12sp"
+        android:textColor="@color/text_primary"
+        android:gravity="center"
+        android:padding="4dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+</LinearLayout>

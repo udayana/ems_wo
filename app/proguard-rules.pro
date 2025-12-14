@@ -20,9 +20,11 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# Keep ML Kit classes
--keep class com.google.mlkit.** { *; }
--dontwarn com.google.mlkit.**
+# Keep ZXing classes (QR code scanning)
+-keep class com.google.zxing.** { *; }
+-dontwarn com.google.zxing.**
+-keep class com.journeyapps.zxing.** { *; }
+-dontwarn com.journeyapps.zxing.**
 
 # Keep Retrofit classes
 -keepattributes Signature

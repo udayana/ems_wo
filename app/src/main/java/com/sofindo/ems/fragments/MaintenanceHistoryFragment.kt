@@ -18,6 +18,8 @@ import com.sofindo.ems.adapters.MaintenanceHistoryAdapter
 import com.sofindo.ems.services.MaintenanceService
 import com.sofindo.ems.services.UserService
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MaintenanceHistoryFragment : Fragment() {
     
@@ -85,12 +87,33 @@ class MaintenanceHistoryFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
         
-        // Add refresh button
+        // Set navigation icon color to primary (green)
+        toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary, null))
+        
+        // Add refresh button with custom view
         toolbar.inflateMenu(R.menu.maintenance_history_menu)
+        toolbar.post {
+            val menuItem = toolbar.menu.findItem(R.id.action_refresh)
+            menuItem?.let {
+                // Create a custom view with green background
+                val actionView = LayoutInflater.from(context).inflate(
+                    R.layout.menu_item_refresh_action,
+                    null
+                )
+                
+                // Set click listener on the action view
+                actionView.setOnClickListener {
+                    loadMaintenanceHistory()
+                }
+                
+                it.actionView = actionView
+            }
+        }
+        
         toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_refresh -> {
-                    loadMaintenanceHistory()
+                    // This will be handled by the action view click listener
                     true
                 }
                 else -> false
@@ -125,8 +148,19 @@ class MaintenanceHistoryFragment : Fragment() {
                     propID = currentPropID
                 )
                 
+                // Sort by date DESC (terbaru di atas) - like iOS
+                val sortedHistoryData = historyData.sortedByDescending { history ->
+                    val dateString = history["date"]?.toString() ?: ""
+                    try {
+                        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        formatter.parse(dateString)?.time ?: 0L
+                    } catch (e: Exception) {
+                        0L
+                    }
+                }
+                
                 historyList.clear()
-                historyList.addAll(historyData)
+                historyList.addAll(sortedHistoryData)
                 
                 setupRecyclerView()
                 showLoading(false)

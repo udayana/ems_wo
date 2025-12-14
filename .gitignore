@@ -102,6 +102,8 @@ lint/tmp/
 # Firebase
 google-services.json
 GoogleService-Info.plist
+firebase-service-account.json
+**/assets/firebase-service-account.json
 
 # API keys and sensitive data
 secrets.properties

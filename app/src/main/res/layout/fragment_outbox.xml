@@ -3,36 +3,73 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingTop="8dp">
+    android:orientation="vertical">
 
-    <!-- Search and Filter Bar -->
+    <!-- Header Bar like iOS -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="?attr/colorSurface">
+        android:padding="16dp"
+        android:background="?attr/colorSurface"
+        android:gravity="center_vertical">
 
-        <EditText
-            android:id="@+id/search_view"
-            android:layout_width="0dp"
+        <!-- WO Out Title -->
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Search WO Out"
-            android:textColor="?attr/colorOnSurface"
-            android:textColorHint="?attr/colorOnSurface"
-            android:background="@drawable/input_background"
-            android:padding="12dp"
-            android:textSize="14sp"
-            android:maxLines="1"
-            android:inputType="text" />
+            android:text="WO Out"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface" />
 
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Toggle Section like iOS -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="12dp">
+
+            <TextView
+                android:id="@+id/tv_username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chief"
+                android:textSize="12sp"
+                android:textColor="@color/primary"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+
+            <Switch
+                android:id="@+id/switch_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="4dp"
+                android:scaleX="0.8"
+                android:scaleY="0.8" />
+
+            <TextView
+                android:id="@+id/tv_department"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Engineering"
+                android:textSize="12sp"
+                android:textColor="@color/gray"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- Filter Button -->
         <ImageButton
             android:id="@+id/btn_filter"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:src="@drawable/ic_filter_list"
             android:background="?attr/selectableItemBackgroundBorderless"
             app:tint="?attr/colorPrimary"

@@ -18,6 +18,7 @@ object UserService {
     private const val KEY_ROLE = "role"
     private const val KEY_PROP_ID = "prop_id"
     private const val KEY_DEPT = "dept"
+    private const val KEY_JABATAN = "jabatan"
     
     private lateinit var prefs: SharedPreferences
     
@@ -36,6 +37,7 @@ object UserService {
             putString(KEY_ROLE, user.role)
             putString(KEY_PROP_ID, user.propID)
             putString(KEY_DEPT, user.dept)
+            putString(KEY_JABATAN, user.jabatan)
         }.apply()
     }
     
@@ -51,7 +53,8 @@ object UserService {
             profileImage = prefs.getString(KEY_PROFILE_IMAGE, null),
             role = prefs.getString(KEY_ROLE, "user") ?: "user",
             propID = prefs.getString(KEY_PROP_ID, null),
-            dept = prefs.getString(KEY_DEPT, null)
+            dept = prefs.getString(KEY_DEPT, null),
+            jabatan = prefs.getString(KEY_JABATAN, null)
         )
     }
     
@@ -99,7 +102,8 @@ object UserService {
             profileImage = prefs.getString(KEY_PROFILE_IMAGE, null),
             role = prefs.getString(KEY_ROLE, "user") ?: "user",
             propID = prefs.getString(KEY_PROP_ID, null),
-            dept = prefs.getString(KEY_DEPT, null)
+            dept = prefs.getString(KEY_DEPT, null),
+            jabatan = prefs.getString(KEY_JABATAN, null)
         )
     }
     

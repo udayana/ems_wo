@@ -42,28 +42,218 @@
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="20dp">
 
-                <!-- Property ID Field -->
+                <!-- Property / Hotel Name Field -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Property ID"
+                    android:text="Property / Hotel Name"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/black"
                     android:layout_marginBottom="2dp" />
 
-                <EditText
-                    android:id="@+id/et_prop_id"
+                <!-- Property Selection Container -->
+                <FrameLayout
+                    android:id="@+id/container_property_selection"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:hint="Ask your admin"
-                    android:inputType="number"
-                    android:textColor="@color/black"
-                    android:textColorHint="@color/text_secondary"
-                    android:background="@drawable/register_input_background"
-                    android:padding="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:textSize="14sp" />
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp">
+
+                    <!-- Detecting Location View -->
+                    <LinearLayout
+                        android:id="@+id/layout_detecting_location"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp"
+                        android:background="@drawable/register_input_background"
+                        android:visibility="gone">
+
+                        <ProgressBar
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="12dp"
+                            android:indeterminateTint="@color/primary" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Mendeteksi lokasi Anda..."
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary" />
+                    </LinearLayout>
+
+                    <!-- Selected Property View -->
+                    <LinearLayout
+                        android:id="@+id/layout_selected_property"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="12dp"
+                        android:background="@drawable/selected_property_background"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="12dp"
+                            android:src="@drawable/ic_check_circle"
+                            android:tint="@color/green" />
+
+                        <TextView
+                            android:id="@+id/tv_selected_property"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/black" />
+                    </LinearLayout>
+
+                    <!-- Manual Property Input View -->
+                    <LinearLayout
+                        android:id="@+id/layout_manual_property_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <!-- No Property Found Warning -->
+                        <LinearLayout
+                            android:id="@+id/layout_no_property_found"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:padding="12dp"
+                            android:background="@drawable/warning_background"
+                            android:visibility="gone">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="8dp"
+                                android:src="@drawable/ic_warning"
+                                android:tint="@color/orange" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Property tidak ditemukan di lokasi Anda"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_secondary" />
+                        </LinearLayout>
+
+                        <!-- Property Name Input -->
+                        <EditText
+                            android:id="@+id/et_property_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:hint="Cari atau ketik nama property"
+                            android:inputType="text"
+                            android:textColor="@color/black"
+                            android:textColorHint="@color/text_secondary"
+                            android:background="@drawable/register_input_background"
+                            android:padding="8dp"
+                            android:textSize="14sp" />
+
+                        <!-- Nearby Properties Suggestion -->
+                        <LinearLayout
+                            android:id="@+id/layout_nearby_suggestions"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="8dp"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Suggestion:"
+                                android:textSize="12sp"
+                                android:textColor="@color/text_secondary"
+                                android:layout_marginBottom="4dp" />
+
+                            <LinearLayout
+                                android:id="@+id/layout_suggestion_buttons"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="start" />
+                        </LinearLayout>
+
+                        <!-- Search Results -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recycler_property_search_results"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:maxHeight="200dp"
+                            android:visibility="gone" />
+
+                        <!-- Property Not Found Alert -->
+                        <LinearLayout
+                            android:id="@+id/layout_property_not_found_alert"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:padding="12dp"
+                            android:background="@drawable/warning_background"
+                            android:visibility="gone">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="8dp"
+                                android:src="@drawable/ic_warning"
+                                android:tint="@color/orange" />
+
+                            <TextView
+                                android:id="@+id/tv_property_not_found"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textSize="12sp"
+                                android:textColor="@color/orange" />
+                        </LinearLayout>
+
+                        <!-- Searching Indicator -->
+                        <LinearLayout
+                            android:id="@+id/layout_searching"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:padding="12dp"
+                            android:visibility="gone">
+
+                            <ProgressBar
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="8dp"
+                                android:indeterminateTint="@color/primary" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Mencari property..."
+                                android:textSize="12sp"
+                                android:textColor="@color/text_secondary" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </FrameLayout>
+
+                <!-- Hidden Property ID (for registration) -->
+                <TextView
+                    android:id="@+id/tv_prop_id"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:visibility="gone" />
 
                 <!-- Name Field -->
                 <TextView

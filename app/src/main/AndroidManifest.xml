@@ -2,12 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <!-- Android 13+ (API 33+) media permissions -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <!-- POST_NOTIFICATIONS permission removed with Firebase -->
+    <!-- Notifications permission for Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Location permissions: GPS is used only for user registration purposes to detect nearby properties during account creation -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:name=".App"
@@ -16,17 +18,33 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.EMS_WO">
+        android:theme="@style/Theme.EMS_WO"
+        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true">
 
         <activity
-            android:name=".auth.LoginActivity"
-            android:exported="true"
-            android:theme="@style/Theme.EMS_WO">
+            android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="emswo" android:host="workorder" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="OPEN_WORKORDER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
+
+        <activity
+            android:name=".auth.LoginActivity"
+            android:exported="true"
+            android:theme="@style/Theme.EMS_WO" />
 
         <activity
             android:name=".auth.RegisterActivity"
@@ -34,15 +52,14 @@
             android:theme="@style/Theme.EMS_WO" />
 
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="emswo" android:host="workorder" />
-            </intent-filter>
-        </activity>
+            android:name=".auth.ForgotPasswordActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".auth.VerifikasiOTPActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
 
         <activity
             android:name=".activities.WorkOrderDetailActivity"
@@ -64,6 +81,78 @@
             android:exported="false"
             android:theme="@style/Theme.EMS_WO" />
 
+        <activity
+            android:name=".activities.ProjectViewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO"
+            android:windowSoftInputMode="adjustPan" />
+
+        <activity
+            android:name=".activities.ProjectDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.UpdateProjectActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <!-- Utility Activities -->
+        <activity
+            android:name=".activities.AbtPageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.KwhtmpageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.ChillerpageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.FreezerpageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.FuelPageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.GaspageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.KwhtrpageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.HeatpumppageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.PdampageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.WatertankpageActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
+        <activity
+            android:name=".activities.CreateProjectActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EMS_WO" />
+
         <!-- FileProvider for camera and gallery access -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -75,7 +164,14 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Firebase messaging service removed -->
+        <!-- Firebase messaging service -->
+        <service
+            android:name=".fcm.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>

@@ -10,14 +10,13 @@
         <item name="colorSecondary">@color/primary_light</item>
         <item name="colorSecondaryVariant">@color/primary</item>
         <item name="colorOnSecondary">@color/white</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
-        <!-- Window insets for proper spacing -->
+        <!-- Window insets for proper spacing - using modern edge-to-edge approach -->
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:fitsSystemWindows">true</item>
+        <!-- Note: android:statusBarColor and android:fitsSystemWindows are deprecated in Android 15
+             These are now handled programmatically via WindowInsets in EdgeToEdgeUtils -->
         <!-- Customize your theme here. -->
     </style>
 
@@ -70,5 +69,13 @@
         <item name="android:minHeight">?attr/actionBarSize</item>
         <item name="android:background">?attr/colorPrimaryVariant</item>
         <item name="android:elevation">0dp</item>
+    </style>
+    
+    <!-- Toolbar Theme for white menu text -->
+    <style name="ToolbarTheme" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="actionMenuTextColor">@color/white</item>
+        <item name="colorControlNormal">@color/white</item>
     </style>
 </resources>

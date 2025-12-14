@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/tv_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Date"
+        android:textSize="11sp"
+        android:textColor="@color/on_surface" />
+
+    <View
+        android:id="@+id/sep1"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray" />
+
+    <TextView
+        android:id="@+id/tv_new_water"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="New Water"
+        android:textSize="11sp"
+        android:textColor="@color/on_surface" />
+
+    <View
+        android:id="@+id/sep2"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray" />
+
+    <TextView
+        android:id="@+id/tv_tot_water"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Tot Water"
+        android:textSize="11sp"
+        android:textColor="@color/on_surface" />
+
+    <View
+        android:id="@+id/sep3"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray" />
+
+    <TextView
+        android:id="@+id/tv_price_total"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Price Total"
+        android:textSize="11sp"
+        android:textColor="@color/on_surface" />
+
+    <View
+        android:id="@+id/sep4"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/gray" />
+
+    <TextView
+        android:id="@+id/tv_rec_by"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Rec By"
+        android:textSize="11sp"
+        android:textColor="@color/on_surface"
+        android:maxLines="1" />
+
+</LinearLayout>
+

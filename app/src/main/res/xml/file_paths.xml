@@ -1,4 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 
+    FileProvider Paths - Scoped Storage Only (No Permission Required)
+    
+    This app uses ONLY app-specific directories for storing work order photos.
+    These directories are automatically cleaned when the app is uninstalled.
+    
+    PRIVACY & COMPLIANCE:
+    - external-files-path: App-specific external directory
+      Location: Android/data/com.sofindo.ems/files/
+      Purpose: Store work order photos captured by users
+      No permission required (Scoped Storage)
+      
+    - cache-path: App cache directory
+      Location: /data/data/com.sofindo.ems/cache/
+      Purpose: Temporary storage for image processing
+      No permission required (Scoped Storage)
+    
+    USER BENEFIT:
+    - Users capture photos to document THEIR OWN work order completion
+    - Photos are for user's work documentation, not developer data collection
+    - Users have full control over what to capture and submit
+-->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-files-path name="my_images" path="." />
     <cache-path name="my_cache" path="." />

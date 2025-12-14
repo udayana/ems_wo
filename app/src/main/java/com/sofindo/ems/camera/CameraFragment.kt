@@ -3,6 +3,7 @@ package com.sofindo.ems.camera
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.sofindo.ems.R
+import com.sofindo.ems.camera.ZxingBarcodeAnalyzer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -71,10 +73,12 @@ class CameraFragment : Fragment() {
                 }
             
             val imageAnalyzer = androidx.camera.core.ImageAnalysis.Builder()
+                .setTargetResolution(Size(800, 800))
                 .setBackpressureStrategy(androidx.camera.core.ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setOutputImageFormat(androidx.camera.core.ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                 .build()
                 .also {
-                    it.setAnalyzer(cameraExecutor, QrAnalyzer { qrCode ->
+                    it.setAnalyzer(cameraExecutor, ZxingBarcodeAnalyzer { qrCode ->
                         onQrScanned?.invoke(qrCode)
                     })
                 }

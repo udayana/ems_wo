@@ -17,6 +17,10 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.sofindo.ems.R
 import com.sofindo.ems.dialogs.ImageViewerDialog
+import com.sofindo.ems.utils.applyTopAndBottomInsets
+import com.sofindo.ems.utils.setupEdgeToEdge
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -32,11 +36,19 @@ class WorkOrderDetailActivity : AppCompatActivity() {
     private lateinit var workOrder: Map<String, Any>
     
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Enable edge-to-edge for Android 15+ (SDK 35)
+        setupEdgeToEdge()
+        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_work_order_detail)
         
+        // Apply window insets to root layout
+        findViewById<android.view.ViewGroup>(android.R.id.content)?.getChildAt(0)?.let { rootView ->
+            rootView.applyTopAndBottomInsets()
+        }
+        
         // Get work order data from intent
-        @Suppress("UNCHECKED_CAST")
+        @Suppress("DEPRECATION", "UNCHECKED_CAST")
         workOrder = intent.getSerializableExtra("workOrder") as? Map<String, Any> ?: emptyMap()
         
         setupToolbar()
@@ -50,6 +62,15 @@ class WorkOrderDetailActivity : AppCompatActivity() {
             title = "Detail Work Order"
             setDisplayHomeAsUpEnabled(true)
             setDisplayShowHomeEnabled(true)
+        }
+        
+        // Set navigation icon color to white for better visibility
+        toolbar.post {
+            toolbar.navigationIcon?.let { icon ->
+                val whiteIcon = androidx.core.graphics.drawable.DrawableCompat.wrap(icon.mutate())
+                androidx.core.graphics.drawable.DrawableCompat.setTint(whiteIcon, android.graphics.Color.WHITE)
+                toolbar.navigationIcon = whiteIcon
+            }
         }
     }
     
@@ -347,6 +368,32 @@ Sent from EMS Work Order App"""
         // Done By
         findViewById<TextView>(R.id.tv_done_by_value).text = workOrder["doneBy"]?.toString() ?: "N/A"
         
+        // Review Section (conditional - show if is_review == 1)
+        val isReviewed = workOrder["is_review"]?.let { reviewValue ->
+            when (reviewValue) {
+                is Number -> reviewValue.toInt() == 1
+                is String -> reviewValue.toIntOrNull() == 1
+                is Boolean -> reviewValue
+                else -> false
+            }
+        } ?: false
+        
+        val reviewRating = workOrder["review_rating"]?.let { ratingValue ->
+            when (ratingValue) {
+                is Number -> ratingValue.toInt()
+                is String -> ratingValue.toIntOrNull() ?: 0
+                else -> 0
+            }
+        } ?: 0
+        
+        val reviewContainer = findViewById<View>(R.id.review_container)
+        if (isReviewed && reviewRating > 0) {
+            reviewContainer.visibility = View.VISIBLE
+            updateReviewStars(reviewRating)
+        } else {
+            reviewContainer.visibility = View.GONE
+        }
+        
         // Remarks (conditional)
         val remarks = workOrder["remarks"]?.toString()
         val remarksContainer = findViewById<View>(R.id.remarks_container)
@@ -465,6 +512,29 @@ Sent from EMS Work Order App"""
         }
     }
     
+    private fun updateReviewStars(rating: Int) {
+        val stars = listOf(
+            findViewById<ImageView>(R.id.iv_review_star_1),
+            findViewById<ImageView>(R.id.iv_review_star_2),
+            findViewById<ImageView>(R.id.iv_review_star_3),
+            findViewById<ImageView>(R.id.iv_review_star_4),
+            findViewById<ImageView>(R.id.iv_review_star_5)
+        )
+        
+        for (i in stars.indices) {
+            val starIndex = i + 1
+            if (starIndex <= rating) {
+                // Filled star - yellow
+                stars[i].setImageResource(R.drawable.ic_star_filled)
+                stars[i].setColorFilter(ContextCompat.getColor(this, R.color.star_filled))
+            } else {
+                // Empty star - gray
+                stars[i].setImageResource(R.drawable.ic_star)
+                stars[i].setColorFilter(ContextCompat.getColor(this, R.color.star_empty))
+            }
+        }
+    }
+    
     private fun calculateTimeSpent(startTime: String?, doneTime: String?): String {
         if (startTime.isNullOrEmpty() || doneTime.isNullOrEmpty()) {
             return "N/A"
@@ -509,7 +579,7 @@ Sent from EMS Work Order App"""
     }
     
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        finish()
         return true
     }
 }

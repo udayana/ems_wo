@@ -5,6 +5,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -21,20 +23,27 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
-import com.sofindo.ems.R
-import com.sofindo.ems.api.RetrofitClient
-import com.sofindo.ems.services.UserService
-import com.sofindo.ems.utils.PermissionUtils
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.bumptech.glide.Glide
+import com.sofindo.ems.R
+import com.sofindo.ems.utils.applyTopAndBottomInsets
+import com.sofindo.ems.utils.setupEdgeToEdge
+import com.sofindo.ems.api.RetrofitClient
+import com.sofindo.ems.services.UserService
+import com.sofindo.ems.services.OfflineQueueService
+import com.sofindo.ems.services. SyncService
+import com.sofindo.ems.database.PendingWorkOrder
+import com.sofindo.ems.utils.PermissionUtils
+import com.sofindo.ems.utils.NetworkUtils
+import kotlinx.coroutines.CoroutineScope
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -52,6 +61,7 @@ class ChangePendingDoneActivity : AppCompatActivity() {
     private var userName: String = ""
     private var selectedImageFile: File? = null
     private var isLoading = false
+    private var photoDoneRequired: Int = 0 // 0 = optional, 1 = required
     
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -64,26 +74,60 @@ class ChangePendingDoneActivity : AppCompatActivity() {
     }
     
     private val galleryLauncher = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let { handleImageSelection(it) }
-    }
-    
-    private val cameraLauncher = registerForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            selectedImageFile?.let { file ->
-                handleImageSelection(Uri.fromFile(file))
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                handleGalleryImage(uri)
             }
         }
     }
     
+    private val cameraLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            lifecycleScope.launch {
+                val file = selectedImageFile
+                if (file != null && file.exists() && file.length() > 0) {
+                    val resizedFile = resizeJpegInPlace(file, maxSide = 420, quality = 90)
+                    selectedImageFile = resizedFile
+                    updatePhotoUI()
+                } else {
+                    @Suppress("DEPRECATION")
+                    result.data?.extras?.getParcelable<Bitmap>("data")?.let { thumb ->
+                        try {
+                            val fallback = createImageFile()
+                            FileOutputStream(fallback).use { out ->
+                                thumb.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                            }
+                            val resizedFile = resizeJpegInPlace(fallback, maxSide = 420, quality = 90)
+                            selectedImageFile = resizedFile
+                            updatePhotoUI()
+                        } catch (e: Exception) {
+                            Toast.makeText(this@ChangePendingDoneActivity, "Failed to save camera image: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    } ?: Toast.makeText(this@ChangePendingDoneActivity, "Camera file not found", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    
+    
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Enable edge-to-edge for Android 15+ (SDK 35)
+        setupEdgeToEdge()
+        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_change_pending_done)
         
+
+        // Apply window insets to root layout
+        findViewById<android.view.ViewGroup>(android.R.id.content)?.getChildAt(0)?.let { rootView ->
+            rootView.applyTopAndBottomInsets()
+        }
         // Get data from intent
+        @Suppress("DEPRECATION", "UNCHECKED_CAST")
         workOrder = (intent.getSerializableExtra("workOrder") as? Map<String, Any>) ?: emptyMap()
         status = intent.getStringExtra("status") ?: ""
         
@@ -95,7 +139,16 @@ class ChangePendingDoneActivity : AppCompatActivity() {
         
         initViews()
         setupToolbar()
+        setupPhotoSection()
         setupListeners()
+        
+        // Initialize submit button state
+        updateSubmitButtonState()
+        
+        // Load admin setting if status is "done"
+        if (status.lowercase() == "done") {
+            loadAdminSetting()
+        }
     }
     
     private fun initViews() {
@@ -107,6 +160,23 @@ class ChangePendingDoneActivity : AppCompatActivity() {
         loadingOverlay = findViewById(R.id.loading_overlay)
     }
     
+    private fun setupPhotoSection() {
+        // Hide upload photo section if status is "pending"
+        if (status.lowercase() == "pending") {
+            btnUploadPhoto.visibility = View.GONE
+            ivPhotoPreview.visibility = View.GONE
+            
+            // Reposition submit button to be below remarks
+            val params = btnSubmit.layoutParams as android.widget.RelativeLayout.LayoutParams
+            params.removeRule(android.widget.RelativeLayout.BELOW)
+            params.addRule(android.widget.RelativeLayout.BELOW, R.id.et_remarks)
+            // Convert 16dp to pixels
+            val scale = resources.displayMetrics.density
+            params.topMargin = (16 * scale + 0.5f).toInt()
+            btnSubmit.layoutParams = params
+        }
+    }
+    
     private fun setupToolbar() {
         supportActionBar?.apply {
             title = "Set to ${status.uppercase()}"
@@ -116,23 +186,71 @@ class ChangePendingDoneActivity : AppCompatActivity() {
     }
     
     private fun setupListeners() {
-        btnUploadPhoto.setOnClickListener {
-            showImageSourceDialog()
+        // Only set click listener for upload photo if status is "done"
+        if (status.lowercase() != "pending") {
+            btnUploadPhoto.setOnClickListener {
+                showImageSourceDialog()
+            }
         }
         
         btnSubmit.setOnClickListener {
             submitChange()
         }
         
-        // Enable/disable submit button based on remarks
+        // Enable/disable submit button based on remarks and photo requirement
         etRemarks.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
-                btnSubmit.isEnabled = !s.isNullOrEmpty() && s.trim().isNotEmpty()
+                updateSubmitButtonState()
             }
         })
     }
+    
+    private fun loadAdminSetting() {
+        lifecycleScope.launch {
+            try {
+                val propID = UserService.getCurrentPropID()
+                if (propID.isNullOrEmpty()) {
+                    // Default to optional if propID not available
+                    photoDoneRequired = 0
+                    updateSubmitButtonState()
+                    return@launch
+                }
+                
+                val response = RetrofitClient.apiService.getAdminSetting(propID)
+                val success = response["success"] as? Boolean ?: false
+                
+                if (success) {
+                    photoDoneRequired = (response["photoDone"] as? Number)?.toInt() ?: 0
+                } else {
+                    // Default to optional if API fails
+                    photoDoneRequired = 0
+                }
+                
+                updateSubmitButtonState()
+            } catch (e: Exception) {
+                // Default to optional if error
+                photoDoneRequired = 0
+                updateSubmitButtonState()
+            }
+        }
+    }
+    
+    private fun updateSubmitButtonState() {
+        val remarksNotEmpty = !etRemarks.text.isNullOrEmpty() && etRemarks.text.toString().trim().isNotEmpty()
+        
+        if (status.lowercase() == "done" && photoDoneRequired == 1) {
+            // Photo required: enable only if remarks not empty AND photo selected
+            btnSubmit.isEnabled = remarksNotEmpty && selectedImageFile != null
+        } else {
+            // Photo optional or status is pending: enable if remarks not empty
+            btnSubmit.isEnabled = remarksNotEmpty
+        }
+    }
+    
+    
+    
     
     private fun showImageSourceDialog() {
         AlertDialog.Builder(this)
@@ -170,42 +288,75 @@ class ChangePendingDoneActivity : AppCompatActivity() {
                 selectedImageFile!!
             )
             
-            cameraLauncher.launch(photoURI)
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            
+            val resInfoList = packageManager.queryIntentActivities(
+                intent, PackageManager.MATCH_DEFAULT_ONLY
+            )
+            for (resolveInfo in resInfoList) {
+                val packageName = resolveInfo.activityInfo.packageName
+                grantUriPermission(
+                    packageName,
+                    photoURI,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            
+            cameraLauncher.launch(intent)
         } catch (e: Exception) {
             Toast.makeText(this, "Error opening camera: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     
     private fun openGallery() {
-        galleryLauncher.launch("image/*")
+        val intent = Intent(MediaStore.ACTION_PICK_IMAGES)
+        galleryLauncher.launch(intent)
     }
     
-    private fun handleImageSelection(uri: Uri) {
-        try {
-            // Convert URI to file
-            val inputStream = contentResolver.openInputStream(uri)
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val imageFileName = "JPEG_${timeStamp}_"
-            val storageDir = getExternalFilesDir(null)
-            selectedImageFile = File.createTempFile(imageFileName, ".jpg", storageDir)
-            
-            selectedImageFile?.outputStream()?.use { outputStream ->
-                inputStream?.use { input ->
-                    input.copyTo(outputStream)
+    private fun handleGalleryImage(uri: Uri) {
+        lifecycleScope.launch {
+            try {
+                val tempFile = createImageFile()
+                val outputStream = FileOutputStream(tempFile)
+                
+                contentResolver.openInputStream(uri)?.use { inputStream ->
+                    inputStream.copyTo(outputStream)
                 }
+                outputStream.close()
+                
+                val resizedFile = resizeJpegInPlace(tempFile, maxSide = 420, quality = 90)
+                selectedImageFile = resizedFile
+                updatePhotoUI()
+            } catch (e: Exception) {
+                Toast.makeText(this@ChangePendingDoneActivity, "Failed to load image: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-            
-            // Show preview
-            Glide.with(this)
-                .load(selectedImageFile)
-                .into(ivPhotoPreview)
-            
-            ivPhotoPreview.visibility = View.VISIBLE
-            
-            // Hide keyboard after photo selection
-            hideKeyboard()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Error loading image: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun createImageFile(): File {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir = getExternalFilesDir(null)
+        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    }
+    
+    private fun updatePhotoUI() {
+        selectedImageFile?.let { file ->
+            try {
+                Glide.with(this)
+                    .load(file)
+                    .placeholder(R.drawable.photo_preview_background)
+                    .error(R.drawable.photo_preview_background)
+                    .into(ivPhotoPreview)
+                
+                ivPhotoPreview.visibility = View.VISIBLE
+                updateSubmitButtonState()
+                hideKeyboard()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Failed to display image preview: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
     
@@ -217,6 +368,12 @@ class ChangePendingDoneActivity : AppCompatActivity() {
             return
         }
         
+        // Validate photo requirement for status "done"
+        if (status.lowercase() == "done" && photoDoneRequired == 1 && selectedImageFile == null) {
+            Toast.makeText(this, "Photo is required for this status", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
         if (isLoading) return
         
         isLoading = true
@@ -224,6 +381,16 @@ class ChangePendingDoneActivity : AppCompatActivity() {
         
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // Check internet connection
+                val hasInternet = NetworkUtils.hasServerConnection()
+                
+                if (!hasInternet) {
+                    // No internet: Save to offline queue
+                    savePendingDoneOffline(remarks)
+                    return@launch
+                }
+                
+                // Has internet: Try to update online
                 val success = callUpdatePendingDoneAPI(remarks)
                 
                 withContext(Dispatchers.Main) {
@@ -237,26 +404,115 @@ class ChangePendingDoneActivity : AppCompatActivity() {
                         setResult(Activity.RESULT_OK)
                         finish()
                     } else {
-                        Toast.makeText(
-                            this@ChangePendingDoneActivity,
-                            "Gagal mengupdate status",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        // Failed to update: Save to offline queue
+                        savePendingDoneOffline(remarks, "Update failed")
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ChangePendingDoneActivity,
-                        "Error: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    // Network error: Save to offline queue
+                    savePendingDoneOffline(remarks, e.message)
                 }
             } finally {
                 withContext(Dispatchers.Main) {
                     isLoading = false
                     showLoading(false)
                 }
+            }
+        }
+    }
+    
+    private suspend fun savePendingDoneOffline(
+        remarks: String,
+        errorMsg: String? = null
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val woId = workOrder["woId"]?.toString() ?: ""
+            if (woId.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@ChangePendingDoneActivity,
+                        "Work order ID not found",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                return@withContext
+            }
+            
+            // Copy photo to persistent location if exists
+            var persistentPhotoPath: String? = null
+            selectedImageFile?.let { file ->
+                if (file.exists()) {
+                    val offlineDir = File(getExternalFilesDir(null), "offline_photos")
+                    if (!offlineDir.exists()) {
+                        offlineDir.mkdirs()
+                    }
+                    val persistentFile = File(offlineDir, "${status}${woId}_${System.currentTimeMillis()}.jpg")
+                    file.copyTo(persistentFile, overwrite = true)
+                    persistentPhotoPath = persistentFile.absolutePath
+                }
+            }
+            
+            // Prepare additional data for status 'done'
+            var doneBy: String? = null
+            var timeDone: String? = null
+            var timeSpent: String? = null
+            
+            if (status.lowercase() == "done") {
+                val currentTimeISO = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val startTime = workOrder["mulainya"]?.toString()
+                timeSpent = calculateTimeSpent(startTime, currentTimeISO)
+                
+                doneBy = userName
+                timeDone = currentTimeISO
+            }
+            
+            // Create pending work order
+            val pendingWO = PendingWorkOrder(
+                propID = workOrder["propID"]?.toString() ?: "",
+                orderBy = workOrder["orderBy"]?.toString() ?: "",
+                job = workOrder["job"]?.toString() ?: "",
+                lokasi = workOrder["lokasi"]?.toString() ?: "",
+                category = workOrder["category"]?.toString() ?: "",
+                dept = workOrder["dept"]?.toString() ?: "",
+                priority = workOrder["priority"]?.toString() ?: "",
+                woto = workOrder["woto"]?.toString() ?: "",
+                status = workOrder["status"]?.toString() ?: "",
+                photoPath = persistentPhotoPath,
+                requestType = "update_pending_done",
+                woId = woId,
+                newStatus = status,
+                remarks = remarks,
+                userName = userName,
+                doneBy = doneBy,
+                timeDone = timeDone,
+                timeSpent = timeSpent,
+                lastError = errorMsg ?: "No internet connection"
+            )
+            
+            // Save to database
+            OfflineQueueService.addPendingWorkOrder(pendingWO)
+            
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    this@ChangePendingDoneActivity,
+                    "Status update saved offline. Will sync when internet is available.",
+                    Toast.LENGTH_LONG
+                ).show()
+                
+                setResult(Activity.RESULT_OK)
+                finish()
+            }
+            
+            // Schedule sync when internet is available
+            SyncService.scheduleSync(this@ChangePendingDoneActivity)
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    this@ChangePendingDoneActivity,
+                    "Failed to save offline: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -342,11 +598,15 @@ class ChangePendingDoneActivity : AppCompatActivity() {
                 timeSpentBody = timeSpent.toRequestBody("text/plain".toMediaTypeOrNull())
             }
             
-            // Prepare photo file if selected
-            val photoPart = selectedImageFile?.let { file ->
-                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                val photoName = "${status}${woId}.jpg"
-                MultipartBody.Part.createFormData("file", photoName, requestFile)
+            // Prepare photo file if selected (only for status "done")
+            val photoPart = if (status.lowercase() == "done") {
+                selectedImageFile?.let { file ->
+                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                    val photoName = "${status}${woId}.jpg"
+                    MultipartBody.Part.createFormData("file", photoName, requestFile)
+                }
+            } else {
+                null
             }
             
             // Call API using RetrofitClient
@@ -382,8 +642,48 @@ class ChangePendingDoneActivity : AppCompatActivity() {
         currentFocus.clearFocus()
     }
     
+    private fun resizeJpegInPlace(file: File, maxSide: Int = 420, quality: Int = 90): File {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+        val srcW = bounds.outWidth
+        val srcH = bounds.outHeight
+        if (srcW <= 0 || srcH <= 0) return file
+        
+        val sample = calculateInSampleSize(srcW, srcH, maxSide)
+        val decodeOpts = BitmapFactory.Options().apply {
+            inSampleSize = sample
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        var bmp = BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
+        
+        val longest = kotlin.math.max(bmp.width, bmp.height)
+        val scale = longest.toFloat() / maxSide
+        val finalBmp = if (scale > 1f) {
+            val w = (bmp.width / scale).toInt()
+            val h = (bmp.height / scale).toInt()
+            Bitmap.createScaledBitmap(bmp, w, h, true)
+        } else bmp
+        
+        FileOutputStream(file, false).use { out ->
+            finalBmp.compress(Bitmap.CompressFormat.JPEG, quality, out)
+            out.flush()
+        }
+        
+        if (finalBmp !== bmp) bmp.recycle()
+        return file
+    }
+    
+    private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
+        var inSampleSize = 1
+        val longest = kotlin.math.max(srcW, srcH)
+        while (longest / inSampleSize > reqMaxSide * 2) {
+            inSampleSize *= 2
+        }
+        return inSampleSize
+    }
+    
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        finish()
         return true
     }
 }

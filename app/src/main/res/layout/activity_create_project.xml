@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/light_gray">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        android:elevation="2dp"
+        android:paddingTop="8dp"
+        android:minHeight="?attr/actionBarSize"
+        app:titleTextColor="#1abc9c"
+        app:navigationIconTint="#1abc9c"
+        app:title="Create Project"
+        app:titleTextAppearance="@style/ToolbarTitleStyle" />
+
+    <!-- Content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Progress Bar -->
+            <LinearLayout
+                android:id="@+id/layout_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp">
+
+                <ProgressBar
+                    android:id="@+id/progress_bar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tv_progress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Uploading..."
+                    android:textSize="14sp"
+                    android:textColor="@color/gray" />
+
+            </LinearLayout>
+
+            <!-- PROJECT INFORMATION Section -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PROJECT INFORMATION"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="#333333"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/form_container_background"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <!-- Project Name -->
+                <EditText
+                    android:id="@+id/et_project_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Project Name"
+                    android:background="@drawable/edittext_background"
+                    android:padding="10dp"
+                    android:textSize="14sp"
+                    android:inputType="text"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/text_secondary"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- To: Spinner -->
+                <Spinner
+                    android:id="@+id/spinner_to"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/spinner_background"
+                    android:padding="10dp"
+                    android:popupBackground="@drawable/dropdown_popup_background"
+                    android:theme="@style/SpinnerDropDownStyle"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Location -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <EditText
+                        android:id="@+id/et_location"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:hint="Enter location"
+                        android:background="@drawable/edittext_background"
+                        android:padding="10dp"
+                        android:textSize="14sp"
+                        android:inputType="text"
+                        android:textColor="@color/black"
+                        android:textColorHint="@color/text_secondary"
+                        android:gravity="center_vertical" />
+
+                    <!-- Location Suggestions -->
+                    <LinearLayout
+                        android:id="@+id/layout_location_suggestions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/suggestions_background"
+                        android:layout_marginTop="4dp"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <!-- Category and Priority -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
+
+                    <!-- Category -->
+                    <Spinner
+                        android:id="@+id/spinner_category"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/spinner_background"
+                        android:padding="10dp"
+                        android:popupBackground="@drawable/dropdown_popup_background"
+                        android:theme="@style/SpinnerDropDownStyle"
+                        android:layout_marginEnd="8dp" />
+
+                    <!-- Priority -->
+                    <Spinner
+                        android:id="@+id/spinner_priority"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/spinner_background"
+                        android:padding="10dp"
+                        android:popupBackground="@drawable/dropdown_popup_background"
+                        android:theme="@style/SpinnerDropDownStyle"
+                        android:layout_marginStart="8dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- JOBS &amp; PHOTOS Section -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="JOBS &amp; PHOTOS"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="#333333"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/form_container_background"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <!-- Jobs RecyclerView -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_view_jobs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Add Job Button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <ImageButton
+                        android:id="@+id/btn_add_job"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:src="@android:drawable/ic_input_add"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Add Job"
+                        android:tint="#1abc9c" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- MATERIALS Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="#333333"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="MATERIALS"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white" />
+
+                <ImageButton
+                    android:id="@+id/btn_add_material"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Add Material"
+                    android:tint="#1abc9c" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/form_container_background"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <!-- Materials RecyclerView -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_view_materials"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Total Amount -->
+                <TextView
+                    android:id="@+id/tv_total_amount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Total: Rp 0"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1abc9c"
+                    android:gravity="end"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <!-- Cancel Button -->
+                <Button
+                    android:id="@+id/btn_cancel"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Cancel"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/cancel_button_background"
+                    android:backgroundTint="#FCCEC5"
+                    android:textColor="@color/red"
+                    android:layout_marginEnd="8dp" />
+
+                <!-- Submit Button -->
+                <Button
+                    android:id="@+id/btn_submit"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Submit"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/submit_button_background"
+                    android:textColor="@color/white"
+                    android:layout_marginStart="8dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>
+
