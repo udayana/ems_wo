@@ -180,7 +180,9 @@ class LoginActivity : AppCompatActivity() {
                     val result = RetrofitClient.apiService.login(email, password)
                     
                     if (result["error"] != null) {
-                        lastError = result["error"].toString()
+                        // Server returned error, show simple message
+                        lastError = "Belum berhasil, silahkan dicoba lagi !"
+                        android.util.Log.e("LoginActivity", "Server error: ${result["error"]}")
                         if (attempt < maxRetries) {
                             // Wait before retry
                             kotlinx.coroutines.delay(1000L * attempt)
@@ -192,7 +194,9 @@ class LoginActivity : AppCompatActivity() {
                         return@launch
                     }
                 } catch (e: Exception) {
-                    lastError = "Login failed: ${e.message}"
+                    // Log error for debugging, but show simple message to user
+                    android.util.Log.e("LoginActivity", "Login error: ${e.message}", e)
+                    lastError = "Belum berhasil, silahkan dicoba lagi !"
                     if (attempt < maxRetries) {
                         kotlinx.coroutines.delay(1000L * attempt)
                         continue
@@ -271,12 +275,14 @@ class LoginActivity : AppCompatActivity() {
                             }
                     } catch (_: Exception) {}
                 } catch (e: Exception) {
-                    handleLoginError("Failed to save user data: ${e.message}")
+                    android.util.Log.e("LoginActivity", "Failed to save user data: ${e.message}", e)
+                    handleLoginError("Belum berhasil, silahkan dicoba lagi !")
                 }
             }
             
         } catch (e: Exception) {
-            handleLoginError("Failed to process login response: ${e.message}")
+            android.util.Log.e("LoginActivity", "Failed to process login response: ${e.message}", e)
+            handleLoginError("Belum berhasil, silahkan dicoba lagi !")
         }
     }
     

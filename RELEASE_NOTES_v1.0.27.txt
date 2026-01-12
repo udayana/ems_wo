@@ -1,0 +1,6 @@
+Release Notes v1.0.27
+
+• Fixed parameter handling issue in Maintenance Job Task that caused errors when loading task details
+• Improved app stability and API call reliability for maintenance features
+
+

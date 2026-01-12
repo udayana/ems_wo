@@ -26,7 +26,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.graphics.BitmapFactory
-import androidx.core.graphics.scale
 import com.bumptech.glide.Glide
 import com.sofindo.ems.R
 import com.sofindo.ems.services.MaintenanceService
@@ -36,6 +35,7 @@ import com.sofindo.ems.services.SyncService
 import com.sofindo.ems.database.PendingMaintenanceTask
 import com.sofindo.ems.utils.NetworkUtils
 import com.sofindo.ems.adapters.MaintenanceJobTaskAdapter
+import com.sofindo.ems.utils.resizeCrop
 import org.json.JSONArray
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -207,7 +207,7 @@ class MaintenanceJobTaskFragment : Fragment() {
         }
         
         // Set navigation icon color to primary (green)
-        toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary, null))
+        toolbar.navigationIcon?.setTint(resources.getColor(R.color.white, null))
         
         // Format date to short format (e.g., "15 Dec 2025")
         val formattedDate = if (scheduleDate.isNotEmpty()) {
@@ -287,14 +287,12 @@ class MaintenanceJobTaskFragment : Fragment() {
                 )
                 
                 if (response["data"] != null && response["data"] is List<*>) {
-                    @Suppress("UNCHECKED_CAST")
                     val maintenanceDataList = response["data"] as List<*>
                     
                     val processedTasks = mutableListOf<Map<String, Any>>()
                     
                     // Process all maintenance tasks from the API
                     for (recordIndex in maintenanceDataList.indices) {
-                        @Suppress("UNCHECKED_CAST")
                         val maintenanceData = maintenanceDataList[recordIndex] as? Map<String, Any>
                         val jobtask = maintenanceData?.get("jobtask")?.toString() ?: ""
                         
@@ -438,12 +436,10 @@ class MaintenanceJobTaskFragment : Fragment() {
                             )
                             
                             if (refreshedResponse["data"] != null && refreshedResponse["data"] is List<*>) {
-                                @Suppress("UNCHECKED_CAST")
                                 val refreshedDataList = refreshedResponse["data"] as List<*>
                                 
                                 // Check if ALL tasks from server are completed
                                 val allTasksFromServer = refreshedDataList.mapNotNull { data ->
-                                    @Suppress("UNCHECKED_CAST")
                                     val taskData = data as? Map<String, Any>
                                     taskData?.get("done")?.toString() == "1" || taskData?.get("done") == 1
                                 }
@@ -597,8 +593,10 @@ class MaintenanceJobTaskFragment : Fragment() {
     private fun handleCameraImage(file: File) {
         lifecycleScope.launch {
             try {
-                // Resize so longest side = 420px (proportional)
-                val resizedFile = resizeJpegInPlace(file, maxSide = 420, quality = 90)
+                // Resize + crop ke 480x480 sebelum upload
+                val resizedFile = withContext(Dispatchers.IO) {
+                    resizeCrop(file, size = 480, quality = 90)
+                }
                 addPhotoToSlot(resizedFile)
             } catch (e: Exception) {
                 Toast.makeText(context, "Failed to process image: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -617,8 +615,10 @@ class MaintenanceJobTaskFragment : Fragment() {
                 }
                 outputStream.close()
                 
-                // Resize so longest side = 420px (proportional)
-                val resizedFile = resizeJpegInPlace(tempFile, maxSide = 420, quality = 90)
+                // Resize + crop ke 480x480 sebelum upload
+                val resizedFile = withContext(Dispatchers.IO) {
+                    resizeCrop(tempFile, size = 480, quality = 90)
+                }
                 addPhotoToSlot(resizedFile)
             } catch (e: Exception) {
                 Toast.makeText(context, "Failed to load image: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -689,46 +689,6 @@ class MaintenanceJobTaskFragment : Fragment() {
         btnAddPhoto.isEnabled = photoCount < 3
     }
     
-    private fun resizeJpegInPlace(file: File, maxSide: Int = 420, quality: Int = 90): File {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(file.absolutePath, bounds)
-        val srcW = bounds.outWidth
-        val srcH = bounds.outHeight
-        if (srcW <= 0 || srcH <= 0) return file
-        
-        val sample = calculateInSampleSize(srcW, srcH, maxSide)
-        val decodeOpts = BitmapFactory.Options().apply {
-            inSampleSize = sample
-            inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888
-        }
-        var bmp = BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
-        
-        val longest = kotlin.math.max(bmp.width, bmp.height)
-        val scale = longest.toFloat() / maxSide
-        val finalBmp = if (scale > 1f) {
-            val w = (bmp.width / scale).toInt()
-            val h = (bmp.height / scale).toInt()
-            android.graphics.Bitmap.createScaledBitmap(bmp, w, h, true)
-        } else bmp
-        
-        FileOutputStream(file, false).use { out ->
-            finalBmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, out)
-            out.flush()
-        }
-        
-        if (finalBmp !== bmp) bmp.recycle()
-        return file
-    }
-    
-    private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
-        var inSampleSize = 1
-        val longest = kotlin.math.max(srcW, srcH)
-        while (longest / inSampleSize > reqMaxSide * 2) {
-            inSampleSize *= 2
-        }
-        return inSampleSize
-    }
-    
     private fun updateMaintenanceNotes() {
         if (isSubmitting) return
         
@@ -775,15 +735,12 @@ class MaintenanceJobTaskFragment : Fragment() {
                 }
                 
                 // Has internet: Try to update online
-                // IMPORTANT: Do NOT change status when updating notes/photos
-                // Status should only be "done" when ALL tasks are completed
                 try {
-                    // Use updateMaintenanceNotesAndPhotos which doesn't change status
-                    MaintenanceService.updateMaintenanceNotesAndPhotos(
+                    MaintenanceService.updateMaintenanceEvent(
                         mntId = eventIdToUse,
+                        status = "done",
                         notes = note,
-                        photos = photosToUpload,
-                        propID = currentPropID
+                        photos = photosToUpload
                     )
                     
                     if (isAdded) {
@@ -842,14 +799,12 @@ class MaintenanceJobTaskFragment : Fragment() {
             val taskMntId = if (tasks.isNotEmpty()) tasks[0]["mntId"]?.toString() ?: "" else ""
             val mntIdToUse = if (taskMntId.isNotEmpty()) taskMntId else mntId
             
-            // IMPORTANT: Do NOT set status = "done" when saving notes/photos offline
-            // Status should only be "done" when ALL tasks are completed
             val pendingTask = PendingMaintenanceTask(
                 requestType = "update_notes_photos",
                 mntId = mntIdToUse,
                 eventId = eventId,
                 notes = note,
-                status = null, // Don't change status when updating notes/photos
+                status = "done",
                 photoPathsJson = photoPathsJson,
                 assetNo = assetNo,
                 propID = currentPropID,
@@ -914,6 +869,47 @@ class MaintenanceJobTaskFragment : Fragment() {
                 etNote.setText("")
             }
         }
+    }
+    
+    // === Helper resize lokal: proporsional, sisi terpanjang = maxSide ===
+    private fun resizeJpegInPlace(file: File, maxSide: Int = 420, quality: Int = 85): File {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+        val srcW = bounds.outWidth
+        val srcH = bounds.outHeight
+        if (srcW <= 0 || srcH <= 0) return file
+
+        val sample = calculateInSampleSize(srcW, srcH, maxSide)
+        val decodeOpts = BitmapFactory.Options().apply {
+            inSampleSize = sample
+            inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888
+        }
+        var bmp = BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
+
+        val longest = kotlin.math.max(bmp.width, bmp.height)
+        val scale = longest.toFloat() / maxSide
+        val finalBmp = if (scale > 1f) {
+            val w = (bmp.width / scale).toInt()
+            val h = (bmp.height / scale).toInt()
+            android.graphics.Bitmap.createScaledBitmap(bmp, w, h, true)
+        } else bmp
+
+        FileOutputStream(file, false).use { out ->
+            finalBmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, out)
+            out.flush()
+        }
+
+        if (finalBmp !== bmp) bmp.recycle()
+        return file
+    }
+
+    private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
+        var inSampleSize = 1
+        val longest = kotlin.math.max(srcW, srcH)
+        while (longest / inSampleSize > reqMaxSide * 2) {
+            inSampleSize *= 2
+        }
+        return inSampleSize
     }
     
     companion object {

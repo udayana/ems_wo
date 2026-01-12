@@ -17,8 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.sofindo.ems.R
 import com.sofindo.ems.dialogs.ImageViewerDialog
-import com.sofindo.ems.utils.applyTopAndBottomInsets
-import com.sofindo.ems.utils.setupEdgeToEdge
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import kotlinx.coroutines.Dispatchers
@@ -36,19 +34,11 @@ class WorkOrderDetailActivity : AppCompatActivity() {
     private lateinit var workOrder: Map<String, Any>
     
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Enable edge-to-edge for Android 15+ (SDK 35)
-        setupEdgeToEdge()
-        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_work_order_detail)
         
-        // Apply window insets to root layout
-        findViewById<android.view.ViewGroup>(android.R.id.content)?.getChildAt(0)?.let { rootView ->
-            rootView.applyTopAndBottomInsets()
-        }
-        
         // Get work order data from intent
-        @Suppress("DEPRECATION", "UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
         workOrder = intent.getSerializableExtra("workOrder") as? Map<String, Any> ?: emptyMap()
         
         setupToolbar()
@@ -579,7 +569,7 @@ Sent from EMS Work Order App"""
     }
     
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        onBackPressed()
         return true
     }
 }

@@ -88,7 +88,7 @@ class MaintenanceHistoryFragment : Fragment() {
         }
         
         // Set navigation icon color to primary (green)
-        toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary, null))
+        toolbar.navigationIcon?.setTint(resources.getColor(R.color.white, null))
         
         // Add refresh button with custom view
         toolbar.inflateMenu(R.menu.maintenance_history_menu)

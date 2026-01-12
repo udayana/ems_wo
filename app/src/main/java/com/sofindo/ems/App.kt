@@ -13,6 +13,7 @@ import com.sofindo.ems.services.UserService
 import com.sofindo.ems.services.OfflineQueueService
 import com.sofindo.ems.services.OfflineProjectService
 import com.sofindo.ems.services.OfflineMaintenanceService
+import com.sofindo.ems.services.SyncService
 
 class App : Application() {
     override fun onCreate() {
@@ -22,6 +23,8 @@ class App : Application() {
         OfflineQueueService.init(this)
         OfflineProjectService.init(this)
         OfflineMaintenanceService.init(this)
+        // Schedule one-time sync for any pending items; will run as soon as network is available
+        SyncService.scheduleSync(this)
         createNotificationChannel()
     }
     

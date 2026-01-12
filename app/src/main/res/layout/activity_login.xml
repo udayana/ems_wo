@@ -10,21 +10,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="72dp"
         android:gravity="center"
         android:minHeight="0dp">
 
         <!-- Profile Image Container (Circle with shadow) -->
         <FrameLayout
-            android:layout_width="175dp"
-            android:layout_height="175dp"
-            android:layout_marginBottom="20dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
             android:background="@drawable/circle_profile_background_no_border">
 
             <ImageView
                 android:id="@+id/iv_profile"
-                android:layout_width="140dp"
-                android:layout_height="140dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_person"
                 android:scaleType="centerCrop"
@@ -41,10 +45,8 @@
             android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="@color/black"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="4dp"
             android:visibility="gone" />
-
-        <View android:layout_width="match_parent" android:layout_height="20dp" />
 
         <!-- Email/Phone Input -->
         <EditText
@@ -58,7 +60,7 @@
             android:textColorHint="@color/text_secondary"
             android:background="@drawable/input_background_green_border"
             android:padding="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="12dp"
             android:textSize="16sp" />
 
         <!-- Password Input -->
@@ -67,7 +69,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:background="@drawable/input_background_green_border"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="12dp"
             android:gravity="center_vertical">
 
             <EditText
@@ -104,7 +106,7 @@
             android:id="@+id/tv_error"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="12dp"
             android:padding="12dp"
             android:background="@drawable/error_background"
             android:textColor="@color/error_red"
@@ -117,7 +119,7 @@
             android:id="@+id/btn_login"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="12dp"
             android:text="Login"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -130,7 +132,7 @@
             android:id="@+id/tv_forgot_password"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="12dp"
             android:text="Forgot Password?"
             android:textSize="14sp"
             android:textStyle="bold"

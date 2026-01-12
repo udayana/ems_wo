@@ -505,8 +505,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 }
             }
             
-            // IMPORTANT: Use updateMaintenanceNotesAndPhotos which doesn't change status
-            // Status should only be "done" when ALL tasks are completed, not when updating notes/photos
+            // IMPORTANT: Status should only be "done" when ALL tasks are completed, not when updating notes/photos
             val response = if (pendingTask.status != null && pendingTask.status == "done") {
                 // Only use updateMaintenanceEvent if status was explicitly set to "done" (all tasks completed)
                 MaintenanceService.updateMaintenanceEvent(
@@ -516,12 +515,15 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     photos = photos
                 )
             } else {
-                // Use updateMaintenanceNotesAndPhotos which doesn't change status
-                MaintenanceService.updateMaintenanceNotesAndPhotos(
+                // For notes/photos update without changing status:
+                // Use updateMaintenanceEvent with current status (not "done") to preserve status
+                // If no status specified, use "pending" as default
+                val currentStatus = pendingTask.status ?: "pending"
+                MaintenanceService.updateMaintenanceEvent(
                     mntId = mntId,
+                    status = currentStatus, // Use current status, not "done" - preserves existing status
                     notes = notes,
-                    photos = photos,
-                    propID = pendingTask.propID
+                    photos = photos
                 )
             }
             

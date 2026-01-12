@@ -4,9 +4,10 @@ import com.sofindo.ems.api.ApiService
 import com.sofindo.ems.api.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 
 class AssetService {
     companion object {
@@ -43,7 +44,6 @@ class AssetService {
                     }
                     
                     if (response["success"] == true && response["data"] != null) {
-                        @Suppress("UNCHECKED_CAST")
                         response["data"] as Map<String, Any>
                     } else {
                         throw Exception("Invalid response format from server")
@@ -53,37 +53,41 @@ class AssetService {
                 }
             }
         }
-        
+
+        // === Inventory helpers used by AssetFragment ===
+
         // Get distinct locations from tblinventory
         suspend fun getInventoryLocations(propID: String): List<String> {
             return withContext(Dispatchers.IO) {
                 try {
                     val apiService: ApiService = RetrofitClient.apiService
-                    val locations = apiService.getInventoryLocations(propID = propID)
-                    locations
+                    apiService.getInventoryLocations(propID = propID)
                 } catch (e: Exception) {
                     throw Exception("Error fetching inventory locations: ${e.message}")
                 }
             }
         }
-        
+
         // Search inventory by Property name (min 2 characters)
-        suspend fun searchInventory(propID: String, searchText: String, lokasi: String? = null): List<Map<String, Any>> {
+        suspend fun searchInventory(
+            propID: String,
+            searchText: String,
+            lokasi: String? = null
+        ): List<Map<String, Any>> {
             return withContext(Dispatchers.IO) {
                 try {
                     val apiService: ApiService = RetrofitClient.apiService
-                    val results = apiService.searchInventory(
+                    apiService.searchInventory(
                         propID = propID,
                         searchText = searchText,
                         lokasi = lokasi
                     )
-                    results
                 } catch (e: Exception) {
                     throw Exception("Error searching inventory: ${e.message}")
                 }
             }
         }
-        
+
         // Get inventory detail by No (primary key) OR by Property + Lokasi
         suspend fun getInventoryDetail(
             no: Int? = null,
@@ -100,18 +104,18 @@ class AssetService {
                         lokasi = lokasi,
                         propID = propID
                     )
-                    
+
                     if (response["error"] != null) {
                         throw Exception(response["error"].toString())
                     }
-                    
+
                     response
                 } catch (e: Exception) {
                     throw Exception("Error fetching inventory detail: ${e.message}")
                 }
             }
         }
-        
+
         // Update inventory data only (without photo)
         suspend fun updateInventory(
             no: Int,
@@ -132,7 +136,6 @@ class AssetService {
             return withContext(Dispatchers.IO) {
                 try {
                     val apiService: ApiService = RetrofitClient.apiService
-                    
                     val response = apiService.updateInventory(
                         action = "update",
                         no = no.toString(),
@@ -150,11 +153,11 @@ class AssetService {
                         suplier = suplier,
                         keterangan = keterangan
                     )
-                    
+
                     if (response["error"] != null) {
                         throw Exception(response["error"].toString())
                     }
-                    
+
                     response
                 } catch (e: Exception) {
                     throw Exception("Error updating inventory: ${e.message}")
@@ -209,7 +212,7 @@ class AssetService {
                 }
             }
         }
-        
+
         // Upload inventory photo separately (with thumbnail)
         suspend fun uploadInventoryPhoto(
             no: Int,
@@ -219,34 +222,35 @@ class AssetService {
             return withContext(Dispatchers.IO) {
                 try {
                     val apiService: ApiService = RetrofitClient.apiService
-                    
+
                     val actionBody = "upload_photo".toRequestBody("text/plain".toMediaTypeOrNull())
                     val noBody = no.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                    
+
                     // Main image with correct name: assets_[no].jpg
                     val mainImageName = "assets_${no}.jpg"
                     val requestFile = photoFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                    val photoPart = okhttp3.MultipartBody.Part.createFormData("photo", mainImageName, requestFile)
-                    
+                    val photoPart = MultipartBody.Part.createFormData("photo", mainImageName, requestFile)
+
                     // Thumbnail with correct name: thumb_assets_[no].jpg
-                    var thumbPart: okhttp3.MultipartBody.Part? = null
-                    if (thumbFile != null && thumbFile.exists()) {
+                    val thumbPart = if (thumbFile != null && thumbFile.exists()) {
                         val thumbImageName = "thumb_assets_${no}.jpg"
                         val thumbRequestBody = thumbFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                        thumbPart = okhttp3.MultipartBody.Part.createFormData("thumb", thumbImageName, thumbRequestBody)
+                        MultipartBody.Part.createFormData("thumb", thumbImageName, thumbRequestBody)
+                    } else {
+                        null
                     }
-                    
+
                     val response = apiService.uploadInventoryPhoto(
                         action = actionBody,
                         no = noBody,
                         photoFile = photoPart,
                         thumbFile = thumbPart
                     )
-                    
+
                     if (response["error"] != null) {
                         throw Exception(response["error"].toString())
                     }
-                    
+
                     response
                 } catch (e: Exception) {
                     throw Exception("Error uploading photo: ${e.message}")

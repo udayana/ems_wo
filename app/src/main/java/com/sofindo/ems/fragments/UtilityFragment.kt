@@ -57,8 +57,6 @@ class UtilityFragment : Fragment() {
         tvError = view.findViewById(R.id.tv_error)
         btnProfile = view.findViewById(R.id.btn_profile)
         
-        toolbar.title = "Utility List"
-        
         // Setup Profile Button
         btnProfile.setOnClickListener {
             navigateToProfile()
@@ -259,10 +257,19 @@ class UtilityCategoryAdapter(
         private val tvCategory: TextView = itemView.findViewById(R.id.tv_category)
         private val recyclerUtilities: RecyclerView = itemView.findViewById(R.id.recycler_utilities)
         
+        init {
+            // Setup LayoutManager once (reuse for performance)
+            if (recyclerUtilities.layoutManager == null) {
+                recyclerUtilities.layoutManager = GridLayoutManager(itemView.context, 4)
+            }
+            recyclerUtilities.setHasFixedSize(true)
+            recyclerUtilities.setItemViewCacheSize(10)
+        }
+        
         fun bind(category: String, utilities: List<Utility>) {
             tvCategory.text = category.uppercase()
             
-            recyclerUtilities.layoutManager = GridLayoutManager(itemView.context, 4)
+            // Create new adapter for each category (each has different utilities)
             recyclerUtilities.adapter = UtilityGridAdapter(utilities, onItemClick)
         }
     }
@@ -270,9 +277,14 @@ class UtilityCategoryAdapter(
 
 // Grid Adapter for Utilities
 class UtilityGridAdapter(
-    private val utilities: List<Utility>,
+    private var utilities: List<Utility>,
     private val onItemClick: (Utility) -> Unit
 ) : RecyclerView.Adapter<UtilityGridAdapter.UtilityViewHolder>() {
+    
+    fun updateData(newUtilities: List<Utility>) {
+        utilities = newUtilities
+        notifyDataSetChanged()
+    }
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UtilityViewHolder {
         val view = LayoutInflater.from(parent.context)

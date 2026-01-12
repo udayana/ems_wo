@@ -1,0 +1,6 @@
+What's New v1.0.28
+
+• Fixed maintenance job task loading issue that caused errors when viewing task details
+• Improved parameter handling and validation for better app stability
+• Enhanced error handling and user feedback for maintenance features
+

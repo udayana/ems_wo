@@ -1,0 +1,490 @@
+ems_wo/
+├── Android-icons/
+│   ├── Icon-144.png
+│   ├── Icon-192.png
+│   ├── Icon-36.png
+│   ├── Icon-48.png
+│   ├── Icon-512.png
+│   ├── Icon-72.png
+│   └── Icon-96.png
+│
+├── app/
+│   ├── build.gradle.kts
+│   ├── google-services.json
+│   ├── proguard-rules.pro
+│   │
+│   ├── release/
+│   │   ├── app-release.apk
+│   │   ├── output-metadata.json
+│   │   └── baselineProfiles/
+│   │       ├── 0/
+│   │       └── 1/
+│   │
+│   └── src/
+│       └── main/
+│           ├── AndroidManifest.xml
+│           │
+│           ├── assets/
+│           │   └── firebase-service-account.json
+│           │
+│           ├── java/
+│           │   └── com/
+│           │       └── sofindo/
+│           │           └── ems/
+│           │               ├── App.kt
+│           │               ├── MainActivity.kt
+│           │               │
+│           │               ├── activities/
+│           │               │   ├── AbtPageActivity.kt
+│           │               │   ├── ChangePendingDoneActivity.kt
+│           │               │   ├── ChangeStatusWOActivity.kt
+│           │               │   ├── ChillerpageActivity.kt
+│           │               │   ├── CreateProjectActivity.kt
+│           │               │   ├── EditWorkOrderActivity.kt
+│           │               │   ├── FreezerpageActivity.kt
+│           │               │   ├── FuelPageActivity.kt
+│           │               │   ├── GaspageActivity.kt
+│           │               │   ├── HeatpumppageActivity.kt
+│           │               │   ├── KwhtmpageActivity.kt
+│           │               │   ├── KwhtrpageActivity.kt
+│           │               │   ├── PdampageActivity.kt
+│           │               │   ├── ProjectDetailActivity.kt
+│           │               │   ├── ProjectViewActivity.kt
+│           │               │   ├── UpdateProjectActivity.kt
+│           │               │   ├── WatertankpageActivity.kt
+│           │               │   └── WorkOrderDetailActivity.kt
+│           │               │
+│           │               ├── adapters/
+│           │               │   ├── ABTRecordAdapter.kt
+│           │               │   ├── AssetSearchAdapter.kt
+│           │               │   ├── ChillerRecordAdapter.kt
+│           │               │   ├── FreezerRecordAdapter.kt
+│           │               │   ├── FuelRecordAdapter.kt
+│           │               │   ├── GasRecordAdapter.kt
+│           │               │   ├── HeatPumpRecordAdapter.kt
+│           │               │   ├── JobsAdapter.kt
+│           │               │   ├── KwhtmRecordAdapter.kt
+│           │               │   ├── KwhtrRecordAdapter.kt
+│           │               │   ├── MaintenanceAdapter.kt
+│           │               │   ├── MaintenanceHistoryAdapter.kt
+│           │               │   ├── MaintenanceJobTaskAdapter.kt
+│           │               │   ├── MaterialsAdapter.kt
+│           │               │   ├── PDAMRecordAdapter.kt
+│           │               │   ├── PhotoGalleryAdapter.kt
+│           │               │   ├── ProjectAdapter.kt
+│           │               │   ├── PropertySearchAdapter.kt
+│           │               │   ├── WaterTankRecordAdapter.kt
+│           │               │   └── WorkOrderAdapter.kt
+│           │               │
+│           │               ├── api/
+│           │               │   ├── ApiService.kt
+│           │               │   └── RetrofitClient.kt
+│           │               │
+│           │               ├── auth/
+│           │               │   ├── ForgotPasswordActivity.kt
+│           │               │   ├── LoginActivity.kt
+│           │               │   ├── RegisterActivity.kt
+│           │               │   └── VerifikasiOTPActivity.kt
+│           │               │
+│           │               ├── base/
+│           │               │   └── BaseActivity.kt
+│           │               │
+│           │               ├── camera/
+│           │               │   ├── CameraFragment.kt
+│           │               │   └── ZxingBarcodeAnalyzer.kt
+│           │               │
+│           │               ├── database/
+│           │               │   ├── Converters.kt
+│           │               │   ├── EMSDatabase.kt
+│           │               │   ├── PendingMaintenanceTask.kt
+│           │               │   ├── PendingMaintenanceTaskDao.kt
+│           │               │   ├── PendingProject.kt
+│           │               │   ├── PendingProjectDao.kt
+│           │               │   ├── PendingWorkOrder.kt
+│           │               │   └── PendingWorkOrderDao.kt
+│           │               │
+│           │               ├── dialogs/
+│           │               │   ├── AssignStaffDialog.kt
+│           │               │   ├── ImageViewerDialog.kt
+│           │               │   └── ReviewDialog.kt
+│           │               │
+│           │               ├── fcm/
+│           │               │   └── MyFirebaseMessagingService.kt
+│           │               │
+│           │               ├── fragments/
+│           │               │   ├── AssetFragment.kt
+│           │               │   ├── EditProfileFragment.kt
+│           │               │   ├── HomeFragment.kt
+│           │               │   ├── MaintenanceDetailFragment.kt
+│           │               │   ├── MaintenanceFragment.kt
+│           │               │   ├── MaintenanceHistoryFragment.kt
+│           │               │   ├── MaintenanceJobTaskFragment.kt
+│           │               │   ├── OutboxFragment.kt
+│           │               │   ├── ProfileFragment.kt
+│           │               │   ├── QRScannerFragment.kt
+│           │               │   ├── SupportFragment.kt
+│           │               │   ├── TambahWOFragment.kt
+│           │               │   └── UtilityFragment.kt
+│           │               │
+│           │               ├── models/
+│           │               │   ├── ABTRecord.kt
+│           │               │   ├── ChillerRecord.kt
+│           │               │   ├── FreezerRecord.kt
+│           │               │   ├── FuelRecord.kt
+│           │               │   ├── GasRecord.kt
+│           │               │   ├── HeatPumpRecord.kt
+│           │               │   ├── JobItem.kt
+│           │               │   ├── KwhtmRecord.kt
+│           │               │   ├── KwhtrRecord.kt
+│           │               │   ├── Maintenance.kt
+│           │               │   ├── MaterialItem.kt
+│           │               │   ├── PDAMRecord.kt
+│           │               │   ├── Project.kt
+│           │               │   ├── ProjectDetail.kt
+│           │               │   ├── ProjectJob.kt
+│           │               │   ├── ProjectMaterial.kt
+│           │               │   ├── ProjectPhoto.kt
+│           │               │   ├── Property.kt
+│           │               │   ├── Staff.kt
+│           │               │   ├── TemperatureRecord.kt
+│           │               │   ├── User.kt
+│           │               │   ├── Utility.kt
+│           │               │   └── WaterTankRecord.kt
+│           │               │
+│           │               ├── services/
+│           │               │   ├── AssetService.kt
+│           │               │   ├── LocationService.kt
+│           │               │   ├── MaintenanceService.kt
+│           │               │   ├── NotificationService.kt
+│           │               │   ├── OfflineMaintenanceService.kt
+│           │               │   ├── OfflineProjectService.kt
+│           │               │   ├── OfflineQueueService.kt
+│           │               │   ├── ProfileService.kt
+│           │               │   ├── SupportService.kt
+│           │               │   ├── SyncService.kt
+│           │               │   └── UserService.kt
+│           │               │
+│           │               ├── utils/
+│           │               │   ├── EdgeToEdgeUtils.kt
+│           │               │   ├── ImageUtils.kt
+│           │               │   ├── NetworkUtils.kt
+│           │               │   └── PermissionUtils.kt
+│           │               │
+│           │               ├── views/
+│           │               │   ├── AbtChartView.kt
+│           │               │   ├── ChillerChartView.kt
+│           │               │   ├── FuelChartView.kt
+│           │               │   ├── GasChartView.kt
+│           │               │   ├── HeatPumpChartView.kt
+│           │               │   ├── KwhtmChartView.kt
+│           │               │   ├── KwhtrChartView.kt
+│           │               │   ├── PdamChartView.kt
+│           │               │   ├── RecyclerColumnDecoration.kt
+│           │               │   ├── TemperatureChartView.kt
+│           │               │   └── WatertankChartView.kt
+│           │               │
+│           │               └── widgets/
+│           │                   └── NoAutoScrollNestedScrollView.kt
+│           │
+│           └── res/
+│               ├── color/
+│               │   └── bottom_nav_item_color.xml
+│               │
+│               ├── drawable/
+│               │   ├── badge_background.xml
+│               │   ├── breakdown_background.xml
+│               │   ├── btn_add_project_circle.xml
+│               │   ├── btn_view_project_background.xml
+│               │   ├── button_cancel_background.xml
+│               │   ├── button_disabled_background.xml
+│               │   ├── button_primary_background.xml
+│               │   ├── button_primary_modern.xml
+│               │   ├── button_secondary_background.xml
+│               │   ├── button_secondary_modern.xml
+│               │   ├── button_upload_background.xml
+│               │   ├── camera_icon_background.xml
+│               │   ├── cancel_button_background.xml
+│               │   ├── card_background.xml
+│               │   ├── circle_background.xml
+│               │   ├── circle_profile_background_no_border.xml
+│               │   ├── circle_profile_background.xml
+│               │   ├── content_background.xml
+│               │   ├── delete_button_background.xml
+│               │   ├── dialog_background.xml
+│               │   ├── dialog_header_background.xml
+│               │   ├── dropdown_popup_background.xml
+│               │   ├── edittext_background.xml
+│               │   ├── error_background.xml
+│               │   ├── form_container_background.xml
+│               │   ├── ic_add_circle_green.xml
+│               │   ├── ic_add_circle.xml
+│               │   ├── ic_add.xml
+│               │   ├── ic_arrow_back.xml
+│               │   ├── ic_arrow_right.xml
+│               │   ├── ic_build.xml
+│               │   ├── ic_calendar.xml
+│               │   ├── ic_camera_custom.xml
+│               │   ├── ic_camera_minimal.xml
+│               │   ├── ic_camera_simple.xml
+│               │   ├── ic_camera.xml
+│               │   ├── ic_check_circle.xml
+│               │   ├── ic_chevron_right.xml
+│               │   ├── ic_close.xml
+│               │   ├── ic_cost.xml
+│               │   ├── ic_delete.xml
+│               │   ├── ic_edit.xml
+│               │   ├── ic_email_simple.xml
+│               │   ├── ic_email.xml
+│               │   ├── ic_error_outline.xml
+│               │   ├── ic_filter_list.xml
+│               │   ├── ic_folder.xml
+│               │   ├── ic_forward.xml
+│               │   ├── ic_gauge.xml
+│               │   ├── ic_help.xml
+│               │   ├── ic_history.xml
+│               │   ├── ic_home.xml
+│               │   ├── ic_image_placeholder.xml
+│               │   ├── ic_list.xml
+│               │   ├── ic_location.xml
+│               │   ├── ic_lock.xml
+│               │   ├── ic_logout.xml
+│               │   ├── ic_menu.xml
+│               │   ├── ic_more_vert.xml
+│               │   ├── ic_note.xml
+│               │   ├── ic_person.xml
+│               │   ├── ic_phone_simple.xml
+│               │   ├── ic_phone.xml
+│               │   ├── ic_photo.xml
+│               │   ├── ic_priority.xml
+│               │   ├── ic_push_pin.xml
+│               │   ├── ic_qr_scanner.xml
+│               │   ├── ic_refresh.xml
+│               │   ├── ic_schedule.xml
+│               │   ├── ic_send.xml
+│               │   ├── ic_share.xml
+│               │   ├── ic_star_filled.xml
+│               │   ├── ic_star.xml
+│               │   ├── ic_status_cancelled.xml
+│               │   ├── ic_status_done.xml
+│               │   ├── ic_status_pending.xml
+│               │   ├── ic_tag.xml
+│               │   ├── ic_task.xml
+│               │   ├── ic_update.xml
+│               │   ├── ic_upload.xml
+│               │   ├── ic_visibility_off.xml
+│               │   ├── ic_visibility.xml
+│               │   ├── ic_warning.xml
+│               │   ├── ic_whatsapp.xml
+│               │   ├── image_background.xml
+│               │   ├── info_background.xml
+│               │   ├── input_background_green_border.xml
+│               │   ├── input_background_modern.xml
+│               │   ├── input_background.xml
+│               │   ├── label_button_background.xml
+│               │   ├── logo_ems.png
+│               │   ├── logout_button_background.xml
+│               │   ├── maintenance_container_background.xml
+│               │   ├── maintenance_item_background.xml
+│               │   ├── outline_button_background.xml
+│               │   ├── photo_button_background.xml
+│               │   ├── photo_preview_background.xml
+│               │   ├── popup_menu_background.xml
+│               │   ├── progress_background.xml
+│               │   ├── record_badge_background.xml
+│               │   ├── register_form_background.xml
+│               │   ├── register_gradient_background.xml
+│               │   ├── register_input_background.xml
+│               │   ├── register_input_error_background.xml
+│               │   ├── rounded_button_background_secondary.xml
+│               │   ├── rounded_button_background.xml
+│               │   ├── rounded_edit_text_background.xml
+│               │   ├── rounded_edit_text.xml
+│               │   ├── rounded_white_background.xml
+│               │   ├── scanner_button_container_background.xml
+│               │   ├── selected_property_background.xml
+│               │   ├── spinner_background_green.xml
+│               │   ├── spinner_background.xml
+│               │   ├── status_background.xml
+│               │   ├── status_badge_background.xml
+│               │   ├── status_indicator_background.xml
+│               │   ├── submit_button_background.xml
+│               │   ├── suggestions_background.xml
+│               │   ├── table_background.xml
+│               │   ├── table_frame_background.xml
+│               │   ├── table_header_background.xml
+│               │   ├── table_row_background.xml
+│               │   ├── task_card_background_selector.xml
+│               │   ├── task_card_background.xml
+│               │   ├── task_number_badge.xml
+│               │   ├── text_underline.xml
+│               │   ├── underline_background.xml
+│               │   ├── update_button_background.xml
+│               │   ├── warning_background.xml
+│               │   ├── work_order_item_background_assigned.xml
+│               │   ├── work_order_item_background_highlight.xml
+│               │   └── work_order_item_background.xml
+│               │
+│               ├── layout/
+│               │   ├── activity_abt_page.xml
+│               │   ├── activity_change_pending_done.xml
+│               │   ├── activity_change_status_wo.xml
+│               │   ├── activity_chiller_page.xml
+│               │   ├── activity_create_project.xml
+│               │   ├── activity_edit_work_order.xml
+│               │   ├── activity_forgot_password.xml
+│               │   ├── activity_freezer_page.xml
+│               │   ├── activity_fuel_page.xml
+│               │   ├── activity_gas_page.xml
+│               │   ├── activity_heat_pump_page.xml
+│               │   ├── activity_kwhtm_page.xml
+│               │   ├── activity_kwhtr_page.xml
+│               │   ├── activity_login.xml
+│               │   ├── activity_main.xml
+│               │   ├── activity_pdam_page.xml
+│               │   ├── activity_project_detail.xml
+│               │   ├── activity_project_view.xml
+│               │   ├── activity_register.xml
+│               │   ├── activity_update_project.xml
+│               │   ├── activity_utility_page.xml
+│               │   ├── activity_verifikasi_otp.xml
+│               │   ├── activity_water_tank_page.xml
+│               │   ├── activity_work_order_detail.xml
+│               │   ├── custom_bottom_navigation.xml
+│               │   ├── custom_toolbar.xml
+│               │   ├── dialog_add_chiller_record.xml
+│               │   ├── dialog_add_freezer_record.xml
+│               │   ├── dialog_add_fuel_record.xml
+│               │   ├── dialog_add_gas_record.xml
+│               │   ├── dialog_add_heat_pump_record.xml
+│               │   ├── dialog_add_kwhtm_record.xml
+│               │   ├── dialog_add_kwhtr_record.xml
+│               │   ├── dialog_add_pdam_record.xml
+│               │   ├── dialog_add_record.xml
+│               │   ├── dialog_assign_staff.xml
+│               │   ├── dialog_image_viewer.xml
+│               │   ├── dialog_photo_gallery.xml
+│               │   ├── dialog_remember_me.xml
+│               │   ├── dialog_review.xml
+│               │   ├── dialog_success.xml
+│               │   ├── fragment_asset.xml
+│               │   ├── fragment_camera.xml
+│               │   ├── fragment_edit_profile.xml
+│               │   ├── fragment_home.xml
+│               │   ├── fragment_maintenance_detail.xml
+│               │   ├── fragment_maintenance_history.xml
+│               │   ├── fragment_maintenance_job_task.xml
+│               │   ├── fragment_maintenance.xml
+│               │   ├── fragment_outbox.xml
+│               │   ├── fragment_profile.xml
+│               │   ├── fragment_support.xml
+│               │   ├── fragment_tambah_wo.xml
+│               │   ├── fragment_utility.xml
+│               │   ├── item_abt_record.xml
+│               │   ├── item_asset_search.xml
+│               │   ├── item_breakdown_row.xml
+│               │   ├── item_chiller_record.xml
+│               │   ├── item_freezer_record.xml
+│               │   ├── item_fuel_record.xml
+│               │   ├── item_gas_record.xml
+│               │   ├── item_heat_pump_record.xml
+│               │   ├── item_job_row.xml
+│               │   ├── item_job_update.xml
+│               │   ├── item_kwhtm_record.xml
+│               │   ├── item_kwhtr_record.xml
+│               │   ├── item_maintenance_history.xml
+│               │   ├── item_maintenance_job_task.xml
+│               │   ├── item_maintenance.xml
+│               │   ├── item_material_row.xml
+│               │   ├── item_pdam_record.xml
+│               │   ├── item_photo_gallery.xml
+│               │   ├── item_photo_pair.xml
+│               │   ├── item_photo_small.xml
+│               │   ├── item_photo_update.xml
+│               │   ├── item_project_job.xml
+│               │   ├── item_project_material.xml
+│               │   ├── item_project_photo_pair.xml
+│               │   ├── item_project_photo.xml
+│               │   ├── item_project.xml
+│               │   ├── item_property_search.xml
+│               │   ├── item_staff.xml
+│               │   ├── item_utility_card.xml
+│               │   ├── item_utility.xml
+│               │   ├── item_water_tank_record.xml
+│               │   ├── item_work_order.xml
+│               │   ├── menu_item_history_action.xml
+│               │   ├── menu_item_refresh_action.xml
+│               │   └── toolbar_project.xml
+│               │
+│               ├── menu/
+│               │   ├── edit_profile_menu.xml
+│               │   ├── maintenance_history_menu.xml
+│               │   ├── maintenance_menu.xml
+│               │   ├── menu_maintenance_detail.xml
+│               │   ├── menu_maintenance_job_task.xml
+│               │   ├── menu_work_order_detail.xml
+│               │   ├── work_order_home_menu.xml
+│               │   └── work_order_menu.xml
+│               │
+│               ├── mipmap-hdpi/
+│               │   ├── ic_launcher_round.png
+│               │   └── ic_launcher.png
+│               │
+│               ├── mipmap-mdpi/
+│               │   ├── ic_launcher_round.png
+│               │   └── ic_launcher.png
+│               │
+│               ├── mipmap-xhdpi/
+│               │   ├── ic_launcher_round.png
+│               │   └── ic_launcher.png
+│               │
+│               ├── mipmap-xxhdpi/
+│               │   ├── ic_launcher_round.png
+│               │   └── ic_launcher.png
+│               │
+│               ├── mipmap-xxxhdpi/
+│               │   ├── ic_launcher_round.png
+│               │   └── ic_launcher.png
+│               │
+│               ├── raw/
+│               │
+│               ├── values/
+│               │   ├── colors.xml
+│               │   ├── dimens.xml
+│               │   ├── strings.xml
+│               │   ├── styles.xml
+│               │   └── themes.xml
+│               │
+│               └── xml/
+│                   └── (network_security_config.xml or similar)
+│
+├── backend/
+│   ├── asset_schedule.php
+│   ├── AssetEditor.php
+│   ├── Assets_edit.php
+│   ├── delete_demo.php
+│   ├── get_admin_setting.php
+│   ├── get_maintask_job.php
+│   ├── get_maintenance_history.php
+│   ├── maintenance_notes.php
+│   ├── update_maintask_status.php
+│   ├── update_maintenance_event.php
+│   ├── update_maintenance_notes.php
+│   └── uploadPhotoMaintenance.php
+│
+├── build.gradle.kts
+├── check_16kb_alignment.sh
+├── ems_wo.keystore
+├── gradle.properties
+├── gradlew
+├── gradlew.bat
+├── local.properties
+├── settings.gradle.kts
+│
+└── gradle/
+    └── wrapper/
+        ├── gradle-wrapper.jar
+        └── gradle-wrapper.properties
+
+
+
+

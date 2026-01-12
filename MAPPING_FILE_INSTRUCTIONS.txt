@@ -1,0 +1,39 @@
+HOW TO HANDLE MAPPING FILE FOR GOOGLE PLAY STORE
+==================================================
+
+After enabling minification (isMinifyEnabled = true), the mapping file will be generated when you build a release AAB/APK.
+
+LOCATION OF MAPPING FILE:
+--------------------------
+When you build release, the mapping file will be generated at:
+app/build/outputs/mapping/release/mapping.txt
+
+HOW TO BUILD RELEASE AAB:
+--------------------------
+./gradlew bundleRelease
+
+The mapping.txt file will be generated in:
+app/build/outputs/mapping/release/mapping.txt
+
+HOW TO UPLOAD TO GOOGLE PLAY:
+------------------------------
+1. Build the release AAB: ./gradlew bundleRelease
+2. Find mapping.txt at: app/build/outputs/mapping/release/mapping.txt
+3. Upload AAB to Google Play Console
+4. When uploading, Google Play will ask for "Deobfuscation file" - upload the mapping.txt file
+5. The warning will disappear after uploading the mapping file
+
+IMPORTANT NOTES:
+----------------
+- The mapping file is specific to each build. You MUST upload the mapping.txt that matches the exact AAB you're uploading.
+- If you rebuild, a new mapping.txt will be generated - use the new one.
+- Keep the mapping.txt file safe - you'll need it for crash reports analysis.
+- The mapping file allows Google Play to deobfuscate stack traces for better crash analysis.
+
+PROGUARD RULES:
+---------------
+We have comprehensive ProGuard rules in app/proguard-rules.pro that:
+- Preserve Retrofit API parameter names (critical for API calls)
+- Keep all necessary classes for app functionality
+- Preserve line numbers for debugging
+- Keep all required attributes for proper deobfuscation

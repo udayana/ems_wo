@@ -166,6 +166,13 @@ interface ApiService {
     suspend fun getPropertyName(
         @Query("propID") propID: String
     ): Map<String, Any>
+
+    // Auto category suggestion for work order description
+    @FormUrlEncoded
+    @POST("get_category_auto.php")
+    suspend fun getAutoCategory(
+        @Field("job") job: String
+    ): Map<String, Any>
     
     // Search work orders - exactly like Flutter
     @GET("search_wo.php")
@@ -334,7 +341,7 @@ interface ApiService {
     suspend fun getMaintenanceTaskJob(
         @Query("noAssets") noAssets: String,
         @Query("propID") propID: String,
-        @Query("eventId") eventId: String
+        @Query("eventId") eventId: String? = null
     ): Map<String, Any>
     
     @POST("update_maintask_status.php")

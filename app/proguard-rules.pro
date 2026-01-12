@@ -12,9 +12,8 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserve line number information for debugging stack traces
+-keepattributes SourceFile,LineNumberTable
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
@@ -29,11 +28,35 @@
 # Keep Retrofit classes
 -keepattributes Signature
 -keepattributes *Annotation*
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
 -keep class retrofit2.** { *; }
 -keepclasseswithmembers class * {
     @retrofit2.http.* <methods>;
 }
 -dontwarn retrofit2.**
+
+# Keep Retrofit parameter names - CRITICAL for API calls
+# This ensures @Query, @Field, @Part parameter names are preserved
+-keepclassmembers,allowobfuscation class * {
+    @retrofit2.http.* <methods>;
+}
+
+# Keep parameter names in Retrofit interface methods
+-keepclassmembers interface * {
+    @retrofit2.http.* <methods>;
+}
+
+# Specifically keep ApiService interface and all its methods
+-keep interface com.sofindo.ems.api.ApiService { *; }
+-keepclassmembers interface com.sofindo.ems.api.ApiService {
+    <methods>;
+}
+
+# Keep all Retrofit annotations to preserve parameter names
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeVisibleParameterAnnotations
+-keepattributes AnnotationDefault
 
 # Keep OkHttp classes
 -dontwarn okhttp3.**

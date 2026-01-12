@@ -10,7 +10,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.core.graphics.scale
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,6 +31,7 @@ import com.sofindo.ems.adapters.MaintenanceAdapter
 import com.sofindo.ems.models.Maintenance
 import com.sofindo.ems.services.MaintenanceService
 import com.sofindo.ems.services.UserService
+import com.sofindo.ems.utils.ImageUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -255,9 +255,9 @@ class MaintenanceFragment : Fragment() {
     private fun handleCameraImage(file: File) {
         lifecycleScope.launch {
             try {
-                // Resize so longest side = 420px (proportional)
+                // Resize + square‑crop image to 420x420 with 90% quality
                 val resizedFile = withContext(Dispatchers.IO) {
-                    resizeJpegInPlace(file, maxSide = 420, quality = 90)
+                    ImageUtils.resizeAndSquareCropJpegInPlace(file, size = 420, quality = 90)
                 }
                 
                 // Show dialog to input photo name
@@ -405,37 +405,6 @@ class MaintenanceFragment : Fragment() {
         }
     }
     
-    private fun resizeJpegInPlace(file: File, maxSide: Int = 420, quality: Int = 90): File {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(file.absolutePath, bounds)
-        val srcW = bounds.outWidth
-        val srcH = bounds.outHeight
-        if (srcW <= 0 || srcH <= 0) return file
-        
-        val sample = calculateInSampleSize(srcW, srcH, maxSide)
-        val decodeOpts = BitmapFactory.Options().apply {
-            inSampleSize = sample
-            inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888
-        }
-        var bmp = BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
-        
-        val longest = kotlin.math.max(bmp.width, bmp.height)
-        val scale = longest.toFloat() / maxSide
-        val finalBmp = if (scale > 1f) {
-            val w = (bmp.width / scale).toInt()
-            val h = (bmp.height / scale).toInt()
-            android.graphics.Bitmap.createScaledBitmap(bmp, w, h, true)
-        } else bmp
-        
-        FileOutputStream(file, false).use { out ->
-            finalBmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, out)
-            out.flush()
-        }
-        
-        if (finalBmp !== bmp) bmp.recycle()
-        return file
-    }
-    
     private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
         var inSampleSize = 1
         val longest = kotlin.math.max(srcW, srcH)
@@ -445,4 +414,4 @@ class MaintenanceFragment : Fragment() {
         return inSampleSize
     }
 }
-
+    

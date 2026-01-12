@@ -20,7 +20,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.sofindo.ems.MainActivity
 import com.sofindo.ems.R
 import com.sofindo.ems.adapters.WorkOrderAdapter
@@ -47,7 +46,7 @@ class HomeFragment : Fragment() {
     private lateinit var tvEmpty: TextView
     private lateinit var btnTabIn: Button
     private lateinit var btnTabOut: Button
-    private lateinit var indicatorActiveTab: View
+    private var indicatorActiveTab: View? = null
     private lateinit var contentContainer: FrameLayout
     
     // Tab state - mirip iOS @AppStorage("lastSelectedHomeTab")
@@ -112,7 +111,7 @@ class HomeFragment : Fragment() {
     private fun initViews(view: View) {
         btnTabIn = view.findViewById(R.id.btn_tab_in)
         btnTabOut = view.findViewById(R.id.btn_tab_out)
-        indicatorActiveTab = view.findViewById(R.id.indicator_active_tab)
+        // indicatorActiveTab is optional - not present in new layout, will remain null
         contentContainer = view.findViewById(R.id.content_container)
         
         recyclerView = view.findViewById(R.id.recycler_view)
@@ -127,6 +126,9 @@ class HomeFragment : Fragment() {
         
         // Log saved tab state for debugging
         android.util.Log.d("HomeFragment", "Restored last selected tab: $lastSelectedTab")
+        
+        // Note: AppBarLayout with fitsSystemWindows="true" handles window insets automatically
+        // No need for manual padding adjustment
         
         // Setup RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
@@ -242,10 +244,23 @@ class HomeFragment : Fragment() {
             }
         }
         
+        // Swipe refresh listener
         swipeRefreshLayout.setOnRefreshListener {
             refreshData()
         }
         
+        // Filter button listener
+        btnFilter.setOnClickListener {
+            android.util.Log.d("HomeFragment", "Filter button clicked")
+            try {
+                showFilterPopup()
+            } catch (e: Exception) {
+                android.util.Log.e("HomeFragment", "Error showing filter popup: ${e.message}", e)
+                Toast.makeText(context, "Error showing filter: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        // Search view listener
         searchView.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -253,14 +268,70 @@ class HomeFragment : Fragment() {
                 onSearchChanged(s?.toString() ?: "")
             }
         })
+    }
+    
+    // Public function to switch to outbox tab (called from MainActivity after creating work order)
+    fun switchToOutboxTab() {
+        // Check if view is created first
+        if (view == null) {
+            android.util.Log.w("HomeFragment", "switchToOutboxTab called before view creation, will retry after view is ready")
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(100)
+                if (view != null && ::sharedPreferences.isInitialized) {
+                    switchToOutboxTab()
+                }
+            }
+            return
+        }
         
-        btnFilter.setOnClickListener {
-            showFilterPopup()
+        // Check if sharedPreferences is initialized (view must be created first)
+        if (!::sharedPreferences.isInitialized) {
+            try {
+                sharedPreferences = requireContext().getSharedPreferences("ems_user_prefs", android.content.Context.MODE_PRIVATE)
+            } catch (e: Exception) {
+                android.util.Log.e("HomeFragment", "Error initializing sharedPreferences: ${e.message}", e)
+                // Retry after view is ready
+                view?.postDelayed({
+                    if (::sharedPreferences.isInitialized) {
+                        switchToOutboxTab()
+                    }
+                }, 100)
+                return
+            }
+        }
+        
+        if (lastSelectedTab != "out") {
+            lastSelectedTab = "out"
+            try {
+                sharedPreferences.edit().putString("lastSelectedHomeTab", "out").apply()
+                android.util.Log.d("HomeFragment", "Tab switched to: out programmatically (saved to SharedPreferences)")
+                updateTabIndicator()
+                switchTabContent()
+                // Refresh outbox data
+                outboxContentFragment?.let { fragment ->
+                    if (fragment is OutboxFragment) {
+                        fragment.refreshData()
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HomeFragment", "Error in switchToOutboxTab: ${e.message}", e)
+            }
+        } else {
+            // Already on outbox tab, just refresh data
+            try {
+                outboxContentFragment?.let { fragment ->
+                    if (fragment is OutboxFragment) {
+                        fragment.refreshData()
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HomeFragment", "Error refreshing outbox data: ${e.message}", e)
+            }
         }
     }
     
     private fun updateTabIndicator() {
-        // Update tab button styles dan indicator position - mirip iOS
+        // Update tab button styles - mirip iOS
         if (lastSelectedTab == "in") {
             btnTabIn.textSize = 14f
             btnTabIn.typeface = android.graphics.Typeface.DEFAULT_BOLD
@@ -269,29 +340,6 @@ class HomeFragment : Fragment() {
             btnTabOut.textSize = 14f
             btnTabOut.typeface = android.graphics.Typeface.DEFAULT
             btnTabOut.setTextColor(resources.getColor(android.R.color.darker_gray, null))
-            
-            // Move indicator to left (first half)
-            val parentLayout = indicatorActiveTab.parent as? android.view.ViewGroup
-            if (parentLayout != null) {
-                val params = indicatorActiveTab.layoutParams as? android.widget.LinearLayout.LayoutParams
-                    ?: android.widget.LinearLayout.LayoutParams(
-                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                val parentWidth = parentLayout.width
-                if (parentWidth > 0) {
-                    params.width = (parentWidth / 2) - 32 // Half width minus margins
-                    params.weight = 0f
-                    params.setMargins(16, 0, 0, 0)
-                    indicatorActiveTab.layoutParams = params
-                } else {
-                    // Fallback: use weight when width is not available yet
-                    params.width = 0
-                    params.weight = 0.5f
-                    params.setMargins(16, 0, 0, 0)
-                    indicatorActiveTab.layoutParams = params
-                }
-            }
         } else {
             btnTabOut.textSize = 14f
             btnTabOut.typeface = android.graphics.Typeface.DEFAULT_BOLD
@@ -300,27 +348,34 @@ class HomeFragment : Fragment() {
             btnTabIn.textSize = 14f
             btnTabIn.typeface = android.graphics.Typeface.DEFAULT
             btnTabIn.setTextColor(resources.getColor(android.R.color.darker_gray, null))
-            
-            // Move indicator to right (second half)
-            val parentLayout = indicatorActiveTab.parent as? android.view.ViewGroup
+        }
+        
+        // Update indicator position if it exists (optional - not in new layout)
+        indicatorActiveTab?.let { indicator ->
+            val parentLayout = indicator.parent as? android.view.ViewGroup
             if (parentLayout != null) {
-                val params = indicatorActiveTab.layoutParams as? android.widget.LinearLayout.LayoutParams
+                val params = indicator.layoutParams as? android.widget.LinearLayout.LayoutParams
                     ?: android.widget.LinearLayout.LayoutParams(
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                         android.view.ViewGroup.LayoutParams.WRAP_CONTENT
                     )
                 val parentWidth = parentLayout.width
                 if (parentWidth > 0) {
-                    params.width = (parentWidth / 2) - 32 // Half width minus margins
-                    params.weight = 0f
-                    params.setMargins(parentWidth / 2 + 16, 0, 16, 0)
-                    indicatorActiveTab.layoutParams = params
+                    if (lastSelectedTab == "in") {
+                        params.width = (parentWidth / 2) - 32
+                        params.weight = 0f
+                        params.setMargins(16, 0, 0, 0)
+                    } else {
+                        params.width = (parentWidth / 2) - 32
+                        params.weight = 0f
+                        params.setMargins(parentWidth / 2 + 16, 0, 16, 0)
+                    }
+                    indicator.layoutParams = params
                 } else {
-                    // Fallback: use weight when width is not available yet
                     params.width = 0
                     params.weight = 0.5f
-                    params.setMargins(android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0, 16, 0)
-                    indicatorActiveTab.layoutParams = params
+                    params.setMargins(if (lastSelectedTab == "in") 16 else android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0, 16, 0)
+                    indicator.layoutParams = params
                 }
             }
         }
@@ -335,6 +390,9 @@ class HomeFragment : Fragment() {
                 searchView.visibility = View.VISIBLE
                 btnFilter.visibility = View.VISIBLE
                 
+                // Ensure listeners are set up for filter and search
+                // (They should already be set in setupListeners, but ensure they're active)
+                
                 // Hide Outbox content if exists
                 outboxContentFragment?.let { fragment ->
                     if (fragment.isAdded) {
@@ -342,6 +400,11 @@ class HomeFragment : Fragment() {
                             .hide(fragment)
                             .commit()
                     }
+                }
+                
+                // Update UI when switching to "in" tab
+                if (::workOrderAdapter.isInitialized) {
+                    updateUI()
                 }
             } else {
                 // Show Outbox content - load OutboxFragment as child fragment
@@ -405,40 +468,83 @@ class HomeFragment : Fragment() {
     }
     
     private fun showFilterPopup() {
-        val popup = PopupMenu(requireContext(), btnFilter)
+        if (!isAdded || context == null) {
+            android.util.Log.w("HomeFragment", "Cannot show filter popup: fragment not added or context is null")
+            return
+        }
         
-        // Load status counts when filter is opened (same as Flutter)
+        android.util.Log.d("HomeFragment", "showFilterPopup called - workOrders count: ${workOrders.size}, statusCounts: $statusCounts")
+        
+        // Ensure statusCounts is initialized even if empty
+        if (statusCounts.isEmpty()) {
+            // Initialize with zeros for all status options
+            statusCounts[""] = 0
+            statusCounts["new"] = 0
+            for (s in statusOptions) {
+                if (s.isNotEmpty() && s != "new") {
+                    statusCounts[s] = 0
+                }
+            }
+            android.util.Log.d("HomeFragment", "Initialized statusCounts with zeros: $statusCounts")
+        }
+        
+        // Quick calculation from existing data for immediate display
+        recomputeStatusCountsFromWorkOrders()
+        
+        // Create and show popup with quick count
+        try {
+            val popup = PopupMenu(requireContext(), btnFilter)
+            updateFilterMenuItems(popup)
+            android.util.Log.d("HomeFragment", "Showing filter popup with ${statusOptions.size} menu items")
+            popup.show()
+        } catch (e: Exception) {
+            android.util.Log.e("HomeFragment", "Error creating/showing popup menu: ${e.message}", e)
+            Toast.makeText(context, "Error showing filter menu: ${e.message}", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Then calculate accurately based on all pages asynchronously
+        // Note: PopupMenu cannot be updated after show, so we'll just update statusCounts
+        // for next time the popup is opened
         lifecycleScope.launch {
             if (currentPropID != null && currentPropID!!.isNotEmpty()) {
                 val userDept = UserService.getCurrentDept()
                 val finalDept = userDept ?: "Engineering"
-                loadStatusCountsInBackground(finalDept)
+                val precise = fetchInboxStatusCountsAllPages(finalDept)
+                if (!isAdded) return@launch
+                if (precise.isNotEmpty()) {
+                    statusCounts.clear()
+                    statusCounts.putAll(precise)
+                    android.util.Log.d("HomeFragment", "Status counts updated from API: $statusCounts")
+                    // Status counts updated for next time popup is opened
+                }
             }
         }
-        
+    }
+    
+    private fun updateFilterMenuItems(popup: PopupMenu) {
+        popup.menu.clear()
         statusOptions.forEach { status ->
             val count = if (status.isEmpty()) {
                 statusCounts[""] ?: 0
             } else if (status.lowercase() == "new") {
                 statusCounts["new"] ?: 0
             } else {
-                statusCounts[status] ?: 0
+                statusCounts[status.lowercase()] ?: statusCounts[status] ?: 0
             }
-            
             val displayName = when {
                 status.isEmpty() -> "All"
                 status.lowercase() == "new" -> "NEW"
                 else -> status.uppercase()
             }
-            
             val menuItem = popup.menu.add("$count → $displayName")
             menuItem.setOnMenuItemClickListener {
+                android.util.Log.d("HomeFragment", "Filter selected: $status ($displayName)")
                 onStatusChanged(status)
                 true
             }
         }
-        
-        popup.show()
+        android.util.Log.d("HomeFragment", "Filter menu items updated with statusCounts: $statusCounts")
     }
     
     private fun onWorkOrderClick(workOrder: Map<String, Any>) {
@@ -665,6 +771,9 @@ class HomeFragment : Fragment() {
                     // Set loading to false and update UI after data is loaded
                     isLoading = false
                     updateUI()
+                    // Recalculate status counter from loaded data
+                    recomputeStatusCountsFromWorkOrders()
+                    
                     // Scroll to top after data is loaded
                     recyclerView.post {
                         recyclerView.scrollToPosition(0)
@@ -681,6 +790,95 @@ class HomeFragment : Fragment() {
     }
     
             // Load status counts only when filter is clicked - same as Flutter
+    private fun recomputeStatusCountsFromWorkOrders() {
+        if (!isAdded) return
+        isLoadingStatusCounts = true
+        val localCounts = mutableMapOf<String, Int>()
+        // Initialize all status options with 0
+        localCounts[""] = 0
+        localCounts["new"] = 0
+        for (s in statusOptions) {
+            if (s.isNotEmpty() && s != "new") {
+                localCounts[s] = 0
+            }
+        }
+        
+        var total = 0
+        for (wo in workOrders) {
+            val raw = wo["status"]?.toString()?.lowercase()?.trim() ?: ""
+            val key = if (raw.isEmpty()) "new" else raw
+            localCounts[key] = (localCounts[key] ?: 0) + 1
+            total++
+        }
+        localCounts[""] = total
+        
+        // Ensure all keys exist
+        for (s in statusOptions) {
+            if (s.isEmpty()) {
+                localCounts[""] = total
+            } else if (s.lowercase() == "new") {
+                if (!localCounts.containsKey("new")) {
+                    localCounts["new"] = 0
+                }
+            } else {
+                if (!localCounts.containsKey(s)) {
+                    localCounts[s] = 0
+                }
+            }
+        }
+        
+        statusCounts.clear()
+        statusCounts.putAll(localCounts)
+        isLoadingStatusCounts = false
+        
+        android.util.Log.d("HomeFragment", "Status counts recomputed: $statusCounts")
+    }
+    
+    // Get all Inbox pages to calculate accurate counter per status
+    private suspend fun fetchInboxStatusCountsAllPages(department: String): Map<String, Int> {
+        return try {
+            val prop = currentPropID ?: return emptyMap()
+            val localCounts = mutableMapOf<String, Int>()
+            localCounts[""] = 0
+            for (s in statusOptions) {
+                if (!localCounts.containsKey(s)) {
+                    localCounts[s] = 0
+                }
+            }
+
+            var pageNum = 1
+            var total = 0
+            while (true) {
+                val pageData = RetrofitClient.apiService.getWorkOrders(
+                    propID = prop,
+                    woto = department,
+                    status = "",
+                    page = pageNum
+                )
+                if (pageData.isEmpty()) break
+                for (wo in pageData) {
+                    val raw = wo["status"]?.toString()?.lowercase() ?: ""
+                    val key = if (raw.isEmpty()) "new" else raw
+                    localCounts[key] = (localCounts[key] ?: 0) + 1
+                    total++
+                }
+                // If server pagination is 10/item, continue until less than 10
+                if (pageData.size < 10) break
+                pageNum++
+            }
+            localCounts[""] = total
+            for (s in statusOptions) {
+                if (!localCounts.containsKey(s)) {
+                    localCounts[s] = 0
+                }
+            }
+            localCounts
+        } catch (e: Exception) {
+            android.util.Log.e("HomeFragment", "Error fetching inbox status counts: ${e.message}", e)
+            emptyMap()
+        }
+    }
+    
     private fun loadStatusCountsInBackground(department: String) {
         isLoadingStatusCounts = true
         
@@ -805,6 +1003,8 @@ class HomeFragment : Fragment() {
                         isLoading = false
                         isLoadingMore = false
                         updateUI()
+                        // Recalculate status counter from loaded data
+                        recomputeStatusCountsFromWorkOrders()
                         
                         // Scroll to top when reset (first load)
                         if (reset) {
@@ -837,9 +1037,15 @@ class HomeFragment : Fragment() {
         loadData(reset = false)
     }
     
-            // Search with debounce - same as Flutter onSearchChanged
+    // Search with debounce - same as Flutter onSearchChanged
     private fun onSearchChanged(value: String) {
-        searchText = value
+        val newSearchText = value.trim()
+        if (searchText == newSearchText) {
+            return // No change, skip
+        }
+        
+        searchText = newSearchText
+        android.util.Log.d("HomeFragment", "Search text changed: '$searchText'")
         
         // Cancel previous timer
         searchDebounce?.cancel()
@@ -850,25 +1056,41 @@ class HomeFragment : Fragment() {
             override fun run() {
                 Handler(Looper.getMainLooper()).post {
                     // Just update the UI with filtered results
-                    updateUI()
+                    if (isAdded && ::workOrderAdapter.isInitialized) {
+                        updateUI()
+                    }
                 }
             }
         }, 500) // 500ms debounce
     }
     
-            // Get filtered work orders based on search text - performance optimization (same as Flutter)
+    // Get filtered work orders based on search text and status - performance optimization (same as Flutter)
     private fun getFilteredWorkOrders(): List<Map<String, Any>> {
-        if (searchText.isEmpty()) {
-            return workOrders
+        var filtered: List<Map<String, Any>> = workOrders
+        
+        // Filter by status first (if selected)
+        if (selectedStatus.isNotEmpty()) {
+            filtered = filtered.filter { workOrder ->
+                val woStatus = workOrder["status"]?.toString()?.lowercase()?.trim() ?: ""
+                val statusKey = if (woStatus.isEmpty()) "new" else woStatus
+                val selectedKey = if (selectedStatus.lowercase() == "new") "new" else selectedStatus.lowercase()
+                statusKey == selectedKey
+            }
         }
         
-        val searchLower = searchText.lowercase()
-        return workOrders.filter { workOrder ->
-            workOrder["nour"]?.toString()?.lowercase()?.contains(searchLower) == true ||
-            workOrder["job"]?.toString()?.lowercase()?.contains(searchLower) == true ||
-            workOrder["lokasi"]?.toString()?.lowercase()?.contains(searchLower) == true ||
-            workOrder["woto"]?.toString()?.lowercase()?.contains(searchLower) == true
+        // Then filter by search text
+        if (searchText.isNotEmpty()) {
+            val searchLower = searchText.lowercase()
+            filtered = filtered.filter { workOrder ->
+                workOrder["nour"]?.toString()?.lowercase()?.contains(searchLower) == true ||
+                workOrder["job"]?.toString()?.lowercase()?.contains(searchLower) == true ||
+                workOrder["lokasi"]?.toString()?.lowercase()?.contains(searchLower) == true ||
+                workOrder["woto"]?.toString()?.lowercase()?.contains(searchLower) == true ||
+                workOrder["orderBy"]?.toString()?.lowercase()?.contains(searchLower) == true
+            }
         }
+        
+        return filtered
     }
     
     private fun onStatusChanged(status: String) {
@@ -936,7 +1158,19 @@ class HomeFragment : Fragment() {
         } else {
             val errorMessage = when {
                 e is kotlinx.coroutines.TimeoutCancellationException -> "Request timeout. Please check your connection."
-                else -> "Failed to load work orders: ${e.message}"
+                e.message?.contains("malformed JSON", ignoreCase = true) == true -> {
+                    // JSON parsing error - show user-friendly message
+                    android.util.Log.e("HomeFragment", "JSON parsing error: ${e.message}", e)
+                    "Server response format error. Please try again or contact support."
+                }
+                e.message?.contains("Failed to parse JSON", ignoreCase = true) == true -> {
+                    android.util.Log.e("HomeFragment", "JSON parsing error: ${e.message}", e)
+                    "Server response format error. Please try again or contact support."
+                }
+                else -> {
+                    android.util.Log.e("HomeFragment", "Error loading work orders: ${e.message}", e)
+                    "Failed to load work orders: ${e.message?.take(100) ?: "Unknown error"}"
+                }
             }
             showEmptyState(errorMessage)
         }

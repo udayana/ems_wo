@@ -1,14 +1,10 @@
-@file:Suppress("SpellCheckingInspection", "ReplaceWith")
-
 package com.sofindo.ems.fragments
 
 import android.Manifest
 import android.app.DatePickerDialog
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.core.graphics.scale
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -22,7 +18,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -37,6 +32,7 @@ import com.sofindo.ems.R
 import com.sofindo.ems.adapters.AssetSearchAdapter
 import com.sofindo.ems.services.AssetService
 import com.sofindo.ems.services.UserService
+import com.sofindo.ems.utils.ImageUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +41,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import android.annotation.SuppressLint
 
 class AssetFragment : Fragment() {
     
@@ -253,9 +248,8 @@ class AssetFragment : Fragment() {
         spinnerLokasi.adapter = adapter
         
         spinnerLokasi.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            @Suppress("UNUSED_PARAMETER")
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if ((etSearch.text?.toString()?.length ?: 0) >= 2) {
+            override fun onItemSelected(parent: AdapterView<*>?, @Suppress("UNUSED_PARAMETER") view: View?, position: Int, id: Long) {
+                if (etSearch.text?.toString()?.length ?: 0 >= 2) {
                     performSearch()
                 }
             }
@@ -329,7 +323,7 @@ class AssetFragment : Fragment() {
     
     private fun showSearchResults() {
         if (searchResults.isEmpty()) {
-            tvEmpty.text = getString(R.string.no_assets_found)
+            tvEmpty.text = "No assets found"
             tvEmpty.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
         } else {
@@ -345,7 +339,7 @@ class AssetFragment : Fragment() {
     }
     
     private fun hideSearchResults() {
-        tvEmpty.text = getString(R.string.type_at_least_2_characters)
+        tvEmpty.text = "Type at least 2 characters to search"
         tvEmpty.visibility = View.VISIBLE
         recyclerView.visibility = View.GONE
         layoutAssetDetail.visibility = View.GONE
@@ -360,7 +354,7 @@ class AssetFragment : Fragment() {
         layoutNavigationButtons.visibility = View.GONE
         
         // Get No from search result - handle different data types and key variations
-        val noValue = asset["No"] ?: asset["no"]
+        val noValue = asset["No"] ?: asset["no"] ?: asset.get("No")
         val assetNo: Int? = when (noValue) {
             is Int -> noValue
             is Double -> noValue.toInt()
@@ -403,7 +397,7 @@ class AssetFragment : Fragment() {
         // Refresh image when fragment is resumed to show latest image from server
         assetDetail?.let { asset ->
             val imageName = asset["Gambar"]?.toString()
-            if (!imageName.isNullOrEmpty() && layoutAssetDetail.isVisible) {
+            if (!imageName.isNullOrEmpty() && layoutAssetDetail.visibility == View.VISIBLE) {
                 // Force refresh image when returning to fragment - always get latest from server
                 loadAssetImage(imageName, forceRefresh = true)
             }
@@ -584,7 +578,7 @@ class AssetFragment : Fragment() {
         val day = calendar.get(Calendar.DAY_OF_MONTH)
         
         DatePickerDialog(requireContext(), { _, selectedYear, selectedMonth, selectedDay ->
-            val date = String.format(Locale.getDefault(), "%04d-%02d-%02d", selectedYear, selectedMonth + 1, selectedDay)
+            val date = String.format("%04d-%02d-%02d", selectedYear, selectedMonth + 1, selectedDay)
             etDatePurchased.setText(date)
         }, year, month, day).show()
     }
@@ -640,9 +634,9 @@ class AssetFragment : Fragment() {
                     btnSaveImage.visibility = View.VISIBLE
                 }
                 
-                // Then resize in background (non-blocking) - resize so longest side = 420px, then crop square
+                // Then resize + square‑crop in background (non-blocking)
                 val resizedFile = withContext(Dispatchers.IO) {
-                    resizeAndCropSquare(file, maxSide = 420, quality = 90)
+                    ImageUtils.resizeAndSquareCropJpegInPlace(file, size = 420, quality = 85)
                 }
                 selectedImageFile = resizedFile
                 
@@ -686,9 +680,9 @@ class AssetFragment : Fragment() {
                     btnSaveImage.visibility = View.VISIBLE
                 }
                 
-                // Then resize in background (non-blocking) - resize so longest side = 420px, then crop square
+                // Then resize + square‑crop in background (non-blocking)
                 val resizedFile = withContext(Dispatchers.IO) {
-                    resizeAndCropSquare(tempFile, maxSide = 420, quality = 90)
+                    ImageUtils.resizeAndSquareCropJpegInPlace(tempFile, size = 420, quality = 85)
                 }
                 selectedImageFile = resizedFile
                 
@@ -725,19 +719,18 @@ class AssetFragment : Fragment() {
         val thumbWidth = (srcW * scale).toInt()
         val thumbHeight = (srcH * scale).toInt()
         
-        // Decode and resize
-        val sample = calculateInSampleSize(srcW, srcH, kotlin.math.max(thumbWidth, thumbHeight))
+        // Decode and resize (simple decode, thumbnail only)
         val decodeOpts = BitmapFactory.Options().apply {
-            inSampleSize = sample
-            inPreferredConfig = Bitmap.Config.ARGB_8888
+            inJustDecodeBounds = false
+            inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888
         }
         
         val bmp = BitmapFactory.decodeFile(sourceFile.absolutePath, decodeOpts) ?: return sourceFile
-        val thumbBmp = bmp.scale(thumbWidth, thumbHeight, true)
+        val thumbBmp = android.graphics.Bitmap.createScaledBitmap(bmp, thumbWidth, thumbHeight, true)
         
         // Save thumbnail
         FileOutputStream(thumbFile, false).use { out ->
-            thumbBmp.compress(Bitmap.CompressFormat.JPEG, 85, out)
+            thumbBmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, out)
             out.flush()
         }
         
@@ -763,7 +756,7 @@ class AssetFragment : Fragment() {
             val options = BitmapFactory.Options().apply {
                 inJustDecodeBounds = false
                 inSampleSize = 2 // Load at half resolution for instant preview
-                inPreferredConfig = Bitmap.Config.RGB_565 // Faster decode
+                inPreferredConfig = android.graphics.Bitmap.Config.RGB_565 // Faster decode
             }
             
             val bitmap = BitmapFactory.decodeFile(file.absolutePath, options)
@@ -797,68 +790,6 @@ class AssetFragment : Fragment() {
                 .apply(requestOptions)
                 .into(ivAssetImage)
         }
-    }
-    
-    private fun resizeAndCropSquare(file: File, maxSide: Int = 420, quality: Int = 90): File {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(file.absolutePath, bounds)
-        val srcW = bounds.outWidth
-        val srcH = bounds.outHeight
-        if (srcW <= 0 || srcH <= 0) return file
-        
-        val sample = calculateInSampleSize(srcW, srcH, maxSide)
-        val decodeOpts = BitmapFactory.Options().apply {
-            inSampleSize = sample
-            inPreferredConfig = Bitmap.Config.ARGB_8888
-        }
-        var bmp = BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
-        
-        // First resize so longest side = maxSide (proportional)
-        val longest = kotlin.math.max(bmp.width, bmp.height)
-        val scale = longest.toFloat() / maxSide
-        val resizedBmp = if (scale > 1f) {
-            val w = (bmp.width / scale).toInt()
-            val h = (bmp.height / scale).toInt()
-            Bitmap.createScaledBitmap(bmp, w, h, true)
-        } else bmp
-        
-        if (resizedBmp !== bmp) bmp.recycle()
-        
-        // Then crop to square (center crop)
-        val size = kotlin.math.min(resizedBmp.width, resizedBmp.height)
-        val x = (resizedBmp.width - size) / 2
-        val y = (resizedBmp.height - size) / 2
-        val squareBmp = Bitmap.createBitmap(resizedBmp, x, y, size, size)
-        
-        // Recycle resizedBmp as we no longer need it
-        if (squareBmp !== resizedBmp) resizedBmp.recycle()
-        
-        // Scale to exact maxSide x maxSide
-        val finalBmp = if (squareBmp.width != maxSide || squareBmp.height != maxSide) {
-            Bitmap.createScaledBitmap(squareBmp, maxSide, maxSide, true)
-        } else squareBmp
-        
-        // Recycle squareBmp if we created a new scaled bitmap
-        if (finalBmp !== squareBmp) squareBmp.recycle()
-        
-        FileOutputStream(file, false).use { out ->
-            finalBmp.compress(Bitmap.CompressFormat.JPEG, quality, out)
-            out.flush()
-        }
-        
-        // Recycle finalBmp
-        finalBmp.recycle()
-        
-        return file
-    }
-    
-    private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
-        var inSampleSize = 1
-        val longest = kotlin.math.max(srcW, srcH)
-        while (longest / inSampleSize > reqMaxSide * 2) {
-            inSampleSize *= 2
-        }
-        return inSampleSize
     }
     
     private fun saveAsset() {
@@ -915,7 +846,7 @@ class AssetFragment : Fragment() {
                             Toast.makeText(requireContext(), "Asset created but No not returned by server", Toast.LENGTH_LONG).show()
                             // Tetap sembunyikan form agar user tidak bingung
                             layoutAssetDetail.visibility = View.GONE
-                            tvEmpty.text = getString(R.string.asset_created)
+                            tvEmpty.text = "Asset created"
                             tvEmpty.visibility = View.VISIBLE
                         }
                     }
@@ -997,7 +928,7 @@ class AssetFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 btnSaveImage.isEnabled = false
-                btnSaveImage.text = getString(R.string.uploading)
+                btnSaveImage.text = "Uploading..."
                 
                 AssetService.uploadInventoryPhoto(
                     no = assetNo,
@@ -1011,7 +942,7 @@ class AssetFragment : Fragment() {
                         if (it.exists()) {
                             it.delete()
                         }
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
                         // Ignore cleanup errors
                     }
                 }
@@ -1057,7 +988,7 @@ class AssetFragment : Fragment() {
                 }
             } finally {
                 btnSaveImage.isEnabled = true
-                btnSaveImage.text = getString(R.string.upload)
+                btnSaveImage.text = "UPLOAD"
             }
         }
     }
@@ -1091,14 +1022,14 @@ class AssetFragment : Fragment() {
                 val currentAssetNo = (asset["No"] as? Number)?.toInt()
                     ?: (asset["No"]?.toString()?.toIntOrNull())
                 
-                currentAssetIndex = if (currentAssetNo != null) {
-                    assetsInSameLocation.indexOfFirst { assetItem ->
+                if (currentAssetNo != null) {
+                    currentAssetIndex = assetsInSameLocation.indexOfFirst { assetItem ->
                         val itemNo = (assetItem["No"] as? Number)?.toInt()
                             ?: (assetItem["No"]?.toString()?.toIntOrNull())
                         itemNo == currentAssetNo
                     }
                 } else {
-                    -1
+                    currentAssetIndex = -1
                 }
                 
                 // Update tombol navigasi
@@ -1298,7 +1229,7 @@ class AssetFragment : Fragment() {
         if (isNewAsset) {
             // Asset baru belum tersimpan, cukup tutup form
             layoutAssetDetail.visibility = View.GONE
-            tvEmpty.text = getString(R.string.asset_creation_cancelled)
+            tvEmpty.text = "Asset creation cancelled"
             tvEmpty.visibility = View.VISIBLE
             return
         }
@@ -1323,7 +1254,7 @@ class AssetFragment : Fragment() {
                             assetDetail = null
                             layoutAssetDetail.visibility = View.GONE
                             recyclerView.visibility = View.GONE
-                            tvEmpty.text = getString(R.string.asset_deleted)
+                            tvEmpty.text = "Asset deleted"
                             tvEmpty.visibility = View.VISIBLE
                         }
                     } catch (e: Exception) {

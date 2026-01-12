@@ -13,8 +13,8 @@ android {
         applicationId = "com.sofindo.ems"
         minSdk = 23
         targetSdk = 35
-        versionCode = 26
-        versionName = "1.0.25"
+        versionCode = 32
+        versionName = "1.0.31"
         multiDexEnabled = true
         
         // Support for 16 KB page size (Required by Google Play Store starting Nov 2025)
@@ -50,7 +50,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

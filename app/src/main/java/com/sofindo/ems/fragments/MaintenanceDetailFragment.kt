@@ -110,8 +110,8 @@ class MaintenanceDetailFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
         
-        // Set navigation icon color to primary (green)
-        toolbar.navigationIcon?.setTint(resources.getColor(R.color.primary, null))
+        // Set navigation icon color to white (for dark AppBar background)
+        toolbar.navigationIcon?.setTint(resources.getColor(R.color.white, null))
         
         // Set initial title
         toolbar.title = "Asset Detail"
@@ -140,13 +140,48 @@ class MaintenanceDetailFragment : Fragment() {
         // Get schedule data from map
         val scheduleData = scheduleDataMap[schedule.id]
         
-        // Get eventId from schedule (this is the actual event ID from tblevent)
+        // Get eventId from schedule (this is the actual event ID from tblevent) - CRITICAL
         val eventId = schedule.id.toString()
+        
+        // Validate eventId is not empty (like iOS)
+        if (eventId.isEmpty()) {
+            Toast.makeText(context, "Event ID tidak ditemukan. Silakan pilih schedule terlebih dahulu.", Toast.LENGTH_SHORT).show()
+            android.util.Log.e("MaintenanceDetail", "Cannot open job tasks: eventId is empty")
+            return
+        }
+        
+        // Get assetNo - ensure it's not empty (like iOS)
+        var assetNo = assetData?.get("no")?.toString()?.trim()
+        if (assetNo.isNullOrEmpty()) {
+            // Fallback to TextView if assetData is null
+            assetNo = tvAssetNo.text.toString().trim()
+            assetNo = assetNo.replace("Asset No:", "").trim()
+        }
+        
+        // Validate assetNo is not empty
+        if (assetNo.isEmpty() || assetNo == "N/A") {
+            Toast.makeText(context, "Asset number tidak ditemukan.", Toast.LENGTH_SHORT).show()
+            android.util.Log.e("MaintenanceDetail", "Cannot open job tasks: assetNo is empty")
+            return
+        }
+        
+        // Get propID - ensure it's not empty (like iOS)
+        var currentPropID = propID
+        if (currentPropID.isEmpty()) {
+            currentPropID = UserService.getCurrentPropIDSync() ?: ""
+        }
+        
+        // Validate propID is not empty
+        if (currentPropID.isEmpty()) {
+            Toast.makeText(context, "Property ID tidak ditemukan. Silakan login ulang.", Toast.LENGTH_SHORT).show()
+            android.util.Log.e("MaintenanceDetail", "Cannot open job tasks: propID is empty")
+            return
+        }
         
         // Get mntId from schedule data map if available
         val mntIdToUse = scheduleData?.get("mntId")?.toString() 
             ?: assetData?.get("mntId")?.toString() 
-            ?: schedule.id.toString() // schedule.id.toString() always returns non-null String
+            ?: schedule.id.toString()
         
         // Get formatted date from schedule (for display)
         val scheduleFormattedDate = scheduleData?.get("formatted_date")?.toString() 
@@ -156,11 +191,20 @@ class MaintenanceDetailFragment : Fragment() {
         val scheduleStartDate = scheduleData?.get("start_date")?.toString() 
             ?: schedule.startDate
         
+        // Get property name
+        val propertyName = assetData?.get("property")?.toString() ?: ""
+        
+        android.util.Log.d("MaintenanceDetail", "Opening job tasks:")
+        android.util.Log.d("MaintenanceDetail", "  assetNo: $assetNo")
+        android.util.Log.d("MaintenanceDetail", "  propID: $currentPropID")
+        android.util.Log.d("MaintenanceDetail", "  eventId: $eventId")
+        android.util.Log.d("MaintenanceDetail", "  scheduleStartDate: $scheduleStartDate")
+        
         val fragment = MaintenanceJobTaskFragment.newInstance(
-            assetNo = assetData?.get("no")?.toString() ?: "",
+            assetNo = assetNo,
             mntId = mntIdToUse,
-            propertyName = assetData?.get("property")?.toString() ?: "",
-            propID = propID,
+            propertyName = propertyName,
+            propID = currentPropID,
             scheduleDate = scheduleFormattedDate,
             scheduleStartDate = scheduleStartDate,
             eventId = eventId
@@ -307,7 +351,7 @@ class MaintenanceDetailFragment : Fragment() {
     private fun loadMaintenanceSchedules() {
         lifecycleScope.launch {
             try {
-                val currentPropID = if (propID.isNotEmpty()) propID else UserService.getCurrentPropID() ?: ""
+                val currentPropID = if (propID.isNotEmpty()) propID else UserService.getCurrentPropIDSync() ?: ""
                 if (currentPropID.isEmpty()) {
                     android.util.Log.e("MaintenanceDetail", "propID is empty")
                     hideAllScheduleButtons()

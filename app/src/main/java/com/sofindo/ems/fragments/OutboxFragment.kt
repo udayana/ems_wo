@@ -8,7 +8,6 @@ import android.widget.ImageButton
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -56,18 +55,12 @@ class OutboxFragment : Fragment() {
     private val statusOptions = listOf("", "new", "received", "on progress", "pending", "done")
     
     
+    companion object {
+        private const val EDIT_WO_REQUEST_CODE = 1001
+    }
+    
     // RecyclerView adapter
     private lateinit var workOrderAdapter: WorkOrderAdapter
-    
-    // Activity result launcher for edit work order
-    private val editWorkOrderLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            // Work order was successfully updated, refresh the data
-            refreshData()
-        }
-    }
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -252,7 +245,7 @@ class OutboxFragment : Fragment() {
             // Navigate to edit work order activity
             val intent = android.content.Intent(context, com.sofindo.ems.activities.EditWorkOrderActivity::class.java)
             intent.putExtra("workOrder", workOrder as java.io.Serializable)
-            editWorkOrderLauncher.launch(intent)
+            startActivityForResult(intent, EDIT_WO_REQUEST_CODE)
         } catch (e: Exception) {
             Toast.makeText(context, "Error: Cannot open edit screen", Toast.LENGTH_SHORT).show()
         }
@@ -395,7 +388,6 @@ class OutboxFragment : Fragment() {
                 val success = response["success"] as? Boolean ?: false
                 
                 if (success) {
-                    @Suppress("UNCHECKED_CAST")
                     val reviews = response["data"] as? List<Map<String, Any>>? ?: emptyList()
                     
                     if (reviews.isNotEmpty()) {
@@ -740,7 +732,7 @@ class OutboxFragment : Fragment() {
         }
     }
     
-    private fun refreshData() {
+    fun refreshData() {
         loadData(reset = true)
     }
     
@@ -800,6 +792,15 @@ class OutboxFragment : Fragment() {
         recyclerView.visibility = View.VISIBLE
     }
     
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        
+        if (requestCode == EDIT_WO_REQUEST_CODE && resultCode == android.app.Activity.RESULT_OK) {
+            // Work order was successfully updated, refresh the data
+            refreshData()
+        }
+    }
     
     override fun onDestroy() {
         super.onDestroy()

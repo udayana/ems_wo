@@ -30,7 +30,6 @@ class MaintenanceService {
                     val response = apiService.getMaintenanceThisWeek(propID)
                     
                     if (response["status"] == "success") {
-                        @Suppress("UNCHECKED_CAST")
                         val maintenanceData = response["data"] as? List<Map<String, Any>> ?: emptyList()
                         maintenanceData.map { Maintenance.fromJson(it) }
                     } else {
@@ -150,63 +149,9 @@ class MaintenanceService {
             }
         }
         
-        // Update maintenance notes and photos WITHOUT changing status
-        // This is used when user only updates notes/photos, not when completing tasks
-        suspend fun updateMaintenanceNotesAndPhotos(
-            mntId: String,
-            notes: String,
-            photos: List<java.io.File> = emptyList(),
-            propID: String? = null
-        ): Map<String, Any> {
-            return withContext(Dispatchers.IO) {
-                try {
-                    // If photos are provided, upload them first
-                    if (photos.isNotEmpty()) {
-                        val uploadResponse = uploadMaintenancePhotos(photos)
-                        // Get uploaded photo filenames from response
-                        @Suppress("UNCHECKED_CAST")
-                        val uploadedPhotos = uploadResponse["photos"] as? List<Map<String, Any>> ?: emptyList()
-                        
-                        // Extract filenames
-                        val photoFilenames = uploadedPhotos.mapNotNull { it["filename"] as? String }
-                        
-                        // Update notes with photo filenames using maintenance_notes.php endpoint
-                        // This endpoint doesn't change status
-                        val requestBody = mutableMapOf<String, String>()
-                        requestBody["mntId"] = mntId
-                        requestBody["notes"] = notes
-                        if (!propID.isNullOrEmpty()) {
-                            requestBody["propID"] = propID
-                        }
-                        
-                        // Add photo filenames if available (API supports this)
-                        if (photoFilenames.isNotEmpty()) {
-                            requestBody["photo1"] = photoFilenames[0]
-                        }
-                        if (photoFilenames.size > 1) {
-                            requestBody["photo2"] = photoFilenames[1]
-                        }
-                        if (photoFilenames.size > 2) {
-                            requestBody["photo3"] = photoFilenames[2]
-                        }
-                        
-                        val apiService: ApiService = RetrofitClient.apiService
-                        val response = apiService.updateMaintenanceNotes(requestBody)
-                        
-                        if (response["success"] == true) {
-                            response
-                        } else {
-                            throw Exception(response["error"] as? String ?: "Unknown error occurred")
-                        }
-                    } else {
-                        // No photos, just update notes (doesn't change status)
-                        updateMaintenanceNotes(mntId, notes, propID)
-                    }
-                } catch (e: Exception) {
-                    throw Exception("Failed to update maintenance notes and photos: ${e.message}")
-                }
-            }
-        }
+
+        
+
         
         // Upload maintenance photos separately
         suspend fun uploadMaintenancePhotos(
@@ -365,7 +310,6 @@ class MaintenanceService {
                     val response = apiService.getAssetSchedule(noAssets, propID)
                     
                     if (response["status"] == "success") {
-                        @Suppress("UNCHECKED_CAST")
                         val scheduleData = response["data"] as? List<Map<String, Any>> ?: emptyList()
                         scheduleData
                     } else {
@@ -388,7 +332,6 @@ class MaintenanceService {
                     val response = apiService.getMaintenanceHistory(mntId, propID)
                     
                     if (response["success"] == true) {
-                        @Suppress("UNCHECKED_CAST")
                         val historyData = response["data"] as? List<Map<String, Any>> ?: emptyList()
                         historyData
                     } else {

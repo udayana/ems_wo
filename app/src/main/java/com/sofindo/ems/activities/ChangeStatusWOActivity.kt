@@ -13,10 +13,6 @@ import com.sofindo.ems.utils.applyTopAndBottomInsets
 import com.sofindo.ems.utils.setupEdgeToEdge
 import com.sofindo.ems.api.RetrofitClient
 import com.sofindo.ems.services.UserService
-import com.sofindo.ems.services.OfflineQueueService
-import com.sofindo.ems.services.SyncService
-import com.sofindo.ems.database.PendingWorkOrder
-import com.sofindo.ems.utils.NetworkUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -53,7 +49,7 @@ class ChangeStatusWOActivity : AppCompatActivity() {
             rootView.applyTopAndBottomInsets()
         }
         // Get work order data from intent
-        @Suppress("DEPRECATION", "UNCHECKED_CAST")
+        @Suppress("UNCHECKED_CAST")
         workOrder = intent.getSerializableExtra("workOrder") as? Map<String, Any> ?: emptyMap()
         
         // Get current user - will be set later when updating status
@@ -172,16 +168,6 @@ class ChangeStatusWOActivity : AppCompatActivity() {
                 val user = UserService.getCurrentUser()
                 val userName = user?.username ?: ""
                 
-                // Check internet connection
-                val hasInternet = NetworkUtils.hasServerConnection()
-                
-                if (!hasInternet) {
-                    // No internet: Save to offline queue
-                    saveStatusUpdateOffline(newStatus, userName)
-                    return@launch
-                }
-                
-                // Has internet: Try to update online
                 val success = callUpdateStatusAPI(newStatus, userName)
                 
                 withContext(Dispatchers.Main) {
@@ -197,94 +183,27 @@ class ChangeStatusWOActivity : AppCompatActivity() {
                         setResult(RESULT_OK)
                         finish()
                     } else {
-                        // Failed to update: Save to offline queue
-                        saveStatusUpdateOffline(newStatus, userName, "Update failed")
+                        // Failed to update
+                        Toast.makeText(
+                            this@ChangeStatusWOActivity,
+                            "Gagal mengupdate status",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    // Network error: Save to offline queue
-                    val user = UserService.getCurrentUser()
-                    val userName = user?.username ?: ""
-                    saveStatusUpdateOffline(newStatus, userName, e.message)
+                    Toast.makeText(
+                        this@ChangeStatusWOActivity,
+                        "Error: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             } finally {
                 withContext(Dispatchers.Main) {
                     isLoading = false
                     showLoading(false)
                 }
-            }
-        }
-    }
-    
-    private suspend fun saveStatusUpdateOffline(
-        newStatus: String,
-        userName: String,
-        errorMsg: String? = null
-    ) = withContext(Dispatchers.IO) {
-        try {
-            val woId = workOrder["woId"]?.toString() ?: ""
-            if (woId.isEmpty()) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        this@ChangeStatusWOActivity,
-                        "Work order ID not found",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                return@withContext
-            }
-            
-            // Prepare timeAccept for status 'received'
-            val timeAccept = if (newStatus.lowercase() == "received") {
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            } else {
-                null
-            }
-            
-            // Create pending work order for status update
-            val pendingWO = PendingWorkOrder(
-                propID = workOrder["propID"]?.toString() ?: "",
-                orderBy = workOrder["orderBy"]?.toString() ?: "",
-                job = workOrder["job"]?.toString() ?: "",
-                lokasi = workOrder["lokasi"]?.toString() ?: "",
-                category = workOrder["category"]?.toString() ?: "",
-                dept = workOrder["dept"]?.toString() ?: "",
-                priority = workOrder["priority"]?.toString() ?: "",
-                woto = workOrder["woto"]?.toString() ?: "",
-                status = workOrder["status"]?.toString() ?: "",
-                requestType = "update_status",
-                woId = woId,
-                newStatus = newStatus,
-                userName = userName,
-                timeAccept = timeAccept,
-                lastError = errorMsg ?: "No internet connection"
-            )
-            
-            // Save to database
-            OfflineQueueService.addPendingWorkOrder(pendingWO)
-            
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    this@ChangeStatusWOActivity,
-                    "Status update saved offline. Will sync when internet is available.",
-                    Toast.LENGTH_LONG
-                ).show()
-                
-                // Return result for refresh
-                setResult(RESULT_OK)
-                finish()
-            }
-            
-            // Schedule sync when internet is available
-            SyncService.scheduleSync(this@ChangeStatusWOActivity)
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    this@ChangeStatusWOActivity,
-                    "Failed to save offline: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
             }
         }
     }
@@ -347,7 +266,7 @@ class ChangeStatusWOActivity : AppCompatActivity() {
     }
     
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        onBackPressed()
         return true
     }
 }

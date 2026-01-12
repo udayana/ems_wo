@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import android.view.View
@@ -27,8 +26,7 @@ import com.sofindo.ems.fragments.ProfileFragment
 import com.sofindo.ems.fragments.UtilityFragment
 import com.sofindo.ems.fragments.EditProfileFragment
 import com.sofindo.ems.services.UserService
-import com.sofindo.ems.utils.applyTopAndBottomInsets
-import com.sofindo.ems.utils.setupEdgeToEdge
+import androidx.core.view.WindowCompat
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -38,68 +36,64 @@ class MainActivity : AppCompatActivity() {
         const val ACTION_OPEN_WORK_ORDER = "OPEN_WORKORDER"
     }
 
-    private lateinit var customBottomNavigation: View
+    lateinit var customBottomNavigation: View
+        private set
     private lateinit var tabHome: View
     private lateinit var tabOut: View
     private lateinit var tabAdd: View
     private lateinit var tabMaint: View
     private lateinit var tabProfile: View
     private var currentFragment: Fragment? = null
-    private var homeFragment: HomeFragment? = null
+    var homeFragment: HomeFragment? = null
+        private set
     private var pendingNavigateWoId: String? = null
     private var isUiReady: Boolean = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Enable edge-to-edge for Android 15+ (SDK 35)
-        setupEdgeToEdge()
-        
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        
-        // Apply window insets to root layout
-        findViewById<android.view.ViewGroup>(android.R.id.content)?.getChildAt(0)?.let { rootView ->
-            rootView.applyTopAndBottomInsets()
-        }
-        
-        // Handle deep link if app was opened via deep link
-        handleDeepLink(intent)
-        
-        // Request notification permission on Android 13+
-        requestNotificationPermissionIfNeeded()
-        
-        // Get FCM token for testing - disabled to avoid showing token on login
-        // getFcmTokenForTesting()
 
-        // Check if user is logged in
+        // ================================
+        // PAKSA MODE NORMAL (BUKAN EDGE TO EDGE)
+        // ================================
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+
+        setContentView(R.layout.activity_main)
+
+        // ❌ HAPUS BARIS INI
+        // setupEdgeToEdge()
+
+        // ❌ HAPUS BARIS INI
+        // findViewById<View>(R.id.fragment_container).applyTopInsets()
+
+        // ================================
+        // LANJUTKAN SEPERTI BIASA
+        // ================================
+
+        handleDeepLink(intent)
+        requestNotificationPermissionIfNeeded()
+
         lifecycleScope.launch {
             val currentUser = UserService.getCurrentUser()
             val currentPropID = UserService.getCurrentPropID()
-            
-            // Check user login status
-            
+
             if (currentUser == null || currentPropID.isNullOrEmpty()) {
-                // User not logged in, redirect to login
                 val intent = Intent(this@MainActivity, LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
                 finish()
                 return@launch
             }
-            
-            // User is logged in, setup UI
+
             setupBottomNavigation()
-            
-            // Check if there's a selected tab from intent (e.g., from ProjectViewActivity)
+
             val selectedTabIndex = intent.getIntExtra("selected_tab", -1)
-            
-            // Set default fragment to Home and activate Home tab
+
             if (savedInstanceState == null) {
                 if (selectedTabIndex >= 0 && selectedTabIndex <= 4) {
-                    // Navigate to specific tab
                     switchToTab(selectedTabIndex)
                 } else {
                     loadFragment(HomeFragment())
-                    updateTabSelection(0) // Ensure Home tab is active
+                    updateTabSelection(0)
                 }
                 isUiReady = true
                 deliverPendingWorkOrderIfPossible()
@@ -240,26 +234,9 @@ class MainActivity : AppCompatActivity() {
         
         // Set initial selection
         updateTabSelection(0)
-        
-        // Setup back press handler
-        setupBackPressHandler()
     }
     
-    private fun setupBackPressHandler() {
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (supportFragmentManager.backStackEntryCount > 0) {
-                    supportFragmentManager.popBackStack()
-                    updateAppBar()
-                } else {
-                    // Finish activity if no back stack
-                    finish()
-                }
-            }
-        })
-    }
-    
-    private fun updateTabSelection(selectedIndex: Int) {
+    fun updateTabSelection(selectedIndex: Int) {
         android.util.Log.d("TabSelection", "updateTabSelection called with index: $selectedIndex")
         
         val tabs = listOf(tabHome, tabOut, tabAdd, tabMaint, tabProfile)
@@ -325,6 +302,14 @@ class MainActivity : AppCompatActivity() {
         updateAppBar()
     }
     
+    // Helper function to ensure tab selection is updated after fragment transaction
+    private fun ensureTabSelection(selectedIndex: Int) {
+        // Post to ensure fragment transaction is complete
+        customBottomNavigation.post {
+            updateTabSelection(selectedIndex)
+        }
+    }
+    
     private fun updateAppBar() {
         val title = when (currentFragment) {
             is HomeFragment -> "Home"
@@ -369,25 +354,33 @@ class MainActivity : AppCompatActivity() {
         when (tabIndex) {
             0 -> {
                 loadFragment(HomeFragment())
-                updateTabSelection(0)
+                ensureTabSelection(0)
             }
             1 -> {
                 loadFragment(OutboxFragment())
-                updateTabSelection(1)
+                ensureTabSelection(1)
             }
             2 -> {
                 loadFragment(TambahWOFragment())
-                updateTabSelection(2)
+                ensureTabSelection(2)
             }
             3 -> {
                 loadFragment(MaintenanceFragment())
-                updateTabSelection(3)
+                ensureTabSelection(3)
             }
             4 -> {
                 loadFragment(UtilityFragment())
-                updateTabSelection(4)
+                ensureTabSelection(4)
             }
         }
     }
     
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
+            updateAppBar()
+        } else {
+            super.onBackPressed()
+        }
+    }
 }

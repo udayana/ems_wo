@@ -26,9 +26,14 @@ import com.google.android.material.snackbar.Snackbar
 import com.sofindo.ems.MainActivity
 import com.sofindo.ems.R
 import com.sofindo.ems.api.RetrofitClient
-import com.sofindo.ems.services.UserService
+import com.sofindo.ems.database.PendingWorkOrder
 import com.sofindo.ems.services.NotificationService
+import com.sofindo.ems.services.OfflineQueueService
+import com.sofindo.ems.services.SyncService
+import com.sofindo.ems.services.UserService
+import com.sofindo.ems.utils.NetworkUtils
 import com.sofindo.ems.utils.PermissionUtils
+import com.sofindo.ems.utils.resizeCrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -79,14 +84,19 @@ class TambahWOFragment : Fragment() {
     private var isLoadingData = true
     private var isSubmitting = false
     
+    // Auto-category state
+    private var autoCategoryJob: android.os.Handler? = null
+    private var autoCategoryRunnable: Runnable? = null
+    private var isAutoCategoryActive = false
+    
     // Activity result launchers
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             lifecycleScope.launch {
                 val file = cameraPhotoFile
                 if (file != null && file.exists() && file.length() > 0) {
-                    // Resize in-place or return resized file (420px longest side, JPEG 90%)
-                    selectedImageFile = resizeJpegInPlace(file, maxSide = 420, quality = 90)
+                    // Resize + crop ke 480x480 sebelum upload
+                    selectedImageFile = resizeCrop(file, size = 480, quality = 90)
                     updatePhotoUI()
                 } else {
                     // Fallback: if some camera app ignored EXTRA_OUTPUT, try to use thumbnail if present
@@ -97,7 +107,8 @@ class TambahWOFragment : Fragment() {
                             FileOutputStream(fallback).use { out ->
                                 thumb.compress(Bitmap.CompressFormat.JPEG, 90, out)
                             }
-                            selectedImageFile = resizeJpegInPlace(fallback, maxSide = 420, quality = 90)
+                            // Resize + crop ke 480x480 sebelum upload
+                            selectedImageFile = resizeCrop(fallback, size = 480, quality = 90)
                             updatePhotoUI()
                         } catch (e: Exception) {
                             showSnackbar("Failed to save camera image: ${e.message}", false)
@@ -178,7 +189,7 @@ class TambahWOFragment : Fragment() {
             navigateToCreateProject()
         }
         
-        // Job text area - capitalize first letter of each sentence
+        // Job text area - capitalize first letter of each sentence + auto-category
         etJob.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -192,6 +203,12 @@ class TambahWOFragment : Fragment() {
                         etJob.setSelection(capitalizedText.length)
                         etJob.addTextChangedListener(this)
                     }
+                    
+                    // Check auto-category if 2 or more words (suku kata)
+                    checkAutoCategory(capitalizedText)
+                } else {
+                    // Reset category spinner if text is empty
+                    resetCategorySpinner()
                 }
             }
         })
@@ -389,6 +406,18 @@ class TambahWOFragment : Fragment() {
             val lowIndex = priorities.indexOf("Low")
             spinnerPriority.setSelection(if (lowIndex > 0) lowIndex else 1)
         }
+        
+        // Add listener to category spinner to reset green background when user manually selects
+        spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // If user manually selects (not auto-category), remove green background
+                if (!isAutoCategoryActive && position > 0) {
+                    spinnerCategory.background = resources.getDrawable(R.drawable.spinner_background, null)
+                }
+            }
+            
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
     }
     
     private fun filterLocations(query: String) {
@@ -509,7 +538,8 @@ class TambahWOFragment : Fragment() {
                 val originalSize = tempFile.length()
                 android.util.Log.d("TambahWOFragment", "Original image size: $originalSize bytes")
                 
-                selectedImageFile = resizeJpegInPlace(tempFile, maxSide = 420, quality = 90)
+                // Resize + crop ke 480x480 sebelum upload
+                selectedImageFile = resizeCrop(tempFile, size = 480, quality = 90)
                 
                 // Log processed image info
                 val processedSize = selectedImageFile?.length() ?: 0
@@ -623,6 +653,7 @@ class TambahWOFragment : Fragment() {
                     } catch (e: Exception) {
                         false // Default to false if check fails
                     }
+
                 }
                 
                 if (isActive) {
@@ -830,9 +861,16 @@ class TambahWOFragment : Fragment() {
         etJob.text.clear()
         etLocation.text.clear()
         
+        // Reset auto-category state
+        autoCategoryRunnable?.let { autoCategoryJob?.removeCallbacks(it) }
+        isAutoCategoryActive = false
+        
         // Set default values instead of placeholder
         val generalIndex = categories.indexOf("General")
         spinnerCategory.setSelection(if (generalIndex > 0) generalIndex else 1)
+        
+        // Remove green background when clearing form - use normal spinner background like other input fields
+        spinnerCategory.background = resources.getDrawable(R.drawable.spinner_background, null)
         
         val engineeringIndex = departments.indexOf("Engineering")
         spinnerDepartment.setSelection(if (engineeringIndex > 0) engineeringIndex else 1)
@@ -855,7 +893,16 @@ class TambahWOFragment : Fragment() {
     }
     
     private fun navigateToOutbox() {
-        (activity as? MainActivity)?.switchToTab(1) // Switch to Outbox tab
+        val mainActivity = activity as? MainActivity
+        if (mainActivity != null) {
+            // Navigate to Home tab (index 0) and switch to outbox tab inside HomeFragment
+            mainActivity.switchToTab(0)
+            // Switch to outbox tab inside HomeFragment after fragment is loaded
+            // Use postDelayed to ensure fragment view is fully initialized
+            mainActivity.customBottomNavigation.postDelayed({
+                mainActivity.homeFragment?.switchToOutboxTab()
+            }, 200) // Delay to ensure fragment transaction and view initialization is complete
+        }
     }
     
     private fun navigateToCreateProject() {
@@ -1000,8 +1047,128 @@ class TambahWOFragment : Fragment() {
         return result.toString()
     }
     
+    /**
+     * Check auto-category when user types job description with 2 or more words (suku kata)
+     * Uses debounce to avoid too many API calls
+     */
+    private fun checkAutoCategory(job: String) {
+        // Count words (suku kata) - split by spaces and filter empty strings
+        val words = job.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }
+        
+        // Only check if 2 or more words
+        if (words.size < 2) {
+            resetCategorySpinner()
+            return
+        }
+        
+        // Cancel previous debounce
+        autoCategoryRunnable?.let { autoCategoryJob?.removeCallbacks(it) }
+        
+        // Create new debounce runnable
+        autoCategoryRunnable = Runnable {
+            fetchAutoCategory(job.trim())
+        }
+        
+        // Post with 500ms delay for debounce
+        if (autoCategoryJob == null) {
+            autoCategoryJob = android.os.Handler(android.os.Looper.getMainLooper())
+        }
+        autoCategoryJob?.postDelayed(autoCategoryRunnable!!, 500)
+    }
+    
+    /**
+     * Fetch auto-category from API
+     */
+    private fun fetchAutoCategory(job: String) {
+        lifecycleScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    try {
+                        RetrofitClient.apiService.getAutoCategory(job)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                
+                if (response != null && isAdded) {
+                    val success = response["success"] as? Boolean ?: false
+                    val category = response["category"] as? String
+                    
+                    if (success && !category.isNullOrEmpty()) {
+                        // Match found - update spinner with green background
+                        updateCategorySpinner(category, isAuto = true)
+                    } else {
+                        // No match - reset to placeholder
+                        resetCategorySpinner()
+                    }
+                } else if (isAdded) {
+                    // API call failed - reset to placeholder
+                    resetCategorySpinner()
+                }
+            } catch (e: Exception) {
+                if (isAdded) {
+                    android.util.Log.e("TambahWOFragment", "Auto-category error: ${e.message}", e)
+                    resetCategorySpinner()
+                }
+            }
+        }
+    }
+    
+    /**
+     * Update category spinner with auto-detected category and green background
+     */
+    private fun updateCategorySpinner(category: String, isAuto: Boolean) {
+        if (!isAdded) return
+        
+        // Check if category exists in the list
+        val categoryIndex = categories.indexOf(category)
+        
+        if (categoryIndex > 0) {
+            // Category exists - set selection
+            spinnerCategory.setSelection(categoryIndex)
+            isAutoCategoryActive = true
+        } else {
+            // Category doesn't exist in list - add it temporarily
+            if (!categories.contains(category)) {
+                categories.add(category)
+                setupSpinners()
+            }
+            val newIndex = categories.indexOf(category)
+            if (newIndex > 0) {
+                spinnerCategory.setSelection(newIndex)
+                isAutoCategoryActive = true
+            }
+        }
+        
+        // Apply green background
+        if (isAuto) {
+            spinnerCategory.background = resources.getDrawable(R.drawable.spinner_background_green, null)
+        }
+    }
+    
+    /**
+     * Reset category spinner to placeholder (Category) and remove green background
+     */
+    private fun resetCategorySpinner() {
+        if (!isAdded) return
+        
+        isAutoCategoryActive = false
+        
+        // Reset to placeholder (index 0)
+        spinnerCategory.setSelection(0)
+        
+        // Remove green background - restore normal background like other input fields
+        spinnerCategory.background = resources.getDrawable(R.drawable.spinner_background, null)
+    }
+    
     override fun onDestroyView() {
         super.onDestroyView()
+        
+        // Clean up auto-category debounce
+        autoCategoryRunnable?.let { autoCategoryJob?.removeCallbacks(it) }
+        autoCategoryJob = null
+        autoCategoryRunnable = null
+        
         // Clean up resources
         selectedImageFile?.let { file ->
             if (file.exists()) {
@@ -1009,52 +1176,4 @@ class TambahWOFragment : Fragment() {
             }
         }
     }
-    // === ADD: resize JPEG in-place to 420px, quality 90% ===
-private fun resizeJpegInPlace(file: java.io.File, maxSide: Int = 420, quality: Int = 90): java.io.File {
-    // 1) read original dimensions without full load
-    val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    android.graphics.BitmapFactory.decodeFile(file.absolutePath, bounds)
-    val srcW = bounds.outWidth
-    val srcH = bounds.outHeight
-    if (srcW <= 0 || srcH <= 0) return file
-
-    // 2) memory-efficient decode (don't make it too small)
-    val sample = calculateInSampleSize(srcW, srcH, maxSide)
-    val decodeOpts = android.graphics.BitmapFactory.Options().apply {
-        inSampleSize = sample
-        inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888
-    }
-    var bmp = android.graphics.BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
-
-    // 3) scale so longest side = maxSide (proportional)
-    val longest = kotlin.math.max(bmp.width, bmp.height)
-    val scale = longest.toFloat() / maxSide
-    val finalBmp = if (scale > 1f) {
-        val w = (bmp.width / scale).toInt()
-        val h = (bmp.height / scale).toInt()
-        android.graphics.Bitmap.createScaledBitmap(bmp, w, h, true)
-    } else bmp
-
-    // 4) overwrite same file as JPEG 90%
-    java.io.FileOutputStream(file, false).use { out ->
-        finalBmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, out)
-        out.flush()
-    }
-
-    if (finalBmp !== bmp) bmp.recycle()
-    return file
-}
-
-
-// === ADD: helper hitung inSampleSize yang “aman” ===
-private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
-    var inSampleSize = 1
-    val longest = kotlin.math.max(srcW, srcH)
-    // safety measure so initial decode result is still > target (≈ < 2× target)
-    while (longest / inSampleSize > reqMaxSide * 2) {
-        inSampleSize *= 2
-    }
-    return inSampleSize
-}
-
 }

@@ -44,7 +44,8 @@
         <activity
             android:name=".auth.LoginActivity"
             android:exported="true"
-            android:theme="@style/Theme.EMS_WO" />
+            android:theme="@style/Theme.EMS_WO"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".auth.RegisterActivity"

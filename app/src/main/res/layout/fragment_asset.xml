@@ -1,348 +1,228 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface">
+    tools:context="com.sofindo.ems.fragments.AssetFragment">
 
-    <!-- Toolbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:layout_alignParentTop="true"
-        android:background="@android:color/transparent"
-        app:titleTextColor="@color/on_surface"
-        app:titleTextAppearance="@style/TextAppearance.AppCompat.Title"
-        app:contentInsetStart="0dp"
-        app:contentInsetEnd="0dp"
-        app:contentInsetStartWithNavigation="0dp"
-        app:contentInsetEndWithActions="0dp" />
-
-    <!-- Content Container -->
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolbar"
-        android:fillViewport="true">
+        android:orientation="vertical">
 
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:title="Assets" />
+
+        <!-- Search header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:padding="16dp">
 
-            <!-- Search Section -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <Spinner
+                android:id="@+id/spinner_lokasi"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
+                android:layout_weight="1" />
 
-                <Spinner
-                    android:id="@+id/spinner_lokasi"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/input_background"
-                    android:padding="10dp" />
-
-                <ImageButton
-                    android:id="@+id/btn_add_asset"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_add"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:tint="@color/primary"
-                    android:contentDescription="Add Asset" />
-
-            </LinearLayout>
-
-            <!-- Search Input -->
             <EditText
                 android:id="@+id/et_search"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="Search asset..."
-                android:background="@drawable/input_background"
-                android:padding="12dp"
-                android:textSize="14sp"
-                android:layout_marginBottom="16dp" />
-
-            <!-- Progress Bar -->
-            <ProgressBar
-                android:id="@+id/progress_bar"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginStart="8dp"
+                android:layout_weight="2"
+                android:hint="Search asset" />
 
-            <!-- RecyclerView for Search Results -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_view"
-                android:layout_width="match_parent"
+            <ImageButton
+                android:id="@+id/btn_add_asset"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="gone" />
+                android:layout_marginStart="8dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="Add asset"
+                android:src="@drawable/ic_add" />
+        </LinearLayout>
 
-            <!-- Empty State -->
-            <TextView
-                android:id="@+id/tv_empty"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Type at least 2 characters to search"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:gravity="center"
-                android:padding="32dp" />
+        <TextView
+            android:id="@+id/tv_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="16dp"
+            android:text="No assets found"
+            android:visibility="gone" />
 
-            <!-- Asset Detail Form -->
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            tools:listitem="@layout/item_asset_search" />
+
+        <!-- Detail section -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
             <LinearLayout
                 android:id="@+id/layout_asset_detail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/dialog_background"
                 android:padding="16dp"
                 android:visibility="gone">
 
-                <!-- Asset Image Section -->
+                <ImageView
+                    android:id="@+id/iv_asset_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/photo_preview_background" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:id="@+id/iv_asset_image"
-                        android:layout_width="200dp"
-                        android:layout_height="200dp"
-                        android:scaleType="centerCrop"
-                        android:background="@drawable/photo_preview_background"
-                        android:layout_marginBottom="8dp" />
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:paddingTop="8dp">
 
                     <Button
                         android:id="@+id/btn_change_image"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Change Image"
-                        android:textSize="12sp"
-                        android:layout_marginBottom="8dp" />
+                        android:text="Change" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_save_image"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Upload"
-                        android:textSize="12sp"
-                        android:visibility="gone" />
-
+                        android:layout_marginStart="8dp"
+                        android:text="UPLOAD" />
                 </LinearLayout>
 
-                <!-- Form Fields -->
-                <com.google.android.material.textfield.TextInputLayout
+                <!-- Text fields -->
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_category"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Category">
+                    android:hint="Category" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_category"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_lokasi"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Lokasi">
+                    android:hint="Location" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_lokasi"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_property"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Property">
+                    android:hint="Property" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_property"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_merk"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Merk">
+                    android:hint="Brand" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_merk"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_model"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Model">
+                    android:hint="Model" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_model"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_serno"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Serial Number">
+                    android:hint="Serial number" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_serno"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_capacity"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Capacity">
+                    android:hint="Capacity" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_capacity"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_date_purchased"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Date Purchased">
+                    android:focusable="false"
+                    android:hint="Date purchased" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_date_purchased"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="date"
-                        android:focusable="false"
-                        android:clickable="true" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_supplier"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Supplier">
+                    android:hint="Supplier" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_supplier"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_keterangan"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:hint="Keterangan">
+                    android:hint="Notes" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_keterangan"
-                        android:layout_width="match_parent"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end"
+                    android:paddingTop="8dp">
+
+                    <Button
+                        android:id="@+id/btn_save"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
-                        android:minLines="3"
-                        android:maxLines="5" />
+                        android:text="Save" />
 
-                </com.google.android.material.textfield.TextInputLayout>
+                    <Button
+                        android:id="@+id/btn_delete"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Delete" />
+                </LinearLayout>
 
-                <!-- Navigation Buttons -->
                 <LinearLayout
                     android:id="@+id/layout_navigation_buttons"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center"
-                    android:layout_marginBottom="16dp"
+                    android:paddingTop="8dp"
                     android:visibility="gone">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_previous"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Previous"
-                        android:layout_marginEnd="8dp" />
+                        android:text="Previous" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_next"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
                         android:text="Next" />
-
-                </LinearLayout>
-
-                <!-- Action Buttons -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="end">
-
-                    <Button
-                        android:id="@+id/btn_delete"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Delete"
-                        android:textColor="@color/error"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:layout_marginEnd="16dp" />
-
-                    <Button
-                        android:id="@+id/btn_save"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Save"
-                        android:background="@drawable/button_primary_background"
-                        android:textColor="@color/white" />
-
                 </LinearLayout>
 
             </LinearLayout>
+        </ScrollView>
 
-        </LinearLayout>
+    </LinearLayout>
 
-    </ScrollView>
-
-</RelativeLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

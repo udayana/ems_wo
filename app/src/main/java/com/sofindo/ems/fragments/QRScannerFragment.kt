@@ -56,10 +56,39 @@ class QRScannerFragment : Fragment() {
         previewView = view.findViewById(R.id.viewFinder)
         cameraExecutor = Executors.newSingleThreadExecutor()
         
+        // Setup close button
+        val btnClose = view.findViewById<android.widget.ImageButton>(R.id.btn_close_scanner)
+        btnClose.setOnClickListener {
+            closeScanner()
+        }
+        
         if (allPermissionsGranted()) {
             startCamera()
         } else {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+    
+    private fun closeScanner() {
+        // Stop camera before closing
+        stopCamera()
+        
+        // Navigate back to previous fragment
+        if (isAdded) {
+            try {
+                parentFragmentManager.popBackStack()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error closing scanner", e)
+                // Fallback: try to navigate to MaintenanceFragment
+                try {
+                    val maintenanceFragment = MaintenanceFragment()
+                    parentFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, maintenanceFragment)
+                        .commit()
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Error navigating to maintenance fragment", ex)
+                }
+            }
         }
     }
     

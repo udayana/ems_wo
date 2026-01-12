@@ -45,6 +45,7 @@ import com.sofindo.ems.utils.PermissionUtils
 import com.sofindo.ems.utils.NetworkUtils
 import com.sofindo.ems.utils.applyTopAndBottomInsets
 import com.sofindo.ems.utils.setupEdgeToEdge
+import com.sofindo.ems.utils.resizeCrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -660,7 +661,10 @@ class CreateProjectActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val file = cameraPhotoFile
             if (file != null && file.exists() && file.length() > 0) {
-                val resizedFile = resizeJpegInPlace(file, maxSide = 420, quality = 90)
+                // Resize + crop ke 480x480 sebelum upload
+                val resizedFile = withContext(Dispatchers.IO) {
+                    resizeCrop(file, size = 480, quality = 90)
+                }
                 addPhotoToJob(selectedJobIndexForPhoto, resizedFile)
             } else {
                 @Suppress("DEPRECATION")
@@ -671,7 +675,10 @@ class CreateProjectActivity : AppCompatActivity() {
                         FileOutputStream(fallback).use { out ->
                             it.compress(Bitmap.CompressFormat.JPEG, 90, out)
                         }
-                        val resizedFile = resizeJpegInPlace(fallback, maxSide = 420, quality = 90)
+                        // Resize + crop ke 480x480 sebelum upload
+                        val resizedFile = withContext(Dispatchers.IO) {
+                            resizeCrop(fallback, size = 480, quality = 90)
+                        }
                         addPhotoToJob(selectedJobIndexForPhoto, resizedFile)
                     } catch (e: Exception) {
                         showSnackbar("Failed to save camera image: ${e.message}", false)
@@ -692,7 +699,10 @@ class CreateProjectActivity : AppCompatActivity() {
                 }
                 outputStream.close()
                 
-                val resizedFile = resizeJpegInPlace(tempFile, maxSide = 420, quality = 90)
+                // Resize + crop ke 480x480 sebelum upload
+                val resizedFile = withContext(Dispatchers.IO) {
+                    resizeCrop(tempFile, size = 480, quality = 90)
+                }
                 addPhotoToJob(selectedJobIndexForPhoto, resizedFile)
             } catch (e: Exception) {
                 showSnackbar("Failed to load image: ${e.message}", false)
@@ -753,21 +763,22 @@ class CreateProjectActivity : AppCompatActivity() {
         val storageDir = getExternalFilesDir(null)
         return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
     }
-    
+
+    // === KEMBALI KE HELPER LAMA: resize proporsional, sisi terpanjang = maxSide ===
     private fun resizeJpegInPlace(file: File, maxSide: Int = 420, quality: Int = 90): File {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.absolutePath, bounds)
         val srcW = bounds.outWidth
         val srcH = bounds.outHeight
         if (srcW <= 0 || srcH <= 0) return file
-        
+
         val sample = calculateInSampleSize(srcW, srcH, maxSide)
         val decodeOpts = BitmapFactory.Options().apply {
             inSampleSize = sample
             inPreferredConfig = Bitmap.Config.ARGB_8888
         }
         var bmp = BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
-        
+
         val longest = maxOf(bmp.width, bmp.height)
         val scale = longest.toFloat() / maxSide
         val finalBmp = if (scale > 1f) {
@@ -775,16 +786,16 @@ class CreateProjectActivity : AppCompatActivity() {
             val h = (bmp.height / scale).toInt()
             Bitmap.createScaledBitmap(bmp, w, h, true)
         } else bmp
-        
+
         FileOutputStream(file, false).use { out ->
             finalBmp.compress(Bitmap.CompressFormat.JPEG, quality, out)
             out.flush()
         }
-        
+
         if (finalBmp !== bmp) bmp.recycle()
         return file
     }
-    
+
     private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
         var inSampleSize = 1
         val longest = maxOf(srcW, srcH)

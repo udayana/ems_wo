@@ -216,3 +216,16 @@ class ZxingBarcodeAnalyzer(private val onQrScanned: (String) -> Unit) : ImageAna
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+

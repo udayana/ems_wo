@@ -1,50 +1,36 @@
 package com.sofindo.ems.activities
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.*
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.sofindo.ems.R
-import com.sofindo.ems.utils.applyTopAndBottomInsets
-import com.sofindo.ems.utils.setupEdgeToEdge
-import com.sofindo.ems.utils.NetworkUtils
-import com.sofindo.ems.services.OfflineProjectService
-import com.sofindo.ems.services.SyncService
-import com.sofindo.ems.database.PendingProject
 import com.sofindo.ems.dialogs.ImageViewerDialog
 import com.sofindo.ems.models.ProjectDetail
 import com.sofindo.ems.models.ProjectJob
 import com.sofindo.ems.models.ProjectPhoto
-import org.json.JSONArray
+import com.sofindo.ems.utils.resizeCrop
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import okhttp3.*
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
 
 class UpdateProjectActivity : AppCompatActivity() {
@@ -53,7 +39,6 @@ class UpdateProjectActivity : AppCompatActivity() {
     private lateinit var backButton: ImageButton
     private lateinit var toolbarTitle: TextView
     private lateinit var btnSave: Button
-    private lateinit var tvProjectName: TextView
     
     private lateinit var spStatus: Spinner
     private lateinit var etNote: EditText
@@ -78,75 +63,16 @@ class UpdateProjectActivity : AppCompatActivity() {
     
     private val statusList = listOf("new", "on progress", "pending", "done", "cancelled")
     
-    // Photo selection state
-    private var cameraPhotoFile: File? = null
-    private var cameraPhotoUri: Uri? = null
-    
-    // Activity result launchers
-    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            lifecycleScope.launch {
-                val file = cameraPhotoFile
-                if (file != null && file.exists() && file.length() > 0) {
-                    val resizedFile = resizeJpegInPlace(file, maxSide = 420, quality = 90)
-                    val uri = FileProvider.getUriForFile(
-                        this@UpdateProjectActivity,
-                        "${packageName}.fileprovider",
-                        resizedFile
-                    )
-                    addPhotoToJob(selectedJobIndexForPhoto, uri)
-                } else {
-                    @Suppress("DEPRECATION")
-                    result.data?.extras?.getParcelable<Bitmap>("data")?.let { thumb ->
-                        try {
-                            val fallback = createImageFile()
-                            FileOutputStream(fallback).use { out ->
-                                thumb.compress(Bitmap.CompressFormat.JPEG, 90, out)
-                            }
-                            val resizedFile = resizeJpegInPlace(fallback, maxSide = 420, quality = 90)
-                            val uri = FileProvider.getUriForFile(
-                                this@UpdateProjectActivity,
-                                "${packageName}.fileprovider",
-                                resizedFile
-                            )
-                            addPhotoToJob(selectedJobIndexForPhoto, uri)
-                        } catch (e: Exception) {
-                            Toast.makeText(this@UpdateProjectActivity, "Failed to save camera image: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
-                    } ?: Toast.makeText(this@UpdateProjectActivity, "Camera file not found", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-    
-    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri ->
-                handleGalleryImage(uri)
-            }
-        }
-    }
-    
-    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        if (isGranted) {
-            openCamera()
-        } else {
-            Toast.makeText(this, "Camera permission is required", Toast.LENGTH_SHORT).show()
-        }
+    companion object {
+        private const val REQUEST_CODE_PICK_IMAGE = 1001
+        private const val REQUEST_CODE_CAMERA = 1002
+        private const val PERMISSION_REQUEST_CODE = 1003
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Enable edge-to-edge for Android 15+ (SDK 35)
-        setupEdgeToEdge()
-        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_update_project)
 
-
-        // Apply window insets to root layout
-        findViewById<android.view.ViewGroup>(android.R.id.content)?.getChildAt(0)?.let { rootView ->
-            rootView.applyTopAndBottomInsets()
-        }
         projectId = intent.getStringExtra("projectId") ?: ""
         propID = intent.getStringExtra("propID") ?: ""
         projectName = intent.getStringExtra("projectName") ?: ""
@@ -170,7 +96,6 @@ class UpdateProjectActivity : AppCompatActivity() {
         backButton = toolbar.findViewById(R.id.back_button)
         toolbarTitle = toolbar.findViewById(R.id.toolbar_title)
         btnSave = findViewById(R.id.btn_save)
-        tvProjectName = findViewById(R.id.tv_project_name)
         
         spStatus = findViewById(R.id.sp_status)
         etNote = findViewById(R.id.et_note)
@@ -180,7 +105,6 @@ class UpdateProjectActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progress_bar)
         
         toolbarTitle.text = "Update Project"
-        tvProjectName.text = projectName
     }
 
     private fun setupToolbar() {
@@ -244,21 +168,6 @@ class UpdateProjectActivity : AppCompatActivity() {
                                     val dataDict = json.optJSONObject("data")
                                     if (dataDict != null) {
                                         projectDetail = ProjectDetail.fromJson(dataDict)
-                                        // Update projectName from detail if available
-                                        val detailProjectName = dataDict.optString("projectName", "")
-                                        if (detailProjectName.isNotEmpty()) {
-                                            projectName = detailProjectName
-                                            runOnUiThread {
-                                                tvProjectName.text = projectName
-                                            }
-                                        }
-                                        // Display existing remarks
-                                        runOnUiThread {
-                                            val existingRemarks = projectDetail?.remarks ?: ""
-                                            if (existingRemarks.isNotEmpty()) {
-                                                etNote.setText(existingRemarks)
-                                            }
-                                        }
                                         displayJobs()
                                     }
                                 } else {
@@ -298,88 +207,75 @@ class UpdateProjectActivity : AppCompatActivity() {
         val jobView = layoutInflater.inflate(R.layout.item_job_update, llJobs, false)
         
         val tvJobTitle = jobView.findViewById<TextView>(R.id.tv_job_title)
-        val llPhotosList = jobView.findViewById<LinearLayout>(R.id.ll_photos_list)
+        val llBeforePhotos = jobView.findViewById<LinearLayout>(R.id.ll_before_photos)
+        val tvArrow = jobView.findViewById<TextView>(R.id.tv_arrow)
+        val llAfterPhotos = jobView.findViewById<LinearLayout>(R.id.ll_after_photos)
+        val btnAddPhotoAfter = jobView.findViewById<Button>(R.id.btn_add_photo_after)
         
         // Set job title
         tvJobTitle.text = "Job ${job.jobIndex + 1}: ${job.jobDescription}"
         
         // Separate photos by type
         val beforePhotos = job.photos.filter { it.photoType.lowercase() == "before" }
+        val afterPhotos = job.photos.filter { it.photoType.lowercase() == "after" }
         
-        // Display photos in vertical pairs: Photo X -- photoDone X -- upload
-        llPhotosList.removeAllViews()
+        // Display before photos with click to add after photo
+        llBeforePhotos.removeAllViews()
         if (beforePhotos.isEmpty()) {
             val emptyView = TextView(this)
             emptyView.text = "No photos"
             emptyView.textSize = 12f
             emptyView.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
             emptyView.gravity = android.view.Gravity.CENTER
-            emptyView.setPadding(16, 16, 16, 16)
-            llPhotosList.addView(emptyView)
+            llBeforePhotos.addView(emptyView)
         } else {
-            beforePhotos.forEachIndexed { index, beforePhoto ->
-                val photoPairView = createPhotoPairView(beforePhoto, job.jobIndex, index + 1)
-                llPhotosList.addView(photoPairView)
+            beforePhotos.forEachIndexed { index, photo ->
+                val photoView = createBeforePhotoView(photo, job.jobIndex, index)
+                llBeforePhotos.addView(photoView)
             }
+        }
+        
+        // Display after photos (existing) - photoDone dari before photo
+        llAfterPhotos.removeAllViews()
+        beforePhotos.forEachIndexed { index, beforePhoto ->
+            // Check if this before photo has photoDone
+            if (!beforePhoto.photoDone.isNullOrEmpty()) {
+                // Display existing photoDone
+                val photoView = createPhotoDoneView(beforePhoto.photoDone, beforePhoto.photoId)
+                llAfterPhotos.addView(photoView)
+            } else {
+                // Check if there's a new photo for this before photo
+                val newPhoto = newPhotosByJob[job.jobIndex]?.find { it.first == beforePhoto.photoId }
+                if (newPhoto != null) {
+                    val photoView = createPhotoView(newPhoto.second, true, job.jobIndex, beforePhoto.photoId)
+                    llAfterPhotos.addView(photoView)
+                } else {
+                    // Empty placeholder
+                    val emptyView = TextView(this)
+                    emptyView.text = "-"
+                    emptyView.textSize = 12f
+                    emptyView.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+                    emptyView.gravity = android.view.Gravity.CENTER
+                    emptyView.minWidth = 100.dpToPx()
+                    emptyView.minHeight = 100.dpToPx()
+                    llAfterPhotos.addView(emptyView)
+                }
+            }
+        }
+        
+        // Setup add photo button - show dialog to select which before photo
+        btnAddPhotoAfter.setOnClickListener {
+            if (beforePhotos.isEmpty()) {
+                Toast.makeText(this, "Tidak ada photo before untuk menambah photo after", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            selectedJobIndexForPhoto = job.jobIndex
+            showSelectBeforePhotoDialog(beforePhotos, job.jobIndex)
         }
         
         return jobView
     }
-    
-    private fun createPhotoPairView(beforePhoto: ProjectPhoto, jobIndex: Int, photoIndex: Int): View {
-        val pairView = layoutInflater.inflate(R.layout.item_photo_pair, null)
-        
-        val flBeforePhoto = pairView.findViewById<FrameLayout>(R.id.fl_before_photo)
-        val flAfterPhoto = pairView.findViewById<FrameLayout>(R.id.fl_after_photo)
-        val btnUpload = pairView.findViewById<ImageButton>(R.id.btn_upload)
-        
-        // Display before photo
-        val beforePhotoView = createBeforePhotoView(beforePhoto, jobIndex, photoIndex - 1)
-        flBeforePhoto.removeAllViews()
-        flBeforePhoto.addView(beforePhotoView)
-        
-        // Display after photo (photoDone) or placeholder
-        flAfterPhoto.removeAllViews()
-        if (!beforePhoto.photoDone.isNullOrEmpty()) {
-            // Display existing photoDone
-            val photoDoneView = createPhotoDoneView(beforePhoto.photoDone, beforePhoto.photoId)
-            flAfterPhoto.addView(photoDoneView)
-            // Keep upload button visible so user can replace photoDone
-            btnUpload.visibility = View.VISIBLE
-        } else {
-            // Check if there's a new photo for this before photo
-            val newPhoto = newPhotosByJob[jobIndex]?.find { it.first == beforePhoto.photoId }
-            if (newPhoto != null) {
-                val newPhotoView = createPhotoView(newPhoto.second, true, jobIndex, beforePhoto.photoId)
-                flAfterPhoto.addView(newPhotoView)
-                // Keep upload button visible so user can change photo
-                btnUpload.visibility = View.VISIBLE
-            } else {
-                // Empty placeholder
-                val emptyView = TextView(this)
-                emptyView.text = "-"
-                emptyView.textSize = 12f
-                emptyView.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
-                emptyView.gravity = android.view.Gravity.CENTER
-                emptyView.minWidth = 100.dpToPx()
-                emptyView.minHeight = 100.dpToPx()
-                emptyView.background = ContextCompat.getDrawable(this, R.drawable.rounded_white_background)
-                flAfterPhoto.addView(emptyView)
-                btnUpload.visibility = View.VISIBLE
-            }
-        }
-        
-        // Setup upload button - always visible for photoDone upload/replace
-        btnUpload.setOnClickListener {
-            selectedJobIndexForPhoto = jobIndex
-            selectedBeforePhotoId = beforePhoto.photoId
-            showImageSourceDialog()
-        }
-        
-        return pairView
-    }
 
-    @Suppress("UNUSED_PARAMETER")
     private fun createBeforePhotoView(photo: ProjectPhoto, jobIndex: Int, index: Int): View {
         val photoView = layoutInflater.inflate(R.layout.item_photo_small, null)
         val ivPhoto = photoView.findViewById<ImageView>(R.id.iv_photo)
@@ -397,16 +293,16 @@ class UpdateProjectActivity : AppCompatActivity() {
         
         btnRemove.visibility = View.GONE
         
-        // Make clickable to view full image
+        // Make clickable to add after photo
         photoView.setOnClickListener {
-            val dialog = ImageViewerDialog(this, imageUrl)
-            dialog.show()
+            selectedJobIndexForPhoto = jobIndex
+            selectedBeforePhotoId = photo.photoId
+            showImageSourceDialog()
         }
         
         return photoView
     }
 
-    @Suppress("UNUSED_PARAMETER")
     private fun createPhotoDoneView(photoDone: String, beforePhotoId: String): View {
         val photoView = layoutInflater.inflate(R.layout.item_photo_small, null)
         val ivPhoto = photoView.findViewById<ImageView>(R.id.iv_photo)
@@ -423,12 +319,6 @@ class UpdateProjectActivity : AppCompatActivity() {
             .into(ivPhoto)
         
         btnRemove.visibility = View.GONE
-        
-        // Make clickable to view full image
-        photoView.setOnClickListener {
-            val dialog = ImageViewerDialog(this, imageUrl)
-            dialog.show()
-        }
         
         return photoView
     }
@@ -479,13 +369,6 @@ class UpdateProjectActivity : AppCompatActivity() {
                 }
                 displayJobs() // Refresh display
             }
-            // Make clickable to view full image
-            photoView.setOnClickListener {
-                // For local URI, we need to pass it as string to ImageViewerDialog
-                // Glide in ImageViewerDialog can handle file:// URIs
-                val dialog = ImageViewerDialog(this, uri.toString())
-                dialog.show()
-            }
         } else {
             btnRemove.visibility = View.GONE
         }
@@ -499,7 +382,7 @@ class UpdateProjectActivity : AppCompatActivity() {
     }
     
     private fun showSelectBeforePhotoDialog(beforePhotos: List<ProjectPhoto>, jobIndex: Int) {
-        val photoOptions = beforePhotos.mapIndexed { index, _ ->
+        val photoOptions = beforePhotos.mapIndexed { index, photo ->
             "Photo ${index + 1}"
         }.toTypedArray()
         
@@ -528,70 +411,42 @@ class UpdateProjectActivity : AppCompatActivity() {
 
     private fun openCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE)
             return
         }
         
-        cameraPhotoFile = createImageFile()
-        cameraPhotoUri = FileProvider.getUriForFile(
-            this,
-            "${packageName}.fileprovider",
-            cameraPhotoFile!!
-        )
-        
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-            putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri)
-            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivityForResult(intent, REQUEST_CODE_CAMERA)
         }
-        
-        val resInfoList = packageManager.queryIntentActivities(
-            intent, PackageManager.MATCH_DEFAULT_ONLY
-        )
-        for (resolveInfo in resInfoList) {
-            val packageName = resolveInfo.activityInfo.packageName
-            grantUriPermission(
-                packageName,
-                cameraPhotoUri,
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-        }
-        
-        cameraLauncher.launch(intent)
     }
 
     private fun openGallery() {
-        val intent = Intent(MediaStore.ACTION_PICK_IMAGES)
-        galleryLauncher.launch(intent)
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        intent.type = "image/*"
+        startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE)
     }
-    
-    private fun handleGalleryImage(uri: Uri) {
-        lifecycleScope.launch {
-            try {
-                val tempFile = createImageFile()
-                val outputStream = FileOutputStream(tempFile)
-                
-                contentResolver.openInputStream(uri)?.use { inputStream ->
-                    inputStream.copyTo(outputStream)
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        
+        if (resultCode == RESULT_OK && selectedJobIndexForPhoto >= 0) {
+            when (requestCode) {
+                REQUEST_CODE_PICK_IMAGE -> {
+                    data?.data?.let { uri ->
+                        addPhotoToJob(selectedJobIndexForPhoto, uri)
+                    }
                 }
-                outputStream.close()
-                
-                val resizedFile = resizeJpegInPlace(tempFile, maxSide = 420, quality = 90)
-                val resizedUri = FileProvider.getUriForFile(
-                    this@UpdateProjectActivity,
-                    "${packageName}.fileprovider",
-                    resizedFile
-                )
-                addPhotoToJob(selectedJobIndexForPhoto, resizedUri)
-            } catch (e: Exception) {
-                Toast.makeText(this@UpdateProjectActivity, "Failed to load image: ${e.message}", Toast.LENGTH_SHORT).show()
+                REQUEST_CODE_CAMERA -> {
+                    data?.extras?.get("data")?.let { bitmap ->
+                        val uri = saveBitmapToFile(bitmap as android.graphics.Bitmap)
+                        uri?.let {
+                            addPhotoToJob(selectedJobIndexForPhoto, it)
+                        }
+                    }
+                }
             }
         }
-    }
-    
-    private fun createImageFile(): File {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val storageDir = getExternalFilesDir(null)
-        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
     }
 
     private fun addPhotoToJob(jobIndex: Int, uri: Uri) {
@@ -611,44 +466,22 @@ class UpdateProjectActivity : AppCompatActivity() {
         displayJobs() // Refresh display
     }
 
-    private fun resizeJpegInPlace(file: File, maxSide: Int = 420, quality: Int = 90): File {
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(file.absolutePath, bounds)
-        val srcW = bounds.outWidth
-        val srcH = bounds.outHeight
-        if (srcW <= 0 || srcH <= 0) return file
-        
-        val sample = calculateInSampleSize(srcW, srcH, maxSide)
-        val decodeOpts = BitmapFactory.Options().apply {
-            inSampleSize = sample
-            inPreferredConfig = Bitmap.Config.ARGB_8888
+    private fun saveBitmapToFile(bitmap: android.graphics.Bitmap): Uri? {
+        return try {
+            val file = File(cacheDir, "camera_photo_${System.currentTimeMillis()}.jpg")
+            val outputStream = java.io.FileOutputStream(file)
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, outputStream)
+            outputStream.flush()
+            outputStream.close()
+            androidx.core.content.FileProvider.getUriForFile(
+                this,
+                "${packageName}.fileprovider",
+                file
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("UpdateProjectActivity", "Error saving bitmap", e)
+            null
         }
-        var bmp = BitmapFactory.decodeFile(file.absolutePath, decodeOpts) ?: return file
-        
-        val longest = kotlin.math.max(bmp.width, bmp.height)
-        val scale = longest.toFloat() / maxSide
-        val finalBmp = if (scale > 1f) {
-            val w = (bmp.width / scale).toInt()
-            val h = (bmp.height / scale).toInt()
-            Bitmap.createScaledBitmap(bmp, w, h, true)
-        } else bmp
-        
-        FileOutputStream(file, false).use { out ->
-            finalBmp.compress(Bitmap.CompressFormat.JPEG, quality, out)
-            out.flush()
-        }
-        
-        if (finalBmp !== bmp) bmp.recycle()
-        return file
-    }
-    
-    private fun calculateInSampleSize(srcW: Int, srcH: Int, reqMaxSide: Int): Int {
-        var inSampleSize = 1
-        val longest = kotlin.math.max(srcW, srcH)
-        while (longest / inSampleSize > reqMaxSide * 2) {
-            inSampleSize *= 2
-        }
-        return inSampleSize
     }
 
     private fun saveUpdate() {
@@ -669,31 +502,18 @@ class UpdateProjectActivity : AppCompatActivity() {
         
         lifecycleScope.launch {
             try {
-                // Check internet connection
-                val hasInternet = withContext(Dispatchers.IO) {
-                    NetworkUtils.hasServerConnection()
-                }
-                
-                if (!hasInternet) {
-                    // No internet: Save to offline queue
-                    saveProjectUpdateOffline(status, note)
-                    return@launch
-                }
-                
-                // Has internet: Try to update online
                 uploadUpdate(status, note)
             } catch (e: Exception) {
                 android.util.Log.e("UpdateProjectActivity", "Error uploading update", e)
-                // Network error: Save to offline queue
-                saveProjectUpdateOffline(status, note, e.message)
+                runOnUiThread {
+                    showLoading(false)
+                    Toast.makeText(this@UpdateProjectActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
     private suspend fun uploadUpdate(status: String, note: String) {
-        // Debug: Log note value
-        android.util.Log.d("UpdateProjectActivity", "Uploading note: '$note' (length: ${note.length})")
-        
         val requestBodyBuilder = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("action", "update")
@@ -701,9 +521,9 @@ class UpdateProjectActivity : AppCompatActivity() {
             .addFormDataPart("propID", propID)
             .addFormDataPart("status", status)
         
-        // Always send note parameter (even if empty, backend will check)
-        // Parameter name is "note" which will be saved to "remarks" field in database
-        requestBodyBuilder.addFormDataPart("note", note)
+        if (note.isNotEmpty()) {
+            requestBodyBuilder.addFormDataPart("note", note)
+        }
         
         // Add photos with photoId (before photo ID) and job_index
         // Format: photos[], photo_id[], job_index[]
@@ -725,11 +545,12 @@ class UpdateProjectActivity : AppCompatActivity() {
                     outputStream.close()
                     
                     if (file.exists()) {
-                        val requestFile = file.asRequestBody("image/jpeg".toMediaType())
-                        // Format filename untuk photoDone: Done_{projectId}_{timestamp}_{index}.jpg
-                        val timestamp = System.currentTimeMillis()
-                        val filename = "Done_${projectId}_${timestamp}_$index.jpg"
-                        requestBodyBuilder.addFormDataPart("photos[]", filename, requestFile)
+                        // Resize + crop ke 480x480 sebelum upload
+                        val processedFile = withContext(Dispatchers.IO) {
+                            resizeCrop(file, size = 480, quality = 90)
+                        }
+                        val requestFile = processedFile.asRequestBody("image/jpeg".toMediaType())
+                        requestBodyBuilder.addFormDataPart("photos[]", "photo_${jobIndex}_$index.jpg", requestFile)
                         requestBodyBuilder.addFormDataPart("photo_id[]", beforePhotoId)
                         requestBodyBuilder.addFormDataPart("job_index[]", jobIndex.toString())
                     }
@@ -750,10 +571,7 @@ class UpdateProjectActivity : AppCompatActivity() {
             override fun onFailure(call: Call, e: IOException) {
                 runOnUiThread {
                     showLoading(false)
-                    // Network error: Save to offline queue
-                    lifecycleScope.launch {
-                        saveProjectUpdateOffline(status, note, e.message)
-                    }
+                    Toast.makeText(this@UpdateProjectActivity, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -770,108 +588,19 @@ class UpdateProjectActivity : AppCompatActivity() {
                             setResult(RESULT_OK)
                             finish()
                         } else {
-                            // Update failed: Save to offline queue
                             val message = json.optString("message", "Failed to update project")
-                            lifecycleScope.launch {
-                                saveProjectUpdateOffline(status, note, message)
-                            }
+                            Toast.makeText(this@UpdateProjectActivity, message, Toast.LENGTH_SHORT).show()
                         }
                     }
                 } catch (e: Exception) {
                     runOnUiThread {
                         showLoading(false)
                         android.util.Log.e("UpdateProjectActivity", "Error parsing response", e)
-                        // Parse error: Save to offline queue
-                        lifecycleScope.launch {
-                            saveProjectUpdateOffline(status, note, e.message)
-                        }
+                        Toast.makeText(this@UpdateProjectActivity, "Error parsing response", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         })
-    }
-    
-    private suspend fun saveProjectUpdateOffline(
-        status: String,
-        note: String,
-        errorMsg: String? = null
-    ) = withContext(Dispatchers.IO) {
-        try {
-            // Copy photos to persistent location
-            val offlineDir = File(getExternalFilesDir(null), "offline_photos")
-            if (!offlineDir.exists()) {
-                offlineDir.mkdirs()
-            }
-            
-            val photoPaths = mutableListOf<String>()
-            val jobIndices = mutableListOf<Int>()
-            val beforePhotoIds = mutableListOf<String>()
-            
-            newPhotosByJob.forEach { (jobIndex, photoPairs) ->
-                photoPairs.forEach { (beforePhotoId, uri) ->
-                    try {
-                        val inputStream = contentResolver.openInputStream(uri)
-                        if (inputStream != null) {
-                            val persistentFile = File(offlineDir, "PROJECT_UPDATE_${projectId}_${System.currentTimeMillis()}_${photoPaths.size}.jpg")
-                            val outputStream = java.io.FileOutputStream(persistentFile)
-                            inputStream.copyTo(outputStream)
-                            inputStream.close()
-                            outputStream.close()
-                            
-                            if (persistentFile.exists()) {
-                                photoPaths.add(persistentFile.absolutePath)
-                                jobIndices.add(jobIndex)
-                                beforePhotoIds.add(beforePhotoId)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        android.util.Log.e("UpdateProjectActivity", "Error copying photo: ${e.message}", e)
-                    }
-                }
-            }
-            
-            val photoPathsJson = if (photoPaths.isNotEmpty()) JSONArray(photoPaths).toString() else null
-            val jobIndexJson = if (jobIndices.isNotEmpty()) JSONArray(jobIndices).toString() else null
-            val beforePhotoIdsJson = if (beforePhotoIds.isNotEmpty()) JSONArray(beforePhotoIds).toString() else null
-            
-            // Create pending project update
-            val pendingProject = PendingProject(
-                requestType = "update",
-                projectId = projectId,
-                propID = propID,
-                newStatus = status,
-                note = note,
-                photoPathsJson = photoPathsJson,
-                jobIndexJson = jobIndexJson,
-                beforePhotoIdsJson = beforePhotoIdsJson,
-                lastError = errorMsg ?: "No internet connection"
-            )
-            
-            // Save to database
-            OfflineProjectService.addPendingProject(pendingProject)
-            
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    this@UpdateProjectActivity,
-                    "Project update saved offline. Will sync when internet is available.",
-                    Toast.LENGTH_LONG
-                ).show()
-                
-                setResult(RESULT_OK)
-                finish()
-            }
-            
-            // Schedule sync when internet is available
-            SyncService.scheduleSync(this@UpdateProjectActivity)
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    this@UpdateProjectActivity,
-                    "Failed to save offline: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
     }
 
     private fun showLoading(show: Boolean) {
@@ -880,5 +609,14 @@ class UpdateProjectActivity : AppCompatActivity() {
         btnSave.isEnabled = !show
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openCamera()
+            } else {
+                Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }
-

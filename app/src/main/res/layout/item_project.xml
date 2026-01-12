@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Project Name"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/input_text_color"
         android:textSize="16sp"
         android:textStyle="bold"
         android:maxLines="1"
@@ -42,7 +42,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="-"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textColor="@color/input_hint_color"
                 android:textSize="13sp" />
 
             <TextView
@@ -50,7 +50,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Location"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textColor="@color/input_hint_color"
                 android:textSize="13sp"
                 android:maxLines="1"
                 android:ellipsize="end" />
@@ -78,7 +78,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:text="Date"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textColor="@color/input_hint_color"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -93,7 +93,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Cost Rp 0"
-            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textColor="@color/input_hint_color"
             android:textSize="13sp"
             android:layout_marginEnd="12dp" />
 
